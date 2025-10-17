@@ -1,0 +1,6 @@
+version: 0.7.0
+
+input_file: "data/input.txt"
+#output_file: "results/output.txt"
+output_file: "results/output"
+uppercase: true
