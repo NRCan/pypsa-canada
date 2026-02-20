@@ -1,4 +1,4 @@
-input_data: data/Canada-National
+input_data: model/Canada-National
 
 #Unsolved Networks
 planning_unsolved_network_unfiltered_nc: networks/unsolved/planning_base_network_unfiltered.nc
@@ -34,7 +34,7 @@ solving:
 
 load:
   load_mode: &load_mode "custom"
-  load_growth_filepath: "data/Canada-National/loads_forecast.csv"
+  load_growth_filepath: "model/Canada-National/loads_forecast.csv"
   ref_year: [*ref_year]
 
 components:
@@ -56,8 +56,8 @@ components:
 snapshots:
   method: "OPT_VRE_HYDRO"
   load_mode: *load_mode
-  folder_name: "data/Canada-National"
-  load_growth_forecast: "data/Canada-National/loads_forecast.csv"
+  folder_name: "model/Canada-National"
+  load_growth_forecast: "model/Canada-National/loads_forecast.csv"
   years: [*ref_year]
   ref_year: *ref_year
   investment_periods: 10

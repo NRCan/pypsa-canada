@@ -1,0 +1,4 @@
+﻿name,bus0,bus1,type,carrier,efficiency,p_min_pu,p_nom,build_year,lifetime,p_nom_extendable,length,capital_cost,marginal_cost,committable
+Link_BUS_3_Heat,BUS_3,BUS_3 Heat,,AC,1.75,0,0,2030,25,TRUE,,78109,,TRUE
+Link_Heat_charge,BUS_3 Heat,BUS_3 Heat Store,,heat,0.99,0,0,2030,25,TRUE,,0,,TRUE
+Link_Heat_discharge,BUS_3 Heat Store,BUS_3 Heat,,heat,0.96,0,0,2030,25,TRUE,,3296,,TRUE

@@ -78,6 +78,7 @@ planning:
   investment_period: [2021, 2025, 2030]
   #investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
   load_shedding: false
+  test_mode: false  # Set to true to limit model to first 24 snapshots for quick testing
   constraints:
     add_spilling_variable: true
     add_stop_production_constraint:

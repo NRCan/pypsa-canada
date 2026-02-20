@@ -1,0 +1,2 @@
+name,bus,carrier,e_nom,e_nom_extendable,standing_loss,build_year,lifetime,capital_cost
+Store_Heat,BUS_3 Heat Store,heat,0,TRUE,0.006,2030,25,1428

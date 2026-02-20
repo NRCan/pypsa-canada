@@ -1,0 +1,94 @@
+input_data: model/minimal_model
+
+#Unsolved Networks
+planning_unsolved_network_unfiltered_nc: networks/unsolved/planning_base_network_unfiltered.nc
+planning_unsolved_network_csv: networks/unsolved/planning_base_network_csv
+planning_unsolved_network_nc: networks/unsolved/planning_base_network.nc
+dispatch_unsolved_network_csv: networks/unsolved/dispatch_base_network_csv
+dispatch_unsolved_network_nc: networks/unsolved/dispatch_base_network.nc
+
+#Solved Networks
+planning_output_file_csv: "results/planning_output_csv"
+planning_output_file_nc: "results/planning_output.nc"
+#dispatch_output_file_csv: "results/dispatch_output_csv"
+dispatch_output_file_csv: "results/dispatch_output"
+#dispatch_output_file_nc: "results/dispatch_output.nc"
+uppercase: true
+
+run:
+  name: "minimal_model" # use this to keep track of runs with different settings
+  disable_progressbar: false # set to true to disable the progressbar
+  shared_resources: false # set to true to share the default resources across runs
+  shared_cutouts: true # set to true to share the default cutout(s) across runs
+  validation: false # set to true to run back-casting plots
+
+year_settings:
+  ref_year: &ref_year 2021
+  start_year: &start_year 2021
+  forecast_year: &forecast_year 2050
+
+solving:
+  solver:
+    name: &solver_name highs
+    options: highs-default
+
+load:
+  load_mode: &load_mode "custom"
+  load_growth_filepath: "model/minimal_model/load_growth.csv"
+  ref_year: [*ref_year]
+
+components:
+  override_dir: ""
+  components_dir: "data/components"
+  costs_dir: "data/costs"
+  obps: true
+  technology_costs: "default_costs"
+  years: [*ref_year]
+  carbon_tax: 
+    '2021': 50 # $ per tonne, based on federal minimums
+    '2025': 125
+    '2030': 170
+    '2035': 170
+    '2040': 170
+    '2045': 170
+    '2050': 170
+
+snapshots:
+  method: "OPT_VRE_HYDRO"
+  load_mode: *load_mode
+  folder_name: "model/minimal_model"
+  load_growth_forecast: "model/minimal_model/load_growth.csv"
+  years: [*ref_year]
+  ref_year: *ref_year
+  investment_periods: 29
+
+  # Rep days config
+  # rep_length: None
+  cluster: 50
+  include_hydro: true
+  solver: *solver_name
+  extreme_days_select: false
+  save_fig: false
+  save_csv: false
+  saving_folder_path: saves
+  provinces_selection: [AB, BC, MB, NB, NS, 'ON', PE, QC, SK, NL]
+  # year: None
+  aggregate: false
+
+extra_loads:
+  is_used: false
+  extra_loads: data/base
+  path: data/base
+
+planning:
+  reference_year: 2021
+  start_year: 2021
+  forecast_year: 2050
+  investment_period: [2021, 2050]
+  #investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
+  load_shedding: false
+  test_mode: true  # Set to true to limit model to first 24 snapshots for quick testing
+  constraints:
+    add_spilling_variable: true
+    add_stop_production_constraint:
+      2050: ["gas"]

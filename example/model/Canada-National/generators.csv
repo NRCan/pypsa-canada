@@ -1,0 +1,649 @@
+name,bus,model,group,p_nom,p_nom_extendable,build_year,lifetime
+150 Mile House_biomass,BC_North,default_biomass,EnPower Green Energy Generation Limited Partnership,6.0,False,2008,20.0
+AB Newsprint_NG_SC,AB_North,gas_CT,Alberta Newsprint Funding Corporation,63.0,False,2014,25.0
+APF Athabasca_biomass,AB_North,default_biomass,Alberta-Pacific Forest Industries,131.0,False,2012,20.0
+Air Liquide Scotford_NG_CG,AB_Central,gas_CC,ATCO Power Canada Ltd.,106.0,False,2003,25.0
+Algoma Cogeneration_NG_CG,ON_North,gas_CC,Essar Power Canada Ltd,63.0,False,2009,25.0
+AltaGas Harmattan_NG_CG,AB_South,gas_CC,Altagas,45.0,False,2012,25.0
+Aspen_NG_CC,SK,gas_CC,SaskPower,370.0,False,2027,25.0
+Atholville_biomass,NB_West,default_biomass,AV Group NB,21.0,False,2012,20.0
+Atikokan_biomass,ON_Northwest,default_biomass,Ontario Power Generation Inc,205.0,False,2014,20.0
+Bantry_NG_SC,AB_South,gas_CT,AltaGas,7.0,False,2012,25.0
+Battle River_NG_CC_0,AB_Central,gas_CC,Heartland Generation Ltd.,395.0,False,2021,25.0
+Battle River_NG_CC_1,AB_Central,gas_CC,Heartland Generation Ltd.,155.0,False,2022,25.0
+Battle River Coal_coal_0,AB_Central,coal_IGCC,Alberta Power 2000 Ltd.,148.0,False,1975,50.0
+Battle River Coal_coal_1,AB_Central,coal_IGCC,Alberta Power 2000 Ltd.,407.0,False,1981,50.0
+Bayside_NG_CC,NB_West,gas_CC,NB Power,290.0,False,1999,25.0
+Bear Creek_NG_CG,AB_North,gas_CC,TransCanada Energy Ltd.,100.0,False,2002,25.0
+Belledune_coal,NB_West,coal_IGCC,NB Power,466.0,False,1993,50.0
+Bellshill_NG_SC,AB_Central,gas_CT,Genalta Power,5.0,False,2018,25.0
+Biomont_biogas,QC_South,default_biogas,Biomont Ã‰nergie,4.8,False,2017,20.0
+Birchmount Energy Centre_NG_CG,ON_East,gas_CC,Markham District Energy Inc,2.6,False,2013,25.0
+Blackfalds_NG_CG,AB_Central,gas_CC,Horseshoe Power,6.05,False,2019,25.0
+Bonnybrook_biomass,AB_South,default_biomass,City of Calgary,10.0,False,2021,20.0
+Boundary Dam_coal,SK,coal_IGCC,SaskPower,284.0,False,2003,50.0
+Boundary Dam_coal_CCS,SK,coal_IGCC,SaskPower,139.0,False,2014,50.0
+Brandon_NG_SC,MB,gas_CT,Manitoba Hydro,280.0,False,2001,25.0
+Brighton Beach_NG_CC,ON_South,gas_CC,Shell Energy North America Canada Inc,570.0,False,2010,25.0
+Bruce A_nuclear_0,ON_South,default_nuclear,Bruce Power LP ,1646.0,False,1977,80.0
+Bruce A_nuclear_1,ON_South,default_nuclear,Bruce Power LP ,816.0,False,1978,80.0
+Bruce A_nuclear_2,ON_South,default_nuclear,Bruce Power LP ,806.0,False,1979,80.0
+Bruce B_nuclear_0,ON_South,default_nuclear,Bruce Power LP ,817.0,False,1984,80.0
+Bruce B_nuclear_1,ON_South,default_nuclear,Bruce Power LP ,822.0,False,1985,80.0
+Bruce B_nuclear_2,ON_South,default_nuclear,Bruce Power LP ,825.0,False,1986,80.0
+Bruce B_nuclear_3,ON_South,default_nuclear,Bruce Power LP ,817.0,False,1987,80.0
+Buck Lake_NG_CG,AB_Central,gas_CC,Keyera,6.0,False,2001,25.0
+Bur Oak Energy Centre_NG_CG,ON_East,gas_CC,Markham District Energy Inc,3.25,False,2014,25.0
+Burnside_oil_CT_0,NS_West,default_oil,Nova Scotia Power Inc.,90.0,False,2015,40.0
+Burnside_oil_CT_1,NS_West,default_oil,Nova Scotia Power Inc.,30.0,False,2020,40.0
+BÃ©arn Sawmill_biomass,QC_North,default_biomass,Tembec,7.0,False,2008,20.0
+BÃ©cancour TCE_NG_CG,QC_East,gas_CC,TransCanada Energy Ltd,547.0,False,2006,25.0
+CANCARB_biomass,AB_South,default_biomass,Tokai Carbon Co.,42.0,False,2001,20.0
+CEPSA-Indorama_NG_CG,QC_South,gas_CC,Indorama Ventures,7.5,False,2003,25.0
+Cache Creek_biogas,BC_South,default_biogas,Wastech Services Ltd.,4.8,False,2014,20.0
+Calgary Energy Centre_NG_CC,AB_South,gas_CC,ENMAX Generation Portfolio Inc.,330.0,False,2002,25.0
+Calstock_biomass,ON_North,default_biomass,Atlantic Power Limited Partnership,24.0,False,2021,20.0
+Camrose_NG_CG,AB_Central,gas_CC,Cargill,10.0,False,2015,25.0
+Cardinal_NG_SC,ON_East,gas_CT,Cardinal Power LP,156.34,False,2015,25.0
+Cariboo Pulp and Paper_biomass,BC_North,default_biomass,Cariboo Pulp and Paper Company,61.3,False,2012,20.0
+Caroline_NG_CG,AB_Central,gas_CC,Shell Canada Limited,19.0,False,2009,25.0
+Carseland_NG_CG,AB_South,gas_CC,TransCanada Energy Ltd.,95.0,False,2001,25.0
+Carson Creek_NG_SC,AB_North,gas_CT,Genalta Power,15.0,False,2015,25.0
+Cascade Gas_NG_CC,AB_North,gas_CC,Kineticor,900.0,False,2023,25.0
+Cavalier_NG_CC,AB_South,gas_CC,ENMAX Cavalier LP,120.0,False,2001,25.0
+Cedar Road_biogas,BC_South,default_biogas,Cedar Road LFG Inc.,1.26,False,2009,20.0
+Celgar_biomass,BC_South,default_biomass,Zellstoff Celgar Limited Partnership,100.0,False,2021,20.0
+Chapais_biomass,QC_North,default_biomass,Brookfield Renewable Energy,31.0,False,2001,20.0
+Chetwynd_biomass,BC_North,default_biomass,West Fraser Mills Ltd.,12.0,False,2014,20.0
+Chinook_NG_CC,SK,gas_CC,SaskPower,350.0,False,2019,25.0
+Chipman_biomass,NB_East,default_biomass,Irving Pulp & Paper Ltd,1.8,False,2021,20.0
+Christina Lake_NG_CG,AB_North,gas_CC,Cenovus Energy,100.0,False,2000,25.0
+Cloverbar_NG_SC_0,AB_Central,gas_CT,Capital Power,48.0,False,2008,25.0
+Cloverbar_NG_SC_1,AB_Central,gas_CT,Capital Power,202.0,False,2009,25.0
+Coaldale_NG_CG,AB_South,gas_CC,Signalta,5.0,False,2019,25.0
+CogÃ©nÃ©ration Valleyfield_biomass,QC_South,default_biomass,Les Industries JPB Inc,9.75,False,2020,20.0
+Combustion Turbine #3_diesel_CT,PE,default_diesel,Maritime Electric,49.0,False,2005,25.0
+Conifex Green Energy_biomass,BC_North,default_biomass,Conifex Power Inc.,36.0,False,2014,20.0
+Cornerbrook _biomass,NL_Newfoundland,default_biomass,Kruger Energy,15.3,False,2021,20.0
+Cory_NG_CG,SK,gas_CC,SaskPower/ATCO Power,249.0,False,2003,25.0
+Crossfield Energy Centre_NG_SC,AB_South,gas_CT,ENMAX Generation Portfolio Inc.,144.0,False,2009,25.0
+Crowsnest Pass_biomass,BC_South,default_biomass,GIF Crowsnest Power LP,10.5,False,2012,20.0
+Daishowa_biomass,AB_North,default_biomass,Daishowa-Marubeni,52.0,False,2011,20.0
+Darlington_nuclear_0,ON_East,default_nuclear,Ontario Power Generation Inc,881.0,False,2020,80.0
+Darlington_nuclear_1,ON_East,default_nuclear,Ontario Power Generation Inc,2643.0,False,2021,80.0
+Denis St Pierre_NG_SC,AB_North,gas_CT,Northstone Power Corp.,3.0,False,2001,25.0
+Destec_NG_CG,ON_East,gas_CC,NPIF Kingston Cogeneration Corporation,140.0,False,1996,25.0
+Dolbeau_biomass,QC_Central,default_biomass,Sysgaz,28.8,False,2012,20.0
+Domtar-Windsor TG1_biomass,QC_East,default_biomass,Domtar,30.0,False,2003,20.0
+Domtar-Windsor TG2_biomass,QC_East,default_biomass,Domtar,18.0,False,2017,20.0
+Dow_NG_CG_0,AB_Central,gas_CC,Dow Chemical Canada ULC,326.0,False,1999,25.0
+Dow_NG_CG_1,ON_South,gas_CC,TransAlta Cogeneration LP,46.0,False,2009,25.0
+Drywood_NG_SC,AB_South,gas_CT,BowArk Energy Ltd.,6.0,False,1999,25.0
+Durham York Energy Centre_MSW,ON_East,default_biomass,Regional Municipality of Durham and Regional Municipality of York,13.9,False,2015,20.0
+East Windsor_NG_CG,ON_South,gas_CC,East Windsor Cogeneration LP,84.0,False,2009,25.0
+Eastview Landfill Gas_biogas,ON_South,default_biogas,Alectra Ultilities Corporation,1.7,False,2005,20.0
+Edson_NG_CG,AB_North,gas_CC,Repsol Canada Energy,13.0,False,2004,25.0
+Elmworth_NG_SC,AB_North,gas_CT,Northstone Power Corp.,9.0,False,2022,25.0
+Emerald_MSW,ON_South,default_biomass,Emerald Energy From Waste Inc ,10.3,False,2015,20.0
+Empress_NG_CG,AB_South,gas_CC,Pembina Empress NGL Parthership,46.0,False,2022,25.0
+Ermine_NG_SC_0,SK,gas_CT,SaskPower,92.0,False,2009,25.0
+Ermine_NG_SC_1,SK,gas_CT,SaskPower,46.0,False,2025,25.0
+Fibrek_biomass,QC_Central,default_biomass,PF RÃ©solu Canada Inc,43.0,False,2012,20.0
+Firebag_NG_CG,AB_North,gas_CC,Suncor Energy Inc.,497.0,False,2007,25.0
+Fort Hills_NG_CG,AB_North,gas_CC,Suncor Energy Inc.,199.0,False,2018,25.0
+Fort Nelson_NG_CC,BC_North,gas_CC,BC Hydro,80.2,False,1999,25.0
+Fort St James Green Energy_biomass,BC_North,default_biomass,Fort St. James Green Energy Limited Partnership,40.0,False,2015,20.0
+Fortress Cellulose_Biomass,QC_South,default_biomass,Fortres Specialty Cellulose Inc.,24.3,False,2012,20.0
+Foster Creek_NG_CG,AB_North,gas_CC,Cenovus Energy,98.0,False,2003,25.0
+Fraser Lake_biomass,BC_North,default_biomass,West Fraser Mills Ltd.,12.0,False,2014,20.0
+Fraser Richmond Soil and Fibre_biogas,BC_South,default_biogas,Harvest Fraser Richmond Organics Ltd.,1.03,False,2013,20.0
+GTAA Cogeneration_NG_CG,ON_South,gas_CC,Transalta,90.0,False,2006,25.0
+Gatineau_biomass,QC_South,default_biomass,Produits forestiers RÃ©solu,16.5,False,2013,20.0
+Genesee Coal_coal_0,AB_Central,coal_IGCC,Capital Power G3 Limited Partnership,422.0,False,1989,50.0
+Genesee Coal_coal_1,AB_Central,coal_IGCC,Capital Power G3 Limited Partnership,422.0,False,1994,50.0
+Genesee Coal_coal_2,AB_Central,coal_IGCC,Capital Power G3 Limited Partnership,527.0,False,2004,50.0
+Genesee Gas_NG_CC,AB_Central,gas_CC,Capital Power G3 Limited Partnership,466.0,False,2021,25.0
+Genesee Gas_NG_SC,AB_Central,gas_CT,Capital Power G3 Limited Partnership,822.0,False,2024,25.0
+Glanbrook_biogas,ON_South,default_biogas,Hamilton Renewable Power Inc ,3.2,False,2008,20.0
+Golden_biomass,BC_South,default_biomass,Louisiana-Pacific Canada Ltd.,7.5,False,2011,20.0
+Goreway_NG_CC,ON_South,gas_CC,Goreway Station Partnership,927.0,False,2009,25.0
+Grand Prairie_biomass,AB_North,default_biomass,Canadian Forest Products Ltd.,18.0,False,2004,20.0
+Grandview_NG_CG,NB_West,gas_CC,TransCanada Energy,98.0,False,2004,25.0
+Great Plains_NG_CC,SK,gas_CC,SaskPower,350.0,False,2025,25.0
+Green Electron_NG_CC,ON_South,gas_CC,Greenfield South Power Corporation,314.0,False,2019,25.0
+Greenfield Energy Centre_NG_SC,ON_South,gas_CT,Greenfield Energy Centre LP,1005.0,False,2008,25.0
+Greenhill_gasoline_CT,NL_Newfoundland,default_diesel,Newfoundland Power,20.0,False,2009,25.0
+HR Milner_NG_CC,AB_North,gas_CC,Milner Power Limited Partnership,300.0,False,2020,25.0
+Halton Hills_NG_SC,ON_South,gas_CT,Portlands Energy Centre LP,712.0,False,2010,25.0
+Hamilton Digester_biogas,ON_South,default_biogas,Hamilton Renewable Power Inc,1.6,False,2006,20.0
+Hardwoods_gasoline_CT,NL_Newfoundland,default_diesel,Nalcor Energy,50.0,False,2017,25.0
+Harmac_biomass,BC_South,default_biomass,Nanaimo Forest Products Ltd.,55.0,False,2013,20.0
+Hartland_biogas,BC_South,default_biogas,Capital Regional District,1.8,False,2004,20.0
+Haute-Yamaska_biogas,QC_South,default_biogas,Terreau Biogaz,2.1,False,2012,20.0
+Hawkes Bay_diesel_CT,NL_Newfoundland,default_diesel,Nalcor Energy,5.0,False,2001,25.0
+Heartland Petrochemical_NG_CG,AB_Central,gas_CC,Inter Pipeline,102.0,False,2022,25.0
+High River_NG_SC_0,AB_South,gas_CT,Signalta,10.0,False,2022,25.0
+High River_NG_SC_1,AB_South,gas_CT,Signalta,10.0,False,2023,25.0
+Holyrood_oil_ST_0,NL_Newfoundland,default_oil,Nalcor Energy,170.0,False,2012,40.0
+Holyrood_gasoline_CT,NL_Newfoundland,default_diesel,Nalcor Energy,123.5,False,2014,25.0
+Holyrood_oil_ST_1,NL_Newfoundland,default_oil,Nalcor Energy,150.0,False,2016,40.0
+Holyrood_oil_ST_2,NL_Newfoundland,default_oil,Nalcor Energy,170.0,False,2021,40.0
+Holyrood Diesel_diesel_CT,NL_Newfoundland,default_diesel,Nalcor Energy,12.0,False,2015,25.0
+Horizon_NG_CG,AB_North,gas_CC,Canadian Natural Resources Ltd.,203.0,False,2016,25.0
+House Mountain_NG_CC,AB_North,gas_CC,ATCO Power Canada Ltd.,7.0,False,2013,25.0
+Houweling Nurseries_biogas,BC_South,default_biogas,Houweling Nurseries Property Ltd.,8.8,False,2014,20.0
+Howe Sound Green Energy_biomass,BC_South,default_biomass,Howe Sound Pulp and Paper Corporation,112.0,False,2021,20.0
+Hydrogen Ready Power Plant_NG_SC,ON_South,gas_CT,Greenfield South Power Inc,195.0,False,2026,25.0
+Index Energy_biomass,ON_East,default_biomass,Index Energy Ajax Corporation,17.81,False,2015,20.0
+Intercon Green Power_biomass,BC_North,default_biomass,Canfor Pulp Limited Partnership,31.7,False,2015,20.0
+Iroquois Falls_NG_CC,ON_North,gas_CC,Iroquois Falls Power Corp ,131.0,False,2017,25.0
+Island Generation_NG_CC,BC_South,gas_CC,V.I. Power Limited Partnership,275.0,False,2002,25.0
+JL Landry_NG_SC,AB_North,gas_CT,Northstone Power Corp.,9.0,False,2001,25.0
+Joffre_NG_CG,AB_Central,gas_CC,NOVA Chemicals,474.0,False,2000,25.0
+Judy Creek_NG_SC,AB_North,gas_CT,Genalta Power,15.0,False,2015,25.0
+Kamloops Green Energy_biomass,BC_South,default_biomass,Domtar Inc.,76.0,False,2012,20.0
+Kaybob_NG_CG,AB_North,gas_CC,TransAlta Corporation,40.0,False,2022,25.0
+Kearl_NG_CG,AB_North,gas_CC,Imperial Oil Resources Ventures Limited,84.0,False,2015,25.0
+Keephills Coal_coal_0,AB_Central,coal_IGCC,TransAlta Corporation,498.0,False,2011,50.0
+Keephills Coal_coal_1,AB_Central,coal_IGCC,TransAlta Corporation,868.0,False,2012,50.0
+Keephills Gas_NG_CC,AB_Central,gas_CC,TransAlta Corporation,861.0,False,2021,25.0
+Kirkland Lake_NG_CC,ON_North,gas_CC,Northland Power,81.0,False,2015,25.0
+Kirkland Lake_NG_SC,ON_North,gas_CT,Northland Power,29.87,False,2015,25.0
+Kopahawakenum_NG_CC,SK,gas_CC,Genalta Power,15.0,False,2025,25.0
+Kruger Bromptonville_biomass,QC_East,default_biomass,Kruger Energie,26.5,False,2014,20.0
+Kruger Products Paper Mill_biomass,BC_South,default_biomass,Kruger Energy,14.0,False,2009,20.0
+Lachenaie Landfill_biomass,QC_South,default_biomass,BFI Canada,4.0,False,2001,20.0
+Lachute_biogas,QC_South,default_biogas,Lidya Energy,9.9,False,2007,20.0
+Lebel-sur-QuÃ©villon_biomass,QC_North,default_biomass,Nexolia BioÃ©nergie,55.3,False,2020,20.0
+Lennox_NG_SC,ON_East,gas_CT,Ontario Power Generation Inc,2000.0,False,2013,25.0
+Lethbridge Burdett_NG_SC,AB_South,gas_CT,Signalta,7.0,False,2001,25.0
+Lethbridge Coaldale_NG_SC,AB_South,gas_CT,Signalta,6.0,False,2001,25.0
+Lethbridge Fort McLeod_NG_SC,AB_South,gas_CT,Signalta,4.0,False,2001,25.0
+Lethbridge Taber_NG_SC,AB_South,gas_CT,Signalta,8.0,False,2001,25.0
+Lindbergh_NG_CG,AB_North,gas_CC,Pengrowth Energy,16.0,False,2015,25.0
+Lingan_coal_0,NS_East,coal_IGCC,Nova Scotia Power Inc.,150.0,False,1979,50.0
+Lingan_coal_1,NS_East,coal_IGCC,Nova Scotia Power Inc.,150.0,False,1980,50.0
+Lingan_coal_2,NS_East,coal_IGCC,Nova Scotia Power Inc.,150.0,False,1983,50.0
+Lingan_coal_3,NS_East,coal_IGCC,Nova Scotia Power Inc.,153.0,False,1984,50.0
+London District Energy_NG_CG,ON_South,gas_CC,London District Energy LP,12.0,False,2008,25.0
+London District Energy Cogen II_NG_CG,ON_South,gas_CC,London District Energy LP,17.9,False,2020,25.0
+MEG1 Christina Lake_NG_CG,AB_North,gas_CC,MEG Energy Corp.,202.0,False,2013,25.0
+MLTC Bioenergy Centre_biomass,SK,default_biomass,Meadow Lake Tribal Council,6.6,False,2022,20.0
+MacKay River_NG_CG,AB_North,gas_CC,TransCanada Energy Ltd.,207.0,False,2002,25.0
+Mahkeses_NG_CG,AB_North,gas_CC,Imperial Oil Resources Ventures Limited,180.0,False,2004,25.0
+Maitland_NG_CG,ON_East,gas_CC,Invista Canada Company,45.7,False,2016,25.0
+Medicine Hat #1_NG_CC,AB_South,gas_CC,City of Medicine Hat,299.0,False,2017,25.0
+Meridian_NG_CG,SK,gas_CC,Meridian Limited Partnership,228.0,False,1999,25.0
+Merritt Green Energy_biomass,BC_South,default_biomass,Merritt Green Energy Limited Partnership,40.0,False,2015,20.0
+Mulligan_NG_CG,AB_North,gas_CC,Tourmaline Oil Corp.,5.0,False,2017,25.0
+Muskeg_NG_CG,AB_North,gas_CC,Shell Canada Energy,202.0,False,2003,25.0
+NRGreen_biomass,AB_North,default_biomass,NRGreen Power Limited Partnership,16.0,False,2013,20.0
+NRGreen Alameda Heat Recovery Facility_biogas,SK,default_biogas,NRGreen Power,5.0,False,2008,20.0
+NRGreen Estlin Heat Recovery Facility_biogas,SK,default_biogas,NRGreen Power,5.0,False,2008,20.0
+NRGreen Kerrobert Heat Recovery Facility_biogas,SK,default_biogas,NRGreen Power,5.0,False,2006,20.0
+NRGreen Loreburn Heat Recovery Facility_biogas,SK,default_biogas,NRGreen Power,5.0,False,2008,20.0
+NWE Williams Lake WW_biomass,BC_North,default_biomass,Atlantic Power Preferred Equity Ltd.,66.0,False,2019,20.0
+Nabiye_NG_CG,AB_North,gas_CC,Imperial Oil Resources Ventures Limited,195.0,False,2015,25.0
+Nackawic_biomass,NB_West,default_biomass,AV Group NB,26.0,False,2012,20.0
+Napanee_NG_CC,ON_East,gas_CC,TransCanada Energy Ltd ,900.0,False,2020,25.0
+Nexen #1_NG_CC,AB_South,gas_CC,ENMAX Balzac LP,120.0,False,2001,25.0
+Nexen #2_NG_CG,AB_North,gas_CC,Nexen,220.0,False,2008,25.0
+Nipigon_NG_SC,ON_Northwest,gas_CT,Atlantic Power Limited Partnership,23.0,False,2018,25.0
+North Battleford_NG_CC,SK,gas_CC,Northland Power,95.0,False,2013,25.0
+North Battleford_NG_SC,SK,gas_CT,Northland Power,176.0,False,2013,25.0
+Northern Prairie _NG_SC,AB_North,gas_CT,Grande Prairie Generation Inc.,105.0,False,2008,25.0
+Northwood Green Power_biomass,BC_North,default_biomass,Canfor Pulp Ltd.,94.5,False,2014,20.0
+Ottawa Health Sciences Centre_NG_CG,ON_East,gas_CC,TransAlta Cogeneration LP,73.7,False,2014,25.0
+PGP Bioenergy Project_biomass,BC_North,default_biomass,Canfor Pulp Ltd.,59.9,False,2019,20.0
+Parkland_NG_SC,AB_South,gas_CT,Pivotal Energy Partners,10.0,False,2014,25.0
+Pickering A_nuclear,ON_East,default_nuclear,Ontario Power Generation Inc,1030.0,False,1971,53.0
+Pickering B_nuclear,ON_East,default_nuclear,Ontario Power Generation Inc,2072.0,False,1971,80.0
+Point Aconi Coal_coal,NS_East,coal_IGCC,Nova Scotia Power Inc.,165.0,False,2010,50.0
+Point Lepreau Nuclear_nuclear,NB_West,default_nuclear,NB Power,660.0,False,2012,19.0
+Point Tupper Coal_coal,NS_East,coal_IGCC,Nova Scotia Power Inc.,150.0,False,2011,50.0
+Poplar Creek_NG_CG,AB_North,gas_CC,Suncor Energy Inc.,376.0,False,2001,25.0
+Poplar Hill_NG_SC,AB_North,gas_CT,Heartland Generation Ltd.,48.0,False,1998,25.0
+Poplar River_coal,SK,coal_IGCC,SaskPower,582.0,False,1981,50.0
+Port Aux Basques_diesel_CT,NL_Newfoundland,default_diesel,Newfoundland Power,2.5,False,2009,25.0
+Port Hawkesbury Biomass_biomass,NS_East,default_biomass,Nova Scotia Power Inc.,63.8,False,2021,20.0
+Portlands Energy Centre_NG_CC,ON_Toronto,gas_CC,Portlands Energy Centre LP,550.0,False,2009,25.0
+Powell River Generation_biomass,BC_South,default_biomass,Catalyst Paper,48.0,False,2012,20.0
+Prairie Green_NG_CC,SK,gas_CC,Prairie Green Renewable Energy,47.0,False,2025,25.0
+Primrose_NG_CG,AB_North,gas_CC,Heartland Generation Ltd.,100.0,False,1998,25.0
+Prince Rupert_NG_SC,BC_North,gas_CT,BC Hydro,46.0,False,2003,25.0
+Queen Elizabeth_NG_CC_0,SK,gas_CC,SaskPower,168.0,False,2002,25.0
+Queen Elizabeth_NG_CC_1,SK,gas_CC,SaskPower,147.0,False,2010,25.0
+Queen Elizabeth_NG_CC_2,SK,gas_CC,SaskPower,205.0,False,2016,25.0
+Rainbow_NG_SC,AB_North,gas_CT,Heartland Generation Ltd.,50.0,False,2001,25.0
+Rainbow Lake #1_NG_CG,AB_North,gas_CC,Heartland Generation Ltd.,47.0,False,2001,25.0
+Ralston_NG_SC,AB_South,gas_CT,NAT-1 Limited Partnership,20.0,False,2016,25.0
+Redwater_NG_CG,AB_Central,gas_CC,TransCanada Energy Ltd.,92.0,False,2001,25.0
+Revelstoke District_biomass,BC_South,default_biomass,City of Revelstoke,1.5,False,2005,20.0
+Saddle Hills_NG_CG,AB_North,gas_CC,Tourmaline,10.0,False,2019,25.0
+Saint John_biomass,NB_West,default_biomass,Irving Pulp & Paper Ltd,33.0,False,2012,20.0
+Savona_biomass,BC_South,default_biomass,EnPower Green Energy Generation Limited Partnership,6.0,False,2008,20.0
+Seegen_biomass,BC_South,default_biomass,"Covanta Burnaby Renewable Energy, ULC",24.8,False,2003,20.0
+Senneterre_biomass,QC_North,default_biomass,Boralex Inc,31.0,False,2001,20.0
+Shand_coal,SK,coal_IGCC,SaskPower,276.0,False,1992,50.0
+Sheerness Coal_coal_0,AB_South,coal_IGCC,TransAlta Corporation,408.0,False,1986,50.0
+Sheerness Coal_coal_1,AB_South,coal_IGCC,TransAlta Corporation,408.0,False,1990,50.0
+Sheerness Gas_NG_CC,AB_South,gas_CC,TransAlta Corporation,800.0,False,2021,25.0
+Shepard_NG_CC,AB_South,gas_CC,ENMAX Shepard Services Inc.,868.0,False,2015,25.0
+Skookumchuck_biomass,BC_South,default_biomass,Skookumchuck Pulp Inc.,51.0,False,2019,20.0
+Slave Lake Pulp_biomass,AB_North,default_biomass,Slave Lake Pulp,9.0,False,2015,20.0
+South Edmonton Terminal_NG_SC,AB_Central,gas_CT,Enbridge,20.0,False,2021,25.0
+Spy Hill_NG_SC,SK,gas_CT,Northland Power,178.0,False,2011,25.0
+Squamish Power Project_biomass,BC_South,default_biomass,Woodfibre LNG Limited,1.6,False,2013,20.0
+St Anthony_diesel_CT,NL_Newfoundland,default_diesel,Nalcor Energy,9.7,False,2012,25.0
+St Clair_NG_CC,ON_South,gas_CC,St Clair Power LP,577.0,False,2009,25.0
+St-FÃ©licien_biomass,QC_Central,default_biomass,Green Leaf,23.0,False,2001,20.0
+St-NicÃ©phore_biogas,QC_East,default_biogas,Waste Management,7.6,False,2012,20.0
+St-Thomas_biomass,QC_South,default_biomass,EBI Ã‰nergie,9.9,False,2012,20.0
+Stephenville_gasoline_CT,NL_Newfoundland,default_diesel,Nalcor Energy,50.0,False,2019,25.0
+Strathcona Gas_NG_CG,AB_Central,gas_CC,Imperial Oil,43.0,False,2020,25.0
+Summerside_diesel_CT,PE,default_diesel,City of Summerside,10.700000000000001,False,2000,25.0
+Sundance Coal_coal_0,AB_Central,coal_IGCC,TransAlta Corporation,401.0,False,2001,50.0
+Sundance Coal_coal_1,AB_Central,coal_IGCC,TransAlta Corporation,406.0,False,2007,50.0
+Sundance Gas_NG_CC,AB_Central,gas_CC,TransAlta Corporation,401.0,False,2021,25.0
+Swan Hills Geothermal_biomass,AB_North,default_biomass,Futera Power Corp,20.0,False,2023,20.0
+Syncrude_NG_CG,AB_North,gas_CC,Syncrude Canada Ltd.,510.0,False,2016,25.0
+Thorold CGS_NG_CG,ON_South,gas_CC,Thorold CoGen LP,241.6,False,2010,25.0
+Thunder Bay Condensing Turbine_biomass,ON_Northwest,default_biomass,Thunder Bay Pulp and Paper Inc.,40.0,False,2013,20.0
+Tolko Armstrong_biomass,BC_South,default_biomass,Tolko Industries Ltd.,20.4,False,2019,20.0
+Tolko Kelowna_biomass,BC_South,default_biomass,Tolko Industries Ltd.,14.9,False,2010,20.0
+Trail Road_biogas,ON_East,default_biogas,Powertrail Inc,6.0,False,2007,20.0
+Transalta Sarnia_NG_CG,ON_South,gas_CC,TransAlta,510.0,False,2009,25.0
+Trenton_coal_0,NS_East,coal_IGCC,Nova Scotia Power Inc.,150.0,False,2009,50.0
+Trenton_coal_1,NS_East,coal_IGCC,Nova Scotia Power Inc.,160.0,False,2017,50.0
+Tufts Cove_oil_CT_0,NS_West,default_oil,Nova Scotia Power Inc.,100.0,False,2000,40.0
+Tufts Cove_NG_SC_0,NS_West,gas_CT,Nova Scotia Power Inc.,47.0,False,2003,25.0
+Tufts Cove_NG_SC_1,NS_West,gas_CT,Nova Scotia Power Inc.,47.0,False,2005,25.0
+Tufts Cove_NG_CC,NS_West,gas_CC,Nova Scotia Power Inc.,49.0,False,2012,25.0
+Tufts Cove_oil_CT_1,NS_West,default_oil,Nova Scotia Power Inc.,250.0,False,2021,40.0
+Tunis_NG_SC,ON_North,gas_CT,Atlantic Power Limited Partnership,36.5,False,2018,25.0
+Tusket Oil_oil_CT,NS_West,default_oil,Nova Scotia Power Inc.,24.0,False,2020,40.0
+Twin Rivers_biomass,NB_West,default_biomass,Fraser Papers Edmundston Pulp Mill,39.0,False,2012,20.0
+TÃ©miscaming 1_biomass,QC_North,default_biomass,Rayonier Advanced Materials,9.4,False,2015,20.0
+TÃ©miscaming 2_biomass,QC_North,default_biomass,Rayonier Advanced Materials,50.8,False,2015,20.0
+UBC Nexterra_biomass,BC_South,default_biomass,University of British Columbia,2.0,False,2012,20.0
+UNBC Bioenergy Plant_biomass,BC_North,default_biomass,University of Northern British Columbia,4.4,False,2009,20.0
+UofA_NG_CG,AB_Central,gas_CC,University of Alberta,39.0,False,2000,25.0
+UofC_NG_CG,AB_South,gas_CC,University of Calgary,12.0,False,2011,25.0
+Vale Capacity Assistance_diesel_CT,NL_Newfoundland,default_diesel,Vale,15.0,False,2015,25.0
+Valleyview_NG_SC_0,AB_North,gas_CT,Heartland Generation Ltd.,50.0,False,2001,25.0
+Valleyview_NG_SC_1,AB_North,gas_CT,Heartland Generation Ltd.,50.0,False,2008,25.0
+Vancouver Landfill_biogas,BC_South,default_biogas,"VF Clean Energy, Inc.",5.5,False,2003,20.0
+Victoria Junction_oil_CT,NS_East,default_oil,Nova Scotia Power Inc.,60.0,False,2021,40.0
+Warden Energy Centre_NG_CG,ON_East,gas_CC,Markham District Energy Inc,5.0,False,2008,25.0
+Weldwood_biomass,AB_North,default_biomass,West Fraser Mills,50.0,False,2010,20.0
+Wembley_NG_CG,AB_North,gas_CC,NuVista Energy Ltd.,19.0,False,2024,25.0
+Wesleyville_gasoline_CT,NL_Newfoundland,default_diesel,Newfoundland Power,8.0,False,2007,25.0
+West Cadotte_NG_SC,AB_North,gas_CT,Genalta Power,20.0,False,2015,25.0
+West Pembina_NG_SC,AB_North,gas_CT,Keyera,13.0,False,2020,25.0
+West Windsor_NG_SC,ON_South,gas_CT,"Engie Canada Inc, West Windsor Power",122.78,False,2016,25.0
+Weyerhaeuser_biomass,AB_North,default_biomass,International Paper Canada Pulp Holdings,48.0,False,2011,20.0
+Whitby_NG_CG,ON_East,gas_CC,Whitby Cogeneration Limited Partnership,56.0,False,1998,25.0
+Wilson Creek_NG_SC,AB_Central,gas_CT,Wilson Creek Energy Corporation,9.0,False,2023,25.0
+Windsor Essex_NG_CG,ON_South,gas_CC,TransAlta Cogeneration LP,72.28,False,2016,25.0
+Yellowhead_NG_SC_0,SK,gas_CT,SaskPower,138.0,False,2010,25.0
+Yellowhead_NG_SC_1,SK,gas_CT,SaskPower,46.0,False,2030,25.0
+York Energy Centre_NG_SC,ON_East,gas_CT,York Energy Centre LP,393.0,False,2012,25.0
+AB_Central_OPT_gas,AB_Central,gas_CC,ungrouped,0,True,2030,
+AB_North_OPT_gas,AB_North,gas_CC,ungrouped,0,True,2030,
+AB_South_OPT_gas,AB_South,gas_CC,ungrouped,0,True,2030,
+BC_North_OPT_gas,BC_North,gas_CC,ungrouped,0,True,2030,
+BC_South_OPT_gas,BC_South,gas_CC,ungrouped,0,True,2030,
+MB_OPT_gas,MB,gas_CC,ungrouped,0,True,2030,
+NB_East_OPT_gas,NB_East,gas_CC,ungrouped,0,True,2030,
+NB_West_OPT_gas,NB_West,gas_CC,ungrouped,0,True,2030,
+NL_Labrador_OPT_gas,NL_Labrador,gas_CC,ungrouped,0,True,2030,
+NL_Newfoundland_OPT_gas,NL_Newfoundland,gas_CC,ungrouped,0,True,2030,
+NS_East_OPT_gas,NS_East,gas_CC,ungrouped,0,True,2030,
+NS_West_OPT_gas,NS_West,gas_CC,ungrouped,0,True,2030,
+ON_East_OPT_gas,ON_East,gas_CC,ungrouped,0,True,2030,
+ON_North_OPT_gas,ON_North,gas_CC,ungrouped,0,True,2030,
+ON_Northwest_OPT_gas,ON_Northwest,gas_CC,ungrouped,0,True,2030,
+ON_South_OPT_gas,ON_South,gas_CC,ungrouped,0,True,2030,
+PE_OPT_gas,PE,gas_CC,ungrouped,0,True,2030,
+QC_Central_OPT_gas,QC_Central,gas_CC,ungrouped,0,True,2030,
+QC_East_OPT_gas,QC_East,gas_CC,ungrouped,0,True,2030,
+QC_North_OPT_gas,QC_North,gas_CC,ungrouped,0,True,2030,
+QC_South_OPT_gas,QC_South,gas_CC,ungrouped,0,True,2030,
+SK_OPT_gas,SK,gas_CC,ungrouped,0,True,2030,
+AB_solar_PV_671,AB_Central,default_solar_PV,ungrouped,22.0,False,2017,30.0
+AB_solar_PV_668,AB_Central,default_solar_PV,ungrouped,14.0,False,2022,30.0
+AB_solar_PV_670,AB_Central,default_solar_PV,ungrouped,47.0,False,2024,30.0
+AB_solar_PV_740_0,AB_South,default_solar_PV,ungrouped,15.0,False,2017,30.0
+AB_solar_PV_741_0,AB_South,default_solar_PV,ungrouped,25.0,False,2020,30.0
+AB_solar_PV_740_1,AB_South,default_solar_PV,ungrouped,13.0,False,2021,30.0
+AB_solar_PV_762_0,AB_South,default_solar_PV,ungrouped,23.0,False,2021,30.0
+AB_solar_PV_673,AB_South,default_solar_PV,ungrouped,62.0,False,2022,30.0
+AB_solar_PV_695,AB_South,default_solar_PV,ungrouped,67.0,False,2022,30.0
+AB_solar_PV_697,AB_South,default_solar_PV,ungrouped,157.0,False,2022,30.0
+AB_solar_PV_698,AB_South,default_solar_PV,ungrouped,30.0,False,2022,30.0
+AB_solar_PV_716_0,AB_South,default_solar_PV,ungrouped,75.0,False,2022,30.0
+AB_solar_PV_718_0,AB_South,default_solar_PV,ungrouped,540.0,False,2022,30.0
+AB_solar_PV_741_1,AB_South,default_solar_PV,ungrouped,56.0,False,2022,30.0
+AB_solar_PV_742,AB_South,default_solar_PV,ungrouped,82.0,False,2022,30.0
+AB_solar_PV_760,AB_South,default_solar_PV,ungrouped,6.0,False,2022,30.0
+AB_solar_PV_762_1,AB_South,default_solar_PV,ungrouped,23.0,False,2022,30.0
+AB_solar_PV_763,AB_South,default_solar_PV,ungrouped,20.0,False,2022,30.0
+AB_solar_PV_764,AB_South,default_solar_PV,ungrouped,19.0,False,2022,30.0
+AB_solar_PV_785_0,AB_South,default_solar_PV,ungrouped,15.0,False,2022,30.0
+AB_solar_PV_694,AB_South,default_solar_PV,ungrouped,25.0,False,2023,30.0
+AB_solar_PV_696_0,AB_South,default_solar_PV,ungrouped,22.0,False,2023,30.0
+AB_solar_PV_716_1,AB_South,default_solar_PV,ungrouped,39.0,False,2023,30.0
+AB_solar_PV_718_1,AB_South,default_solar_PV,ungrouped,50.0,False,2023,30.0
+AB_solar_PV_719,AB_South,default_solar_PV,ungrouped,22.0,False,2023,30.0
+AB_solar_PV_740_2,AB_South,default_solar_PV,ungrouped,14.0,False,2023,30.0
+AB_solar_PV_672,AB_South,default_solar_PV,ungrouped,75.0,False,2024,30.0
+AB_solar_PV_674,AB_South,default_solar_PV,ungrouped,81.0,False,2024,30.0
+AB_solar_PV_675,AB_South,default_solar_PV,ungrouped,17.0,False,2024,30.0
+AB_solar_PV_806,AB_South,default_solar_PV,ungrouped,85.0,False,2024,30.0
+AB_solar_PV_696_1,AB_South,default_solar_PV,ungrouped,94.0,False,2025,30.0
+AB_solar_PV_740_3,AB_South,default_solar_PV,ungrouped,21.0,False,2025,30.0
+AB_solar_PV_785_1,AB_South,default_solar_PV,ungrouped,216.0,False,2025,30.0
+BC_solar_PV_588,BC_South,default_solar_PV,ungrouped,1.1,False,2010,30.0
+ON_solar_PV_2099_0,ON_East,default_solar_PV,ungrouped,10.0,False,2012,30.0
+ON_solar_PV_2129,ON_East,default_solar_PV,ungrouped,10.0,False,2012,30.0
+ON_solar_PV_2065,ON_East,default_solar_PV,ungrouped,10.0,False,2013,30.0
+ON_solar_PV_2098,ON_East,default_solar_PV,ungrouped,7.0,False,2013,30.0
+ON_solar_PV_2099_1,ON_East,default_solar_PV,ungrouped,9.0,False,2013,30.0
+ON_solar_PV_2035,ON_East,default_solar_PV,ungrouped,8.5,False,2014,30.0
+ON_solar_PV_2034_0,ON_East,default_solar_PV,ungrouped,100.0,False,2015,30.0
+ON_solar_PV_2034_1,ON_East,default_solar_PV,ungrouped,54.0,False,2019,30.0
+ON_solar_PV_1861,ON_North,default_solar_PV,ungrouped,30.0,False,2014,30.0
+ON_solar_PV_1800,ON_North,default_solar_PV,ungrouped,40.0,False,2015,30.0
+ON_solar_PV_1754,ON_South,default_solar_PV,ungrouped,80.0,False,2010,30.0
+ON_solar_PV_1755,ON_South,default_solar_PV,ungrouped,5.0,False,2010,30.0
+ON_solar_PV_1813,ON_South,default_solar_PV,ungrouped,10.0,False,2014,30.0
+ON_solar_PV_1870_0,ON_South,default_solar_PV,ungrouped,100.0,False,2015,30.0
+ON_solar_PV_1726,ON_South,default_solar_PV,ungrouped,50.0,False,2016,30.0
+ON_solar_PV_1838,ON_South,default_solar_PV,ungrouped,50.0,False,2016,30.0
+ON_solar_PV_1870_1,ON_South,default_solar_PV,ungrouped,44.0,False,2019,30.0
+PE_solar_PV_2643,PE,default_solar_PV,ungrouped,10.0,False,2023,30.0
+PE_solar_PV_2677,PE,default_solar_PV,ungrouped,21.0,False,2023,30.0
+SK_solar_PV_895,SK,default_solar_PV,ungrouped,10.0,False,2022,30.0
+SK_solar_PV_1004_0,SK,default_solar_PV,ungrouped,10.0,False,2022,30.0
+SK_solar_PV_1028,SK,default_solar_PV,ungrouped,10.0,False,2022,30.0
+SK_solar_PV_1004_1,SK,default_solar_PV,ungrouped,10.0,False,2024,30.0
+SK_solar_PV_1051,SK,default_solar_PV,ungrouped,100.0,False,2026,30.0
+AB_wind_ons_670,AB_Central,wind_2021,ungrouped,66.0,False,2009,25.0
+AB_wind_ons_736,AB_Central,wind_2021,ungrouped,150.0,False,2012,25.0
+AB_wind_ons_802,AB_Central,wind_2021,ungrouped,28.9,False,2015,25.0
+AB_wind_ons_737_0,AB_Central,wind_2021,ungrouped,130.0,False,2023,25.0
+AB_wind_ons_757,AB_Central,wind_2021,ungrouped,152.0,False,2023,25.0
+AB_wind_ons_737_1,AB_Central,wind_2021,ungrouped,198.0,False,2024,25.0
+AB_wind_ons_654,AB_South,wind_2021,ungrouped,20.0,False,2001,25.0
+AB_wind_ons_676_0,AB_South,wind_2021,ungrouped,45.5,False,2001,25.0
+AB_wind_ons_677,AB_South,wind_2021,ungrouped,3.9,False,2002,25.0
+AB_wind_ons_676_1,AB_South,wind_2021,ungrouped,73.0,False,2003,25.0
+AB_wind_ons_676_2,AB_South,wind_2021,ungrouped,135.0,False,2004,25.0
+AB_wind_ons_698_0,AB_South,wind_2021,ungrouped,30.0,False,2004,25.0
+AB_wind_ons_676_3,AB_South,wind_2021,ungrouped,71.0,False,2006,25.0
+AB_wind_ons_720_0,AB_South,wind_2021,ungrouped,30.0,False,2006,25.0
+AB_wind_ons_676_4,AB_South,wind_2021,ungrouped,66.6,False,2007,25.0
+AB_wind_ons_742,AB_South,wind_2021,ungrouped,81.0,False,2009,25.0
+AB_wind_ons_676_5,AB_South,wind_2021,ungrouped,132.0,False,2010,25.0
+AB_wind_ons_698_1,AB_South,wind_2021,ungrouped,68.0,False,2010,25.0
+AB_wind_ons_717_0,AB_South,wind_2021,ungrouped,88.0,False,2011,25.0
+AB_wind_ons_676_6,AB_South,wind_2021,ungrouped,105.6,False,2012,25.0
+AB_wind_ons_693,AB_South,wind_2021,ungrouped,82.0,False,2012,25.0
+AB_wind_ons_676_7,AB_South,wind_2021,ungrouped,46.0,False,2015,25.0
+AB_wind_ons_697,AB_South,wind_2021,ungrouped,300.0,False,2015,25.0
+AB_wind_ons_676_8,AB_South,wind_2021,ungrouped,210.6,False,2019,25.0
+AB_wind_ons_764_0,AB_South,wind_2021,ungrouped,298.6,False,2019,25.0
+AB_wind_ons_676_9,AB_South,wind_2021,ungrouped,206.4,False,2021,25.0
+AB_wind_ons_764_1,AB_South,wind_2021,ungrouped,298.6,False,2021,25.0
+AB_wind_ons_763_0,AB_South,wind_2021,ungrouped,130.0,False,2022,25.0
+AB_wind_ons_785_0,AB_South,wind_2021,ungrouped,242.0,False,2022,25.0
+AB_wind_ons_716,AB_South,wind_2021,ungrouped,145.0,False,2023,25.0
+AB_wind_ons_717_1,AB_South,wind_2021,ungrouped,120.0,False,2023,25.0
+AB_wind_ons_720_1,AB_South,wind_2021,ungrouped,113.0,False,2023,25.0
+AB_wind_ons_761,AB_South,wind_2021,ungrouped,303.0,False,2023,25.0
+AB_wind_ons_762,AB_South,wind_2021,ungrouped,63.0,False,2023,25.0
+AB_wind_ons_764_2,AB_South,wind_2021,ungrouped,466.0,False,2023,25.0
+AB_wind_ons_782,AB_South,wind_2021,ungrouped,449.0,False,2023,25.0
+AB_wind_ons_785_1,AB_South,wind_2021,ungrouped,242.0,False,2023,25.0
+AB_wind_ons_806,AB_South,wind_2021,ungrouped,100.0,False,2023,25.0
+AB_wind_ons_763_1,AB_South,wind_2021,ungrouped,122.3,False,2025,25.0
+BC_wind_ons_422,BC_North,wind_2021,ungrouped,102.0,False,2009,25.0
+BC_wind_ons_355,BC_North,wind_2021,ungrouped,144.0,False,2011,25.0
+BC_wind_ons_423,BC_North,wind_2021,ungrouped,142.2,False,2012,25.0
+BC_wind_ons_400_0,BC_North,wind_2021,ungrouped,184.6,False,2015,25.0
+BC_wind_ons_400_1,BC_North,wind_2021,ungrouped,15.0,False,2019,25.0
+BC_wind_ons_400_2,BC_North,wind_2021,ungrouped,30.0,False,2021,25.0
+BC_wind_ons_455,BC_South,wind_2021,ungrouped,15.0,False,2010,25.0
+BC_wind_ons_456,BC_South,wind_2021,ungrouped,15.0,False,2010,25.0
+BC_wind_ons_161,BC_South,wind_2021,ungrouped,99.2,False,2013,25.0
+MB_wind_ons_1204,MB,wind_2021,ungrouped,120.45,False,2012,25.0
+MB_wind_ons_1249,MB,wind_2021,ungrouped,138.0,False,2012,25.0
+NB_wind_ons_2610_0,NB_East,wind_2021,ungrouped,167.3,False,2009,25.0
+NB_wind_ons_2606,NB_East,wind_2021,ungrouped,45.0,False,2011,25.0
+NB_wind_ons_2610_1,NB_East,wind_2021,ungrouped,167.3,False,2011,25.0
+NB_wind_ons_2610_2,NB_East,wind_2021,ungrouped,167.3,False,2018,25.0
+NB_wind_ons_2644,NB_East,wind_2021,ungrouped,2.35,False,2018,25.0
+NB_wind_ons_2609,NB_East,wind_2021,ungrouped,3.8,False,2020,25.0
+NB_wind_ons_2611,NB_East,wind_2021,ungrouped,18.0,False,2020,25.0
+NB_wind_ons_2610_3,NB_East,wind_2021,ungrouped,20.0,False,2021,25.0
+NB_wind_ons_2537,NB_West,wind_2021,ungrouped,99.0,False,2009,25.0
+NB_wind_ons_2542,NB_West,wind_2021,ungrouped,42.0,False,2023,25.0
+NL_wind_ons_2956,NL_Newfoundland,wind_2021,ungrouped,27.0,False,2008,25.0
+NL_wind_ons_2977,NL_Newfoundland,wind_2021,ungrouped,27.0,False,2008,25.0
+NS_wind_ons_2709_0,NS_East,wind_2021,ungrouped,51.0,False,2010,25.0
+NS_wind_ons_2765_0,NS_East,wind_2021,ungrouped,6.0,False,2010,25.0
+NS_wind_ons_2791_0,NS_East,wind_2021,ungrouped,24.0,False,2010,25.0
+NS_wind_ons_2738_0,NS_East,wind_2021,ungrouped,62.1,False,2011,25.0
+NS_wind_ons_2765_1,NS_East,wind_2021,ungrouped,4.6,False,2012,25.0
+NS_wind_ons_2836_0,NS_East,wind_2021,ungrouped,18.4,False,2012,25.0
+NS_wind_ons_2738_1,NS_East,wind_2021,ungrouped,2.0,False,2013,25.0
+NS_wind_ons_2790,NS_East,wind_2021,ungrouped,2.0,False,2013,25.0
+NS_wind_ons_2791_1,NS_East,wind_2021,ungrouped,2.0,False,2013,25.0
+NS_wind_ons_2789,NS_East,wind_2021,ungrouped,2.0,False,2014,25.0
+NS_wind_ons_2709_1,NS_East,wind_2021,ungrouped,6.390000000000001,False,2015,25.0
+NS_wind_ons_2738_2,NS_East,wind_2021,ungrouped,12.6,False,2015,25.0
+NS_wind_ons_2791_2,NS_East,wind_2021,ungrouped,18.15,False,2015,25.0
+NS_wind_ons_2813,NS_East,wind_2021,ungrouped,1.9,False,2015,25.0
+NS_wind_ons_2814_0,NS_East,wind_2021,ungrouped,8.7,False,2015,25.0
+NS_wind_ons_2836_1,NS_East,wind_2021,ungrouped,2.3,False,2015,25.0
+NS_wind_ons_2836_2,NS_East,wind_2021,ungrouped,7.05,False,2016,25.0
+NS_wind_ons_2738_3,NS_East,wind_2021,ungrouped,1.6,False,2017,25.0
+NS_wind_ons_2814_1,NS_East,wind_2021,ungrouped,1.7,False,2017,25.0
+NS_wind_ons_2836_3,NS_East,wind_2021,ungrouped,2.35,False,2017,25.0
+NS_wind_ons_2836_4,NS_East,wind_2021,ungrouped,3.9,False,2021,25.0
+NS_wind_ons_2580_0,NS_West,wind_2021,ungrouped,30.6,False,2005,25.0
+NS_wind_ons_2709_2,NS_West,wind_2021,ungrouped,50.6,False,2011,25.0
+NS_wind_ons_2739,NS_West,wind_2021,ungrouped,1.5,False,2011,25.0
+NS_wind_ons_2644_0,NS_West,wind_2021,ungrouped,30.0,False,2012,25.0
+NS_wind_ons_2709_3,NS_West,wind_2021,ungrouped,1.6,False,2013,25.0
+NS_wind_ons_2544_0,NS_West,wind_2021,ungrouped,2.0,False,2014,25.0
+NS_wind_ons_2577,NS_West,wind_2021,ungrouped,2.0,False,2014,25.0
+NS_wind_ons_2647,NS_West,wind_2021,ungrouped,6.0,False,2014,25.0
+NS_wind_ons_2709_4,NS_West,wind_2021,ungrouped,10.0,False,2014,25.0
+NS_wind_ons_2710,NS_West,wind_2021,ungrouped,2.3,False,2014,25.0
+NS_wind_ons_2544_1,NS_West,wind_2021,ungrouped,3.68,False,2015,25.0
+NS_wind_ons_2580_1,NS_West,wind_2021,ungrouped,3.2,False,2015,25.0
+NS_wind_ons_2646_0,NS_West,wind_2021,ungrouped,108.0,False,2015,25.0
+NS_wind_ons_2679_0,NS_West,wind_2021,ungrouped,22.0,False,2015,25.0
+NS_wind_ons_2709_5,NS_West,wind_2021,ungrouped,8.190000000000001,False,2015,25.0
+NS_wind_ons_2679_1,NS_West,wind_2021,ungrouped,25.5,False,2016,25.0
+NS_wind_ons_2680_0,NS_West,wind_2021,ungrouped,4.6,False,2016,25.0
+NS_wind_ons_2711,NS_West,wind_2021,ungrouped,3.2,False,2016,25.0
+NS_wind_ons_2544_2,NS_West,wind_2021,ungrouped,6.7,False,2017,25.0
+NS_wind_ons_2644_1,NS_West,wind_2021,ungrouped,6.0,False,2017,25.0
+NS_wind_ons_2679_2,NS_West,wind_2021,ungrouped,6.0,False,2017,25.0
+NS_wind_ons_2680_1,NS_West,wind_2021,ungrouped,7.05,False,2017,25.0
+NS_wind_ons_2543,NS_West,wind_2021,ungrouped,30.0,False,2021,25.0
+NS_wind_ons_2678_0,NS_West,wind_2021,ungrouped,5.7,False,2021,25.0
+NS_wind_ons_2646_1,NS_West,wind_2021,ungrouped,150.0,False,2024,25.0
+NS_wind_ons_2678_1,NS_West,wind_2021,ungrouped,100.0,False,2025,25.0
+NS_wind_ons_2679_3,NS_West,wind_2021,ungrouped,66.0,False,2025,25.0
+ON_wind_ons_2068,ON_East,wind_2021,ungrouped,197.8,False,2009,25.0
+ON_wind_ons_2035,ON_East,wind_2021,ungrouped,74.11,False,2018,25.0
+ON_wind_ons_2129,ON_East,wind_2021,ungrouped,99.76,False,2022,25.0
+ON_wind_ons_1680_0,ON_North,wind_2021,ungrouped,189.0,False,2006,25.0
+ON_wind_ons_1777,ON_North,wind_2021,ungrouped,60.0,False,2014,25.0
+ON_wind_ons_1679,ON_North,wind_2021,ungrouped,58.32000000000001,False,2015,25.0
+ON_wind_ons_1680_1,ON_North,wind_2021,ungrouped,25.0,False,2015,25.0
+ON_wind_ons_1834,ON_North,wind_2021,ungrouped,300.0,False,2021,25.0
+ON_wind_ons_1542,ON_Northwest,wind_2021,ungrouped,98.9,False,2011,25.0
+ON_wind_ons_1781_0,ON_South,wind_2021,ungrouped,39.6,False,2006,25.0
+ON_wind_ons_1841,ON_South,wind_2021,ungrouped,99.0,False,2006,25.0
+ON_wind_ons_1809_0,ON_South,wind_2021,ungrouped,76.0,False,2007,25.0
+ON_wind_ons_1755_0,ON_South,wind_2021,ungrouped,200.6,False,2008,25.0
+ON_wind_ons_1810_0,ON_South,wind_2021,ungrouped,8.3,False,2008,25.0
+ON_wind_ons_1868_0,ON_South,wind_2021,ungrouped,199.5,False,2008,25.0
+ON_wind_ons_1755_1,ON_South,wind_2021,ungrouped,90.0,False,2009,25.0
+ON_wind_ons_1809_1,ON_South,wind_2021,ungrouped,181.5,False,2009,25.0
+ON_wind_ons_1756_0,ON_South,wind_2021,ungrouped,50.6,False,2010,25.0
+ON_wind_ons_1784_0,ON_South,wind_2021,ungrouped,98.9,False,2010,25.0
+ON_wind_ons_1755_2,ON_South,wind_2021,ungrouped,126.6,False,2011,25.0
+ON_wind_ons_1756_1,ON_South,wind_2021,ungrouped,165.6,False,2011,25.0
+ON_wind_ons_1784_1,ON_South,wind_2021,ungrouped,20.0,False,2011,25.0
+ON_wind_ons_1838_0,ON_South,wind_2021,ungrouped,23.0,False,2012,25.0
+ON_wind_ons_1755_3,ON_South,wind_2021,ungrouped,99.0,False,2013,25.0
+ON_wind_ons_1784_2,ON_South,wind_2021,ungrouped,99.0,False,2013,25.0
+ON_wind_ons_1870_0,ON_South,wind_2021,ungrouped,229.4,False,2013,25.0
+ON_wind_ons_1782_0,ON_South,wind_2021,ungrouped,60.0,False,2014,25.0
+ON_wind_ons_1783_0,ON_South,wind_2021,ungrouped,283.5,False,2014,25.0
+ON_wind_ons_1784_3,ON_South,wind_2021,ungrouped,270.0,False,2014,25.0
+ON_wind_ons_1868_1,ON_South,wind_2021,ungrouped,91.39,False,2014,25.0
+ON_wind_ons_1870_1,ON_South,wind_2021,ungrouped,148.6,False,2014,25.0
+ON_wind_ons_1781_1,ON_South,wind_2021,ungrouped,270.0,False,2015,25.0
+ON_wind_ons_1783_1,ON_South,wind_2021,ungrouped,140.0,False,2015,25.0
+ON_wind_ons_1810_1,ON_South,wind_2021,ungrouped,213.0,False,2015,25.0
+ON_wind_ons_1811,ON_South,wind_2021,ungrouped,102.0,False,2015,25.0
+ON_wind_ons_1838_1,ON_South,wind_2021,ungrouped,63.0,False,2015,25.0
+ON_wind_ons_1782_1,ON_South,wind_2021,ungrouped,100.0,False,2016,25.0
+ON_wind_ons_1903,ON_South,wind_2021,ungrouped,230.0,False,2016,25.0
+ON_wind_ons_1756_2,ON_South,wind_2021,ungrouped,99.82,False,2017,25.0
+ON_wind_ons_1755_4,ON_South,wind_2021,ungrouped,99.12,False,2018,25.0
+ON_wind_ons_1756_3,ON_South,wind_2021,ungrouped,60.0,False,2019,25.0
+PE_wind_ons_2675_0,PE,wind_2021,ungrouped,13.6,False,2003,25.0
+PE_wind_ons_2763_0,PE,wind_2021,ungrouped,30.0,False,2006,25.0
+PE_wind_ons_2675_1,PE,wind_2021,ungrouped,9.0,False,2007,25.0
+PE_wind_ons_2643,PE,wind_2021,ungrouped,99.0,False,2009,25.0
+PE_wind_ons_2676,PE,wind_2021,ungrouped,12.0,False,2009,25.0
+PE_wind_ons_2675_2,PE,wind_2021,ungrouped,10.0,False,2013,25.0
+PE_wind_ons_2736,PE,wind_2021,ungrouped,30.0,False,2014,25.0
+PE_wind_ons_2763_1,PE,wind_2021,ungrouped,30.0,False,2025,25.0
+QC_wind_ons_2303,QC_Central,wind_2021,ungrouped,350.0,False,2014,25.0
+QC_wind_ons_2304,QC_Central,wind_2021,ungrouped,67.9,False,2014,25.0
+QC_wind_ons_2334_0,QC_Central,wind_2021,ungrouped,271.79999999999995,False,2014,25.0
+QC_wind_ons_2334_1,QC_Central,wind_2021,ungrouped,23.5,False,2015,25.0
+QC_wind_ons_2272,QC_Central,wind_2021,ungrouped,23.5,False,2020,25.0
+QC_wind_ons_2467,QC_Central,wind_2021,ungrouped,200.0,False,2024,25.0
+QC_wind_ons_2305,QC_Central,wind_2021,ungrouped,800.0,False,2026,25.0
+QC_wind_ons_2334_2,QC_Central,wind_2021,ungrouped,400.0,False,2026,25.0
+QC_wind_ons_2469,QC_East,wind_2021,ungrouped,43.0,False,1999,25.0
+QC_wind_ons_2500,QC_East,wind_2021,ungrouped,57.0,False,1999,25.0
+QC_wind_ons_2441_0,QC_East,wind_2021,ungrouped,109.5,False,2006,25.0
+QC_wind_ons_2569_0,QC_East,wind_2021,ungrouped,108.0,False,2006,25.0
+QC_wind_ons_2604_0,QC_East,wind_2021,ungrouped,100.5,False,2007,25.0
+QC_wind_ons_2536,QC_East,wind_2021,ungrouped,109.5,False,2008,25.0
+QC_wind_ons_2470_0,QC_East,wind_2021,ungrouped,133.3,False,2009,25.0
+QC_wind_ons_2604_1,QC_East,wind_2021,ungrouped,4.1,False,2010,25.0
+QC_wind_ons_2569_1,QC_East,wind_2021,ungrouped,312.0,False,2011,25.0
+QC_wind_ons_2604_2,QC_East,wind_2021,ungrouped,58.5,False,2011,25.0
+QC_wind_ons_2338_0,QC_East,wind_2021,ungrouped,80.0,False,2012,25.0
+QC_wind_ons_2471_0,QC_East,wind_2021,ungrouped,138.6,False,2012,25.0
+QC_wind_ons_2277,QC_East,wind_2021,ungrouped,100.0,False,2013,25.0
+QC_wind_ons_2336_0,QC_East,wind_2021,ungrouped,150.0,False,2013,25.0
+QC_wind_ons_2390,QC_East,wind_2021,ungrouped,24.6,False,2013,25.0
+QC_wind_ons_2470_1,QC_East,wind_2021,ungrouped,300.0,False,2013,25.0
+QC_wind_ons_2571,QC_East,wind_2021,ungrouped,67.8,False,2013,25.0
+QC_wind_ons_2307_0,QC_East,wind_2021,ungrouped,135.7,False,2014,25.0
+QC_wind_ons_2336_1,QC_East,wind_2021,ungrouped,24.0,False,2014,25.0
+QC_wind_ons_2338_1,QC_East,wind_2021,ungrouped,24.6,False,2014,25.0
+QC_wind_ons_2391_0,QC_East,wind_2021,ungrouped,23.5,False,2014,25.0
+QC_wind_ons_2441_1,QC_East,wind_2021,ungrouped,48.1,False,2014,25.0
+QC_wind_ons_2471_1,QC_East,wind_2021,ungrouped,42.4,False,2014,25.0
+QC_wind_ons_2501,QC_East,wind_2021,ungrouped,101.1,False,2014,25.0
+QC_wind_ons_2336_2,QC_East,wind_2021,ungrouped,24.0,False,2015,25.0
+QC_wind_ons_2391_1,QC_East,wind_2021,ungrouped,51.7,False,2015,25.0
+QC_wind_ons_2569_2,QC_East,wind_2021,ungrouped,74.0,False,2015,25.0
+QC_wind_ons_2471_2,QC_East,wind_2021,ungrouped,74.8,False,2016,25.0
+QC_wind_ons_2502_0,QC_East,wind_2021,ungrouped,149.3,False,2016,25.0
+QC_wind_ons_2416,QC_East,wind_2021,ungrouped,224.4,False,2017,25.0
+QC_wind_ons_2307_1,QC_East,wind_2021,ungrouped,147.2,False,2018,25.0
+QC_wind_ons_2335,QC_East,wind_2021,ungrouped,180.0,False,2026,25.0
+QC_wind_ons_2338_2,QC_East,wind_2021,ungrouped,120.0,False,2026,25.0
+QC_wind_ons_2391_2,QC_East,wind_2021,ungrouped,349.8,False,2026,25.0
+QC_wind_ons_2417,QC_East,wind_2021,ungrouped,270.0,False,2026,25.0
+QC_wind_ons_2441_2,QC_East,wind_2021,ungrouped,122.3,False,2026,25.0
+QC_wind_ons_2502_1,QC_East,wind_2021,ungrouped,102.2,False,2026,25.0
+QC_wind_ons_2248,QC_South,wind_2021,ungrouped,101.2,False,2012,25.0
+QC_wind_ons_2217,QC_South,wind_2021,ungrouped,24.6,False,2016,25.0
+QC_wind_ons_2219,QC_South,wind_2021,ungrouped,24.0,False,2021,25.0
+SK_wind_ons_851,SK,wind_2021,ungrouped,11.0,False,2002,25.0
+SK_wind_ons_873,SK,wind_2021,ungrouped,11.0,False,2002,25.0
+SK_wind_ons_895,SK,wind_2021,ungrouped,150.0,False,2006,25.0
+SK_wind_ons_1093,SK,wind_2021,ungrouped,26.0,False,2011,25.0
+SK_wind_ons_916,SK,wind_2021,ungrouped,23.0,False,2015,25.0
+SK_wind_ons_1048,SK,wind_2021,ungrouped,20.0,False,2019,25.0
+SK_wind_ons_915,SK,wind_2021,ungrouped,10.5,False,2020,25.0
+SK_wind_ons_940,SK,wind_2021,ungrouped,200.0,False,2020,25.0
+SK_wind_ons_894,SK,wind_2021,ungrouped,175.0,False,2021,25.0
+SK_wind_ons_1071,SK,wind_2021,ungrouped,200.0,False,2024,25.0
+AB_North_OPT_PV-537,AB_North,default_solar_PV,ungrouped,0.0,True,2030,
+BC_North_OPT_PV-471,BC_North,default_solar_PV,ungrouped,0.0,True,2030,
+AB_South_OPT_PV-629,AB_South,default_solar_PV,ungrouped,0.0,True,2030,
+BC_South_OPT_PV-585,BC_South,default_solar_PV,ungrouped,0.0,True,2030,
+AB_Central_OPT_PV-583,AB_Central,default_solar_PV,ungrouped,0.0,True,2030,
+MB_OPT_PV-1114,MB,default_solar_PV,ungrouped,0.0,True,2030,
+SK_OPT_PV-870,SK,default_solar_PV,ungrouped,0.0,True,2030,
+NB_West_OPT_PV-2508,NB_West,default_solar_PV,ungrouped,0.0,True,2030,
+NB_East_OPT_PV-2611,NB_East,default_solar_PV,ungrouped,0.0,True,2030,
+NL_Labrador_OPT_PV-2918,NL_Labrador,default_solar_PV,ungrouped,0.0,True,2030,
+QC_Central_OPT_PV-2389,QC_Central,default_solar_PV,ungrouped,0.0,True,2030,
+NL_Newfoundland_OPT_PV-2956,NL_Newfoundland,default_solar_PV,ungrouped,0.0,True,2030,
+NS_West_OPT_PV-2544,NS_West,default_solar_PV,ungrouped,0.0,True,2030,
+NS_East_OPT_PV-2766,NS_East,default_solar_PV,ungrouped,0.0,True,2030,
+ON_Northwest_OPT_PV-1506,ON_Northwest,default_solar_PV,ungrouped,0.0,True,2030,
+ON_North_OPT_PV-1778,ON_North,default_solar_PV,ungrouped,0.0,True,2030,
+ON_South_OPT_PV-1756,ON_South,default_solar_PV,ungrouped,0.0,True,2030,
+ON_East_OPT_PV-2128,ON_East,default_solar_PV,ungrouped,0.0,True,2030,
+PE_OPT_PV-2708,PE,default_solar_PV,ungrouped,0.0,True,2030,
+QC_North_OPT_PV-1931,QC_North,default_solar_PV,ungrouped,0.0,True,2030,
+QC_South_OPT_PV-2217,QC_South,default_solar_PV,ungrouped,0.0,True,2030,
+QC_East_OPT_PV-2335,QC_East,default_solar_PV,ungrouped,0.0,True,2030,
+AB_North_OPT_wind-733,AB_North,wind_new,ungrouped,0.0,True,2030,
+BC_North_OPT_wind-85,BC_North,wind_new,ungrouped,0.0,True,2030,
+AB_South_OPT_wind-721,AB_South,wind_new,ungrouped,0.0,True,2030,
+BC_South_OPT_wind-162,BC_South,wind_new,ungrouped,0.0,True,2030,
+AB_Central_OPT_wind-779,AB_Central,wind_new,ungrouped,0.0,True,2030,
+MB_OPT_wind-1227,MB,wind_new,ungrouped,0.0,True,2030,
+SK_OPT_wind-1025,SK,wind_new,ungrouped,0.0,True,2030,
+NB_West_OPT_wind-2508,NB_West,wind_new,ungrouped,0.0,True,2030,
+NB_East_OPT_wind-2607,NB_East,wind_new,ungrouped,0.0,True,2030,
+NL_Labrador_OPT_wind-2594,NL_Labrador,wind_new,ungrouped,0.0,True,2030,
+QC_Central_OPT_wind-2432,QC_Central,wind_new,ungrouped,0.0,True,2030,
+NL_Newfoundland_OPT_wind-2965,NL_Newfoundland,wind_new,ungrouped,0.0,True,2030,
+NS_West_OPT_wind-2580,NS_West,wind_new,ungrouped,0.0,True,2030,
+NS_East_OPT_wind-2836,NS_East,wind_new,ungrouped,0.0,True,2030,
+ON_Northwest_OPT_wind-1359,ON_Northwest,wind_new,ungrouped,0.0,True,2030,
+ON_North_OPT_wind-1778,ON_North,wind_new,ungrouped,0.0,True,2030,
+ON_South_OPT_wind-1809,ON_South,wind_new,ungrouped,0.0,True,2030,
+ON_East_OPT_wind-1936,ON_East,wind_new,ungrouped,0.0,True,2030,
+PE_OPT_wind-2736,PE,wind_new,ungrouped,0.0,True,2030,
+QC_North_OPT_wind-2049,QC_North,wind_new,ungrouped,0.0,True,2030,
+QC_South_OPT_wind-2218,QC_South,wind_new,ungrouped,0.0,True,2030,
+QC_East_OPT_wind-2604,QC_East,wind_new,ungrouped,0.0,True,2030,
+AB_Central_hydro_run,AB_Central,hydro_ror,ungrouped,16.8,False,0,
+AB_South_hydro_run,AB_South,hydro_ror,ungrouped,129.6,False,0,
+BC_North_hydro_run,BC_North,hydro_ror,ungrouped,319.6,False,0,
+BC_South_hydro_run,BC_South,hydro_ror,ungrouped,1482.42,False,0,
+MB_hydro_run,MB,hydro_ror,ungrouped,10.0,False,0,
+NB_East_hydro_run,NB_East,hydro_ror,ungrouped,11.0,False,0,
+NB_West_hydro_run,NB_West,hydro_ror,ungrouped,34.1,False,0,
+NL_Newfoundland_hydro_run,NL_Newfoundland,hydro_ror,ungrouped,4.0,False,0,
+NS_West_hydro_run,NS_West,hydro_ror,ungrouped,19.0,False,0,
+ON_East_hydro_run,ON_East,hydro_ror,ungrouped,1444.0,False,0,
+ON_North_hydro_run,ON_North,hydro_ror,ungrouped,470.27,False,0,
+ON_Northwest_hydro_run,ON_Northwest,hydro_ror,ungrouped,672.6,False,0,
+ON_South_hydro_run,ON_South,hydro_ror,ungrouped,2099.0,False,0,
+QC_Central_hydro_run,QC_Central,hydro_ror,ungrouped,1712.2,False,0,
+QC_East_hydro_run,QC_East,hydro_ror,ungrouped,147.25,False,0,
+QC_North_hydro_run,QC_North,hydro_ror,ungrouped,72.5,False,0,
+QC_South_hydro_run,QC_South,hydro_ror,ungrouped,3633.27,False,0,
+SK_hydro_run,SK,hydro_ror,ungrouped,13.0,False,0,

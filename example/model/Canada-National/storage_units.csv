@@ -1,0 +1,80 @@
+name,bus,p_nom,model,max_hours,state_of_charge_initial,p_nom_extendable,build_year,spill_cost,lifetime
+AB_Central_daily,AB_Central,482.0,hydro_storage,24,482.0,False,0,1e-05,
+AB_South_daily,AB_South,299.0,hydro_storage,24,299.0,False,0,1e-05,
+BC_North_daily,BC_North,45.2,hydro_storage,24,45.2,False,0,1e-05,
+BC_North_monthly,BC_North,5778.0,hydro_storage,744,5778.0,False,0,1e-05,
+BC_South_daily,BC_South,4633.29,hydro_storage,24,4633.29,False,0,1e-05,
+BC_South_monthly,BC_South,5471.0,hydro_storage,744,5471.0,False,0,1e-05,
+MB_daily,MB,1312.0,hydro_storage,24,1312.0,False,0,1e-05,
+MB_monthly,MB,4648.0,hydro_storage,744,4648.0,False,0,1e-05,
+NB_West_daily,NB_West,898.0,hydro_storage,24,898.0,False,0,1e-05,
+NL_Labrador_monthly,NL_Labrador,6251.95,hydro_storage,744,6251.95,False,0,1e-05,
+NL_Newfoundland_daily,NL_Newfoundland,487.77,hydro_storage,24,487.77,False,0,1e-05,
+NL_Newfoundland_monthly,NL_Newfoundland,737.4,hydro_storage,744,737.4,False,0,1e-05,
+NS_East_daily,NS_East,219.3,hydro_storage,24,219.3,False,0,1e-05,
+NS_West_daily,NS_West,157.35,hydro_storage,24,157.35,False,0,1e-05,
+ON_East_daily,ON_East,1116.0,hydro_storage,24,1116.0,False,0,1e-05,
+ON_North_daily,ON_North,2772.96,hydro_storage,24,2772.96,False,0,1e-05,
+ON_Northwest_daily,ON_Northwest,203.0,hydro_storage,24,203.0,False,0,1e-05,
+ON_South_daily,ON_South,144.0,hydro_storage,24,144.0,False,0,1e-05,
+QC_Central_daily,QC_Central,9935.5,hydro_storage,24,9935.5,False,0,1e-05,
+QC_Central_monthly,QC_Central,7566.0,hydro_storage,744,7566.0,False,0,1e-05,
+QC_North_daily,QC_North,885.0,hydro_storage,24,885.0,False,0,1e-05,
+QC_North_monthly,QC_North,17016.0,hydro_storage,744,17016.0,False,0,1e-05,
+QC_South_daily,QC_South,384.0,hydro_storage,24,384.0,False,0,1e-05,
+QC_South_monthly,QC_South,55.0,hydro_storage,744,55.0,False,0,1e-05,
+SK_daily,SK,850.0,hydro_storage,24,850.0,False,0,1e-05,
+903_battery,ON_North,5,default_liion_battery,3.8,0,False,2026,1e-05,25.0
+Almonte BESS_battery,ON_East,5,default_liion_battery,3.8,0,False,2026,1e-05,25.0
+Arlen Energy Storage 1_battery,ON_South,19,default_liion_battery,4.0,0,False,2026,1e-05,25.0
+Ellwood_battery,ON_East,4,default_liion_battery,0.75,0,False,2016,1e-05,25.0
+Fleet Street_battery,SK,20,default_liion_battery,1.0,0,False,2024,1e-05,25.0
+Goreway BESS_battery,ON_South,48,default_liion_battery,3.9583333333333335,0,False,2026,1e-05,25.0
+Hagersville Battery Energy Storage ParkÂ _battery,ON_South,285,default_liion_battery,4.0,0,False,2026,1e-05,25.0
+Kitchener_battery,ON_South,2,default_liion_battery,3.0,0,False,2016,1e-05,25.0
+Napanee Energy Storage_battery,ON_East,250,default_liion_battery,4.0,0,False,2026,1e-05,25.0
+OZ-1_battery,ON_South,5,default_liion_battery,3.8,0,False,2026,1e-05,25.0
+Oneida Energy Storage_battery,ON_South,250,default_liion_battery,4.0,0,False,2025,1e-05,25.0
+SFF 06_battery,ON_East,5,default_liion_battery,3.8,0,False,2026,1e-05,25.0
+Sault Ste Marie_battery,ON_North,7,default_liion_battery,1.0,0,False,2016,1e-05,25.0
+Slemon Park Storage_battery,PE,1,default_liion_battery,2.0,0,False,2020,1e-05,25.0
+Stratford_battery,ON_South,9,default_liion_battery,4.555555555555555,0,False,2019,1e-05,25.0
+Summerland Energy Centre_battery,BC_South,1,default_liion_battery,4.0,0,False,2023,1e-05,25.0
+Summerside Storage_battery,PE,10,default_liion_battery,2.0,0,False,2020,1e-05,25.0
+Summerview_battery,AB_South,10,default_liion_battery,2.0,0,False,2020,1e-05,25.0
+Tilbury Battery Storage_battery,ON_South,76,default_liion_battery,4.0,0,False,2026,1e-05,25.0
+Vaughan 1E Energy Storage 1_battery,ON_East,19,default_liion_battery,4.0,0,False,2026,1e-05,25.0
+Vaughan 3 Energy Storage 1_battery,ON_East,38,default_liion_battery,4.0,0,False,2026,1e-05,25.0
+Walker BESS 4_battery,ON_South,5,default_liion_battery,3.8,0,False,2026,1e-05,25.0
+Walker BESS 5_battery,ON_South,5,default_liion_battery,3.8,0,False,2026,1e-05,25.0
+Walker BESS 6_battery,ON_South,5,default_liion_battery,3.8,0,False,2026,1e-05,25.0
+WaterCharger_battery,AB_South,180,default_liion_battery,2.0,0,False,2024,1e-05,25.0
+York BESS_battery,ON_East,114,default_liion_battery,4.0,0,False,2026,1e-05,25.0
+eReserve 1 Rycroft_battery,AB_North,20,default_liion_battery,1.75,0,False,2020,1e-05,25.0
+eReserve 2 Buffalo Creek_battery,AB_Central,20,default_liion_battery,1.75,0,False,2020,1e-05,25.0
+eReserve 3 Mercer Hill_battery,AB_North,20,default_liion_battery,1.75,0,False,2023,1e-05,25.0
+eReserve4_battery,AB_Central,20,default_liion_battery,1.75,0,False,2023,1e-05,25.0
+eReserve5 Hughenden_battery,AB_Central,20,default_liion_battery,1.75,0,False,2023,1e-05,25.0
+eReserve6_battery,AB_Central,20,default_liion_battery,1.75,0,False,2023,1e-05,25.0
+eReserve7_battery,AB_North,20,default_liion_battery,1.75,0,False,2024,1e-05,25.0
+eReserve8_battery,AB_North,20,default_liion_battery,1.75,0,False,2024,1e-05,25.0
+eReserve9_battery,AB_North,20,default_liion_battery,1.75,0,False,2024,1e-05,25.0
+AB_Central_OPT_Battery,AB_Central,0,default_liion_battery,4,0,True,2030,1e-05,
+AB_North_OPT_Battery,AB_North,0,default_liion_battery,4,0,True,2030,1e-05,
+AB_South_OPT_Battery,AB_South,0,default_liion_battery,4,0,True,2030,1e-05,
+BC_South_OPT_Battery,BC_South,0,default_liion_battery,4,0,True,2030,1e-05,
+NB_East_OPT_Battery,NB_East,0,default_liion_battery,4,0,True,2030,1e-05,
+NB_West_OPT_Battery,NB_West,0,default_liion_battery,4,0,True,2030,1e-05,
+NL_Newfoundland_OPT_Battery,NL_Newfoundland,0,default_liion_battery,4,0,True,2030,1e-05,
+NS_East_OPT_Battery,NS_East,0,default_liion_battery,4,0,True,2030,1e-05,
+NS_West_OPT_Battery,NS_West,0,default_liion_battery,4,0,True,2030,1e-05,
+ON_East_OPT_Battery,ON_East,0,default_liion_battery,4,0,True,2030,1e-05,
+ON_North_OPT_Battery,ON_North,0,default_liion_battery,4,0,True,2030,1e-05,
+ON_Northwest_OPT_Battery,ON_Northwest,0,default_liion_battery,4,0,True,2030,1e-05,
+ON_South_OPT_Battery,ON_South,0,default_liion_battery,4,0,True,2030,1e-05,
+ON_Toronto_OPT_Battery,ON_Toronto,0,default_liion_battery,4,0,True,2030,1e-05,
+PE_OPT_Battery,PE,0,default_liion_battery,4,0,True,2030,1e-05,
+QC_Central_OPT_Battery,QC_Central,0,default_liion_battery,4,0,True,2030,1e-05,
+QC_East_OPT_Battery,QC_East,0,default_liion_battery,4,0,True,2030,1e-05,
+QC_South_OPT_Battery,QC_South,0,default_liion_battery,4,0,True,2030,1e-05,
+SK_OPT_Battery,SK,0,default_liion_battery,4,0,True,2030,1e-05,
