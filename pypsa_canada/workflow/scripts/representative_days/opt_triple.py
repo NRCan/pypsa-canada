@@ -332,7 +332,9 @@ def opt3_method(
     filename_csv = f"{filename}.csv"
     # Create snapshots df
     snap_df = n.snapshot_weightings.copy()
-    snap_df[["objective", "stores", "generators"]] = 0.0  # Use float to allow decimal weights
+    snap_df[["objective", "stores", "generators"]] = (
+        0.0  # Use float to allow decimal weights
+    )
     # Create index column
     snap_df["idx"] = range(len(snap_df))
     # Set the weights

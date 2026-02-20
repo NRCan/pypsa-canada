@@ -187,6 +187,7 @@ class GenerateSnapshotProfile:
             saving_folder_path=saving_folder_path,
         )
 
+
 def snapshots_selection(
     network: Network,
     snapshot_config: dict,

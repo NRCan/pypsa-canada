@@ -480,16 +480,18 @@ def flatten_multiperiod_network(network: pypsa.Network) -> pypsa.Network:
 
 
 def main():
-    
+
     network = pypsa.Network(snakemake.input.planning_unsolved_network_unfiltered)
 
-    #Applying Optimal Generators Values to Unfiltered Network
-    optimal_gen_values = pd.read_csv(os.path.join(snakemake.input.planning_solved_network, "generators.csv"))
-    network.generators.p_nom_opt=optimal_gen_values["p_nom_opt"].values
+    # Applying Optimal Generators Values to Unfiltered Network
+    optimal_gen_values = pd.read_csv(
+        os.path.join(snakemake.input.planning_solved_network, "generators.csv")
+    )
+    network.generators.p_nom_opt = optimal_gen_values["p_nom_opt"].values
 
-    #Re-establish correct weighting 
-    #TODO Verify if we put 1,1,1 or something
-    network.snapshot_weightings.loc[:,["objective", "stores", "generators"]] = 1
+    # Re-establish correct weighting
+    # TODO Verify if we put 1,1,1 or something
+    network.snapshot_weightings.loc[:, ["objective", "stores", "generators"]] = 1
 
     # TODO move this to a function
     # Set all committables components to True

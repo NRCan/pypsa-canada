@@ -232,7 +232,9 @@ def avg_peak_method(
     filename = "snapshots_avg_method"
     filename_csv = f"{filename}.csv"
     # Alter snapshots
-    snap_df[["objective", "stores", "generators"]] = 0.0  # Use float to allow decimal weights
+    snap_df[["objective", "stores", "generators"]] = (
+        0.0  # Use float to allow decimal weights
+    )
     # Set the weights
 
     for year_key, year_prov in year_info.items():

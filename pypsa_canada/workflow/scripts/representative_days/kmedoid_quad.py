@@ -49,7 +49,9 @@ def kmedoid_quad_method(
     if provinces is None:
         provinces = [None]
     snap_df = n.snapshot_weightings.copy()
-    snap_df[["objective", "stores", "generators"]] = 0.0  # Use float to allow decimal weights
+    snap_df[["objective", "stores", "generators"]] = (
+        0.0  # Use float to allow decimal weights
+    )
     filename = "snapshots_" + str(cluster) + "c"
     filename_csv = f"{filename}.csv"
     if year is not None:

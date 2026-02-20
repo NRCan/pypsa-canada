@@ -115,7 +115,9 @@ def main():
         snapshots_status = SnapshotStatus(int(f.read()))
 
     if snapshots_status == SnapshotStatus.Delayed:
-        network, _snapshot_status = snapshots_selection(network, snapshot_config, snapshots_status)
+        network, _snapshot_status = snapshots_selection(
+            network, snapshot_config, snapshots_status
+        )
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)

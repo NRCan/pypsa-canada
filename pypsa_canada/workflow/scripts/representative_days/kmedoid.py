@@ -118,7 +118,9 @@ def kmedoid_method(
         plt.savefig(f"{saving_folder_path}clusters_{filename}.png", dpi=1200)
 
     snapshot_weighting = n.snapshot_weightings.copy()
-    snapshot_weighting[["objective", "stores", "generators"]] = 0.0  # Use float to allow decimal weights
+    snapshot_weighting[["objective", "stores", "generators"]] = (
+        0.0  # Use float to allow decimal weights
+    )
     snapshot_weighting["idx"] = range(len(snapshot_weighting))
 
     # Now set the weights to the clusters associated with their occurrences

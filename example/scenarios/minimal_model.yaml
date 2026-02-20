@@ -44,7 +44,7 @@ components:
   obps: true
   technology_costs: "default_costs"
   years: [*ref_year]
-  carbon_tax: 
+  carbon_tax:
     '2021': 50 # $ per tonne, based on federal minimums
     '2025': 125
     '2030': 170

@@ -2,8 +2,8 @@ import logging
 
 import click
 
-from pypsa_canada.cli.workflow import run
 from pypsa_canada.cli.dag import dag
+from pypsa_canada.cli.workflow import run
 
 logger = logging.getLogger(__name__)
 

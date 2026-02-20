@@ -1,11 +1,13 @@
-import linopy
 import logging
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
 import pypsa
-from typing import TYPE_CHECKING
 from pypsa.descriptors import get_activity_mask, get_switchable_as_dense
+
 from pypsa_canada.deprecation import deprecated
+
 if TYPE_CHECKING:
     import pypsa
 
@@ -13,7 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 def CER_generator_grouping(network, CER_constraint, year: int, mode: str):
-    """_summary_
+    """
+    _summary_
 
     Parameters
     ----------
@@ -108,7 +111,8 @@ def CER_generator_grouping(network, CER_constraint, year: int, mode: str):
 
 
 def aggregate_generators_into_group(CER_constraint, CER_generators):
-    """Aggregate generators into group
+    """
+    Aggregate generators into group
 
     Parameters
     ----------
@@ -128,11 +132,14 @@ def aggregate_generators_into_group(CER_constraint, CER_generators):
         pass
     return CER_generators
 
+
 @deprecated(
     version="0.1",
     alternative="Spill_cost",
 )
-def add_spilling_variable(network: "pypsa.Network", snapshots: "pd.DatetimeIndex | None" = None):
+def add_spilling_variable(
+    network: "pypsa.Network", snapshots: "pd.DatetimeIndex | None" = None
+):
     """
     M : Linopy.model
         The linopy model property from the pypsa network
@@ -231,7 +238,7 @@ def add_bidirection_link_constraint(network: "pypsa.Network", links_dict: dict):
             ):
                 link0_p_nom = m["Link-p_nom"].loc[links[0]]
                 link1_p_nom = m["Link-p_nom"].loc[links[1]]
-                constraint = m.add_constraints(
+                m.add_constraints(
                     link0_p_nom,
                     "==",
                     link1_p_nom,
@@ -260,10 +267,11 @@ def add_bidirection_link_constraint(network: "pypsa.Network", links_dict: dict):
                     link1_status = m.variables["Link-status"].sel(
                         {"Link-com": links[1]}
                     )
-                    constraint = m.add_constraints(
+                    m.add_constraints(
                         link0_status + link1_status <= 1,
                         name=f"Bidirectionnality_of_{intertie}",
                     )
+
 
 @deprecated(
     version="0.1",
@@ -305,7 +313,7 @@ def prevent_spill_if_not_fully_charged(
 
     # For each storage unit with inflow, add constraints such that spill is 0 if not fully charged
     units_with_inflow = upper.max()[upper.max() > 0].index
-    print(f'Model variables = {m.variables}')
+    print(f"Model variables = {m.variables}")
     for unit, data in network.storage_units.loc[units_with_inflow].iterrows():
         M1 = int(np.ceil(upper.loc[snapshots, unit].max()))
         lhs1 = (

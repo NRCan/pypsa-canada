@@ -151,7 +151,9 @@ def opt_quad_method(
 
     # Load snapshots and obtain unique periods
     snap_df = n.snapshot_weightings.copy()
-    snap_df[["objective", "stores", "generators"]] = 0.0  # Use float to allow decimal weights
+    snap_df[["objective", "stores", "generators"]] = (
+        0.0  # Use float to allow decimal weights
+    )
     periods = np.unique(snap_df.index.get_level_values("period"))
     # Load generators.csv
     gen_df = n.df("Generator")

@@ -68,7 +68,7 @@ def dag(
     debug: bool = False,
 ):
     """Generate DAG visualization for the Snakemake workflow."""
-    
+
     # Configure logging level
     log_level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(
@@ -94,7 +94,7 @@ def dag(
     if not configfile.exists():
         print(f"Error: Config file not found at {configfile}")
         sys.exit(1)
-    
+
     print(f"Using config: {configfile}")
 
     # Check if Snakefile exists
@@ -104,25 +104,28 @@ def dag(
 
     print(f"Generating {'rulegraph' if rulegraph else 'DAG'} from: {workdir}")
     print(f"Using Snakefile: {snakefile}")
-    
+
     output_file = f"{output}.{format}"
     print(f"Output: {output_file}\n")
 
     # Build the Snakemake command
     graph_type = "--rulegraph" if rulegraph else "--dag"
-    
+
     cmd = [
         "snakemake",
-        "-s", str(snakefile),
-        "--configfile", str(configfile),
-        "-d", str(workdir),
+        "-s",
+        str(snakefile),
+        "--configfile",
+        str(configfile),
+        "-d",
+        str(workdir),
         graph_type,
     ]
-    
+
     # Add targets if specified
     if targets:
         cmd.extend(targets)
-    
+
     if debug:
         print(f"Running command: {' '.join(cmd)}\n")
 
@@ -135,15 +138,17 @@ def dag(
             text=True,
             check=True,
         )
-        
+
         dot_content = result.stdout
-        
+
         if not dot_content or not dot_content.strip():
-            print("[ERROR] No DAG content generated. Check your workflow configuration.")
+            print(
+                "[ERROR] No DAG content generated. Check your workflow configuration."
+            )
             if result.stderr:
                 print(f"Stderr: {result.stderr}")
             sys.exit(1)
-        
+
         # Save or convert the output
         if format == "dot":
             # Save DOT file directly
@@ -162,25 +167,35 @@ def dag(
                     text=True,
                 )
                 stdout, stderr = process.communicate(input=dot_content)
-                
+
                 if process.returncode != 0:
                     print(f"\n[ERROR] Graphviz failed: {stderr}")
                     print("\nTip: Make sure Graphviz is installed:")
-                    print("  - Windows: choco install graphviz or download from https://graphviz.org/download/")
+                    print(
+                        "  - Windows: choco install graphviz or download from https://graphviz.org/download/"
+                    )
                     print("  - Linux: sudo apt-get install graphviz")
                     print("  - macOS: brew install graphviz")
-                    print("\nAlternatively, save as DOT format: pypsa_canada dag -f your_config.yaml --format=dot")
+                    print(
+                        "\nAlternatively, save as DOT format: pypsa_canada dag -f your_config.yaml --format=dot"
+                    )
                     sys.exit(1)
-                
-                print(f"✓ {'Rulegraph' if rulegraph else 'DAG'} visualization saved to: {output_file}")
-                
+
+                print(
+                    f"✓ {'Rulegraph' if rulegraph else 'DAG'} visualization saved to: {output_file}"
+                )
+
             except FileNotFoundError:
                 print("\n[ERROR] Graphviz 'dot' command not found!")
                 print("\nPlease install Graphviz:")
-                print("  - Windows: choco install graphviz or download from https://graphviz.org/download/")
+                print(
+                    "  - Windows: choco install graphviz or download from https://graphviz.org/download/"
+                )
                 print("  - Linux: sudo apt-get install graphviz")
                 print("  - macOS: brew install graphviz")
-                print("\nAlternatively, save as DOT format: pypsa_canada dag -f your_config.yaml --format=dot")
+                print(
+                    "\nAlternatively, save as DOT format: pypsa_canada dag -f your_config.yaml --format=dot"
+                )
                 sys.exit(1)
 
     except subprocess.CalledProcessError as e:
@@ -193,5 +208,6 @@ def dag(
     except Exception as e:
         print(f"\n[ERROR] DAG generation failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

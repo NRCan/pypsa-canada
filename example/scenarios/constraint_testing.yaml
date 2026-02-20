@@ -57,7 +57,7 @@ snapshots:
   save_fig: ""
   save_csv: ""
   solver: ""
-  load_mode: "Default" 
+  load_mode: "Default"
   years: [2025, 2030]
   folder_name: data/base
   ref_years: 2025
@@ -83,7 +83,7 @@ planning:
     # add_spilling_variable: true
     add_stop_production_constraint:
       2030: ["gas"]
-    component_capacity_expansion_constraint: 
+    component_capacity_expansion_constraint:
       custom_constraint_filepath: "data/constraints/custom_constraints.csv"
     planning_reserve_margin:
       capacity_values_placeholder_filepath: "data/constraints/capacity_values_placeholder.csv"

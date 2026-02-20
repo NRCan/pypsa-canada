@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import pypsa
 
+
 def drop_inactive_assets(
     network: "pypsa.Network", period: int, components_to_deactivate: str | None = None
 ):

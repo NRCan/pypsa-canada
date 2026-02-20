@@ -4,7 +4,6 @@ import os
 # from pypsa.descriptors import get_active_assets, get_extendable_i
 import warnings
 
-import linopy
 import pandas as pd
 import pypsa
 from linopy.expressions import merge
@@ -21,7 +20,8 @@ logger = logging.getLogger(__name__)
 def add_CER_constraint_planning(
     constraint, m, network, snapshots, groups, CER_gens, year
 ):
-    """Function to add the CER constraint according to the option parameters given.
+    """
+    Function to add the CER constraint according to the option parameters given.
 
     Parameters
     ----------
@@ -112,10 +112,10 @@ def add_planning_reserve_margin(
     # snapshots: pd.DatetimeIndex | pd.MultiIndex,
     province: str,
     margin: float = 1.2,
-    capacity_values_filepath: str = None
-
+    capacity_values_filepath: str = None,
 ):
-    """Function to add a planning reserver margin constraint.
+    """
+    Function to add a planning reserver margin constraint.
     This function will force the simulation to generate more
     than the peak load with a % reserve margin added. The
     function will verify if there are any active asset (generators, cascade
@@ -144,7 +144,9 @@ def add_planning_reserve_margin(
 
     # Calculate reserve margin load from peak
     if "province" in network.buses.columns:
-        bus_province_list = list(network.buses.index[network.buses.province == province])
+        bus_province_list = list(
+            network.buses.index[network.buses.province == province]
+        )
     else:
         bus_province_list = list(
             network.buses.index[[province in x for x in network.buses.index]]
@@ -171,15 +173,13 @@ def add_planning_reserve_margin(
 
     # Import file with capacity value (fractional) vs. carrier/model
     # Check for custom data folder path from environment variable
-    custom_data_folder = os.environ.get('PYPSA_CUSTOM_DATA_FOLDER')
-    #data_filepath = os.path.join(custom_data_folder, "data", "constraints", capacity_values_filepath)
+    custom_data_folder = os.environ.get("PYPSA_CUSTOM_DATA_FOLDER")
+    # data_filepath = os.path.join(custom_data_folder, "data", "constraints", capacity_values_filepath)
     data_filepath = os.path.join(str(custom_data_folder), str(capacity_values_filepath))
 
-    capacity_value_by_carrier = pd.read_csv(
-        data_filepath, index_col="Carrier"
-    )
+    capacity_value_by_carrier = pd.read_csv(data_filepath, index_col="Carrier")
     capacity_value_by_carrier.columns = capacity_value_by_carrier.columns.astype(int)
-    print(f'Capacity value by carrier = {capacity_value_by_carrier}')
+    print(f"Capacity value by carrier = {capacity_value_by_carrier}")
     # Initialize both sides of constraint
     lhs = []
     rhs = reserve_margin
@@ -195,11 +195,11 @@ def add_planning_reserve_margin(
             df["capacity_value_fractional"] = df.apply(
                 lambda row: capacity_value_by_carrier.loc[row.model, year], axis=1
             )
-            print(f'Step 1 = {df}')
+            print(f"Step 1 = {df}")
             df["capacity_value"] = df["p_nom"] * df["capacity_value_fractional"]
-            print(f'bus_province_list= {bus_province_list}')
+            print(f"bus_province_list= {bus_province_list}")
             df = df.loc[df.bus.isin(bus_province_list)]
-            print(f'Step 2 (after bus filter)= {df}')
+            print(f"Step 2 (after bus filter)= {df}")
 
         else:
             df = df[df.index.str.contains("_turbine_link")]
@@ -212,7 +212,7 @@ def add_planning_reserve_margin(
         df = df[
             (df.build_year + df.lifetime > int(year)) & (df.build_year <= int(year))
         ]
-        print(f'DF {component} = {df}')
+        print(f"DF {component} = {df}")
         if df.empty:
             continue
 
@@ -220,12 +220,8 @@ def add_planning_reserve_margin(
 
         # Compute right-hand side of constraint requiring extendable gen capacity value (total) be greater or equal to reserve margin minus existing gen total capacity value
         rhs -= existing_cap_value
-        print(
-            f"Existing {component} cap_value for {province} = {existing_cap_value}"
-        )
-        print(
-            f"RHS = {rhs}"
-        )
+        print(f"Existing {component} cap_value for {province} = {existing_cap_value}")
+        print(f"RHS = {rhs}")
         logger.debug(
             f"Existing {component} cap_value for {province} = {existing_cap_value}"
         )
@@ -268,7 +264,8 @@ def add_planning_reserve_margin(
 
 
 def add_emission_constraint_planning(network, snapshots, emissions_limit, year):
-    """Function to add Net-Zero constraint in planning, it's a global emissions limit on all the network for a correspunding investment year.
+    """
+    Function to add Net-Zero constraint in planning, it's a global emissions limit on all the network for a correspunding investment year.
 
     Parameters
     ----------
@@ -321,20 +318,21 @@ def add_emission_constraint_planning(network, snapshots, emissions_limit, year):
     return 0
 
 
-def component_capacity_expansion_constraint(network, constraints_csv_filepath:str):
-    """Function to add min/max on component expansion based on carrier,
+def component_capacity_expansion_constraint(network, constraints_csv_filepath: str):
+    """
+    Function to add min/max on component expansion based on carrier,
     work-around for pypsa global_constraints since they don't work properly
     """
     m = network.model
-    custom_data_folder = os.environ.get('PYPSA_CUSTOM_DATA_FOLDER')
-    #file_path = os.path.join(str(custom_data_folder), "data", "constraints", "custom_constraints.csv")
+    custom_data_folder = os.environ.get("PYPSA_CUSTOM_DATA_FOLDER")
+    # file_path = os.path.join(str(custom_data_folder), "data", "constraints", "custom_constraints.csv")
     # file_path = os.path.join(str(custom_data_folder), constraints)
     file_path = os.path.join(str(custom_data_folder), str(constraints_csv_filepath))
 
-    logger.info(f'Custom filepath = {file_path}')
+    logger.info(f"Custom filepath = {file_path}")
     if os.path.exists(file_path):
         custom_constraints = pd.read_csv(file_path, index_col=0)
-        logger.info(f'custom_constraints = {custom_constraints}')
+        logger.info(f"custom_constraints = {custom_constraints}")
     else:
         raise FileNotFoundError(
             f"Error: custom_constraints.csv not found at {file_path}, skipping component capacity expansion constraints"
@@ -346,9 +344,9 @@ def component_capacity_expansion_constraint(network, constraints_csv_filepath:st
     #     custom_constraints.constraint_group.isin(constraints)
     # ]
 
-    logger.info(f'Adding custom constraint (step1) before loop')
+    logger.info("Adding custom constraint (step1) before loop")
     for constraint, data in custom_constraints.iterrows():
-        #components = network.df(data.component_type).copy()
+        # components = network.df(data.component_type).copy()
         components = network.components[data.component_type].static
 
         if data.year not in network.investment_periods:

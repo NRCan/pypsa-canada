@@ -14,7 +14,6 @@ repos:
     -   id: trailing-whitespace
         name: trailing-whitespace
         description: Remove all trailing whitespace from the code
-        exclude: 'library/PyDSS/*'
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.2
@@ -22,6 +21,6 @@ repos:
     -   id: ruff
         args:
         -   --fix
-        exclude: 'library/PyDSS/*'
+        exclude: 'pypsa_canada/workflow/rules/*'
     -   id: ruff-format
-        exclude: 'library/PyDSS/*'
+        exclude: 'pypsa_canada/workflow/rules/*'

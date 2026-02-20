@@ -305,7 +305,7 @@ def main():
     assert network.generators_t.p_max_pu.index.equals(network.snapshots)
     assert network.loads_t.p_set.index.equals(network.snapshots)
 
-    #Save a copy of the network unfiltered
+    # Save a copy of the network unfiltered
     # network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     network.export_to_netcdf(snakemake.output.planning_unsolved_network_unfiltered)
 
@@ -319,7 +319,8 @@ def main():
     network.snapshot_weightings = network.snapshot_weightings.loc[network.snapshots]
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
-    
+
+
 if __name__ == "__main__":
     try:
         main()

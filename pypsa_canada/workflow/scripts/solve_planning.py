@@ -3,24 +3,21 @@ import logging
 import os
 import sys
 import traceback
-from xarray import DataArray
+from typing import TYPE_CHECKING
+
 import pandas as pd
 import pypsa
 from constraints.generic_constraints import (
-    add_spilling_variable,
-    add_stop_prod_constraint,
-    add_bidirection_link_constraint,
-    prevent_spill_if_not_fully_charged,
     CER_generator_grouping,
+    add_bidirection_link_constraint,
+    add_stop_prod_constraint,
 )
 from constraints.planning_constraints import (
     add_CER_constraint_planning,
-    add_planning_reserve_margin,
     add_emission_constraint_planning,
+    add_planning_reserve_margin,
     component_capacity_expansion_constraint,
 )
-from typing import TYPE_CHECKING
-import warnings
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -52,9 +49,7 @@ def disable_committable_for_OPT(network: pypsa.Network):
     network.generators.loc[
         network.generators["p_nom_extendable"] == True, "p_min_pu"
     ] = 0
-    network.links.loc[
-        network.links["p_nom_extendable"] == True, "committable"
-    ] = False
+    network.links.loc[network.links["p_nom_extendable"] == True, "committable"] = False
 
 
 def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.DatetimeIndex"):
@@ -75,7 +70,7 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 
     # The snapshots must only contain one unique year
     period_list = network.snapshots.get_level_values(0).unique()
-    logging.info(f'Period list = {period_list}')
+    logging.info(f"Period list = {period_list}")
 
     # Add binary spilling variable (1: spilling, 0: not spilling) to Linopy model
     # spilling_variable_ena = constraint_dict.get("add_spilling_variable")
@@ -94,7 +89,7 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 
     # # Add prevent spill if not fully charged constraint (applies to all periods)
     # if "add_prevent_spill_if_not_fully_charged_constraint" in constraint_dict:
-    #     if ("maximum_soc_storage_value" in 
+    #     if ("maximum_soc_storage_value" in
     #         constraint_dict["add_prevent_spill_if_not_fully_charged_constraint"]):
     #         maximum_soc_storage_value = constraint_dict[
     #             "add_prevent_spill_if_not_fully_charged_constraint"
@@ -103,7 +98,7 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
     #         prevent_spill_if_not_fully_charged(
     #             network, network.snapshots, maximum_soc_storage_value
     #         )
-    
+
     # Per-period constraints
     # spilling_variable_ena = constraint_dict.get("add_spilling_variable")
     # logging.info(f'Add Spilling Variable has been set to {spilling_variable_ena}')
@@ -121,7 +116,7 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 
     # # Add prevent spill if not fully charged constraint (applies to all periods)
     # if "add_prevent_spill_if_not_fully_charged_constraint" in constraint_dict:
-    #     if ("maximum_soc_storage_value" in 
+    #     if ("maximum_soc_storage_value" in
     #         constraint_dict["add_prevent_spill_if_not_fully_charged_constraint"]):
     #         maximum_soc_storage_value = constraint_dict[
     #             "add_prevent_spill_if_not_fully_charged_constraint"
@@ -130,13 +125,15 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
     #         prevent_spill_if_not_fully_charged(
     #             network, network.snapshots, maximum_soc_storage_value
     #         )
-    
+
     # Per-period constraints
     for period in period_list:
-        period_snapshots = network.snapshots[network.snapshots.get_level_values(0) == period]
-        logging.info(f'Processing constraints for period {period}')
-        logging.info(f'Processing constraints for period {period}')
-        logging.info(f'Network multi-index = {period_snapshots}')
+        period_snapshots = network.snapshots[
+            network.snapshots.get_level_values(0) == period
+        ]
+        logging.info(f"Processing constraints for period {period}")
+        logging.info(f"Processing constraints for period {period}")
+        logging.info(f"Network multi-index = {period_snapshots}")
 
         # Stop production constraint
 
@@ -145,9 +142,15 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
             stop_production_dict = constraint_dict["add_stop_production_constraint"]
             logging.debug(f"Stop_production_dictionary = {stop_production_dict}")
             if period in stop_production_dict:
-                logging.info(f"Adding stop production constraint for {stop_production_dict[period]}")
-                logging.info(f"Adding stop production constraint for {stop_production_dict[period]}")
-                add_stop_prod_constraint(network, period_snapshots, stop_production_dict[period])
+                logging.info(
+                    f"Adding stop production constraint for {stop_production_dict[period]}"
+                )
+                logging.info(
+                    f"Adding stop production constraint for {stop_production_dict[period]}"
+                )
+                add_stop_prod_constraint(
+                    network, period_snapshots, stop_production_dict[period]
+                )
 
         # CER constraint for planning
         CER_constraint = constraint_dict.get("CER_constraint")
@@ -158,10 +161,17 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
                     network, CER_constraint, period, "planning"
                 )
                 if not CER_generators.empty:
-                    logging.info(f"Adding CER constraint for {len(CER_generators)} generators")
+                    logging.info(
+                        f"Adding CER constraint for {len(CER_generators)} generators"
+                    )
                     add_CER_constraint_planning(
-                        CER_constraint, m, network, period_snapshots,
-                        CER_group_list, CER_generators, period
+                        CER_constraint,
+                        m,
+                        network,
+                        period_snapshots,
+                        CER_group_list,
+                        CER_generators,
+                        period,
                     )
 
         # Net-zero/Emissions constraint
@@ -169,20 +179,34 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
         if NZ_constraint:
             if period in NZ_constraint:
                 emissions_limit = NZ_constraint[period]
-                logging.info(f"Adding emissions constraint for {period}: {emissions_limit} MtCO2eq")
+                logging.info(
+                    f"Adding emissions constraint for {period}: {emissions_limit} MtCO2eq"
+                )
                 add_emission_constraint_planning(
                     network, period_snapshots, emissions_limit, period
                 )
 
         # Planning reserve margin constraint
-        reserve_margin_config = constraint_dict.get("planning_reserve_margin").get("provinces_list", {})
-        capacity_values_filepath = constraint_dict.get("planning_reserve_margin").get("capacity_values_placeholder_filepath", None)
+        reserve_margin_config = constraint_dict.get("planning_reserve_margin").get(
+            "provinces_list", {}
+        )
+        capacity_values_filepath = constraint_dict.get("planning_reserve_margin").get(
+            "capacity_values_placeholder_filepath", None
+        )
         for prov, margin in reserve_margin_config.items():
-            logging.info(f"Adding reserve margin constraint for {prov} in {period} with margin {margin}")
-            print(f"Adding reserve margin constraint for {prov} in {period} with margin {margin}")
+            logging.info(
+                f"Adding reserve margin constraint for {prov} in {period} with margin {margin}"
+            )
+            print(
+                f"Adding reserve margin constraint for {prov} in {period} with margin {margin}"
+            )
             if capacity_values_filepath is None:
-                raise ValueError("capacity_values_placeholder_filename must be provided in the configuration for planning reserve margin constraint")
-            add_planning_reserve_margin(network, period, prov, margin, capacity_values_filepath)
+                raise ValueError(
+                    "capacity_values_placeholder_filename must be provided in the configuration for planning reserve margin constraint"
+                )
+            add_planning_reserve_margin(
+                network, period, prov, margin, capacity_values_filepath
+            )
 
             # add_planning_reserve_margin(m, self.network, year, prov, margin)
             # if "provinces" in reserve_margin_config:
@@ -193,16 +217,23 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
             #     for province in provinces:
             #         prov_margin = province_margins.get(province, margin)
             #         logging.info(f"Adding reserve margin constraint for {province} in {period} with margin {prov_margin}")
-                    
+
             #         add_planning_reserve_margin(
             #             network, period_snapshots, province, prov_margin
             #         )
 
     # Custom capacity expansion constraints (applies to all periods)
-    custom_constraints = constraint_dict.get("component_capacity_expansion_constraint", False)
+    custom_constraints = constraint_dict.get(
+        "component_capacity_expansion_constraint", False
+    )
     if custom_constraints:
-        logging.info(f"Adding custom capacity expansion constraints: {custom_constraints}")
-        component_capacity_expansion_constraint(network, custom_constraints.get("custom_constraint_filepath"))
+        logging.info(
+            f"Adding custom capacity expansion constraints: {custom_constraints}"
+        )
+        component_capacity_expansion_constraint(
+            network, custom_constraints.get("custom_constraint_filepath")
+        )
+
 
 # def rename_dims(n):
 #     for c in ["generators", "links", "storage_units"]:
@@ -216,7 +247,7 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 # def fix_network_dataarray_dims(network):
 #     """
 #     Fix DataArray dimension names after loading from netCDF.
-    
+
 #     When snapshots are MultiIndex, PyPSA may create DataArrays with generic
 #     dimension names like 'dim_0' instead of 'snapshot', causing alignment errors.
 #     This fixes those dimension names before model creation.
@@ -241,13 +272,13 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 #                                     logging.info(f"Fixed index level names for {component_t}.{attr_name}")
 #                     except (AttributeError, TypeError):
 #                         pass
-    
+
 #     # Also fix the main snapshots index
 #     if hasattr(network.snapshots, 'name'):
 #         if network.snapshots.name == 'dim_0' or network.snapshots.name is None:
 #             network.snapshots.name = 'snapshot'
 #             logging.info("Fixed snapshots index name")
-    
+
 #     return network
 
 # def fix_snapshot_dim(n):
@@ -257,7 +288,7 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 #     for component_t_name in ['storage_units_t']:
 #         if not hasattr(n, component_t_name):
 #             continue
-        
+
 #         component_t = getattr(n, component_t_name)
 #         print(f'Component {component_t_name}')
 #         print(f'component_t {component_t}')
@@ -275,12 +306,15 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 #             except (AttributeError, TypeError):
 #                 pass
 
+
 def main():
     network = pypsa.Network(snakemake.input.planning_unsolved_network)
     disable_committable_for_OPT(network)
 
-    #TODO Temporary fix for standing_loss dim_0 issue - should be fixed in the network loading step instead
-    network.storage_units_t.standing_loss = network.storage_units_t.standing_loss.rename({'dim_0': 'snapshot'})
+    # TODO Temporary fix for standing_loss dim_0 issue - should be fixed in the network loading step instead
+    network.storage_units_t.standing_loss = (
+        network.storage_units_t.standing_loss.rename({"dim_0": "snapshot"})
+    )
 
     model = network.optimize.create_model(multi_investment_periods=True)  # NOQA
 
@@ -292,9 +326,9 @@ def main():
         solver_name=solver_settings["name"],
         extra_functionality=add_all_planning_constraints,
     )
-    logging.info(f'Optimization Model: {network.model}')
+    logging.info(f"Optimization Model: {network.model}")
     out_path = str(snakemake.output.solved_network_csv)
-    
+
     network.export_to_csv_folder(out_path)
 
 

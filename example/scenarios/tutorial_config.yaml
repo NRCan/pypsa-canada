@@ -57,7 +57,7 @@ snapshots:
   save_fig: ""
   save_csv: ""
   solver: ""
-  load_mode: "Default" 
+  load_mode: "Default"
   years: [2021, 2025, 2030]
   folder_name: data/base
   ref_years: 2021

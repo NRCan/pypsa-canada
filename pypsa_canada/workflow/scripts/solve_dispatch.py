@@ -7,22 +7,15 @@ import traceback
 # from typing import Optional, Dict, Any, Union
 from itertools import chain, groupby
 
-import numpy as np
 import pandas as pd
 import pypsa
-from pypsa.descriptors import get_activity_mask, get_switchable_as_dense
-from pypsa_canada.workflow.scripts.common import drop_inactive_assets
 from constraints.generic_constraints import (
-    add_spilling_variable,
-    add_stop_prod_constraint,
     add_bidirection_link_constraint,
+    add_stop_prod_constraint,
     prevent_spill_if_not_fully_charged,
-    CER_generator_grouping,
 )
-from constraints.dispatch_constraints import (
-    distribute_CER_hours_dispatch,
-    add_CER_constraint_dispatch,
-)
+
+from pypsa_canada.workflow.scripts.common import drop_inactive_assets
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
@@ -48,7 +41,7 @@ config = snakemake.config
 # - add_bidirection_link_constraint -> from constraints.generic_constraints
 # - add_prevent_spill_if_not_fully_charged_constraint -> prevent_spill_if_not_fully_charged
 # - distribute_CER_hours_dispatch -> from constraints.dispatch_constraints
-# 
+#
 # CER constraint handling for dispatch is complex due to UC period state tracking.
 # It remains integrated in the optimize_uc_period loop below where it was originally.
 # The constraint functions from constraints.dispatch_constraints are used there.
@@ -270,7 +263,7 @@ def main():
         period_network = network.copy()
 
         drop_inactive_assets(network=period_network, period=period)
-        logging.info(f'Period_snapshots = {period_snapshots}')
+        logging.info(f"Period_snapshots = {period_snapshots}")
         period_network.set_snapshots(period_snapshots)
 
         if linearized_unit_commitment:

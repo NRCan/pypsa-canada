@@ -112,7 +112,7 @@ def main():
     # network_ref = network.copy()
     extra_load_config = config["extra_loads"]
 
-    if(extra_load_config["is_used"]):
+    if extra_load_config["is_used"]:
         network = create_extra_load_p_set(network, extra_load_config)
         network = add_extra_load_p_set(network, extra_load_config)
 

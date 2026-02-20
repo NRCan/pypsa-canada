@@ -238,7 +238,9 @@ def opt_method(
         plt.clf()
 
     snapshot_weighting = n.snapshot_weightings.copy()
-    snapshot_weighting[["objective", "stores", "generators"]] = 0.0  # Use float to allow decimal weights
+    snapshot_weighting[["objective", "stores", "generators"]] = (
+        0.0  # Use float to allow decimal weights
+    )
     snapshot_weighting["idx"] = range(len(snapshot_weighting))
 
     try:

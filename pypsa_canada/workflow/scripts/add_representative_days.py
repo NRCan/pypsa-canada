@@ -32,7 +32,9 @@ def main():
     # network_ref = network.copy()
     snapshots_conf = config["snapshots"]
 
-    network.copy().export_to_netcdf(snakemake.output.planning_unsolved_network_unfiltered)
+    network.copy().export_to_netcdf(
+        snakemake.output.planning_unsolved_network_unfiltered
+    )
 
     network, snapshot_status = snapshots_selection(network, snapshots_conf)
 

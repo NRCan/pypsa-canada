@@ -7,7 +7,6 @@ Expects a Snakefile in the same directory.
 """
 
 import logging
-import logging
 import os
 import sys
 from importlib.resources import files

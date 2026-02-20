@@ -7,6 +7,7 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 import pypsa
+
 # import pypsa_cad.preprocess.representative_days.carpe_diem.temporal_clustering_class as temporal_clustering_class
 # import pypsa_cad.preprocess.representative_days.carpe_diem.temporal_clustering_class as temporal_clustering_class
 import representative_days.temporal_clustering_class as temporal_clustering_class
@@ -54,7 +55,9 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
 
     # Load snapshots and obtain unique periods
     snap_df = n.snapshot_weightings.copy()
-    snap_df[["objective", "stores", "generators"]] = 0.0  # Use float to allow decimal weights
+    snap_df[["objective", "stores", "generators"]] = (
+        0.0  # Use float to allow decimal weights
+    )
     periods = np.unique(snap_df.index.get_level_values("period"))
 
     # Load generators.csv
