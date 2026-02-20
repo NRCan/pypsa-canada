@@ -1,0 +1,166 @@
+# SPDX-FileCopyrightText:  PyPSA-Earth and PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+version: 0.7.0
+
+input_data: "data/base"
+
+#Unsolved Networks
+planning_unsolved_network_unfiltered_nc: networks/unsolved/planning_base_network_unfiltered.nc
+planning_unsolved_network_csv: networks/unsolved/planning_base_network_csv
+planning_unsolved_network_nc: networks/unsolved/planning_base_network.nc
+dispatch_unsolved_network_csv: networks/unsolved/dispatch_base_network_csv
+dispatch_unsolved_network_nc: networks/unsolved/dispatch_base_network.nc
+
+#Solved Networks
+planning_output_file_csv: "results/planning_output_csv"
+planning_output_file_nc: "results/planning_output.nc"
+#dispatch_output_file_csv: "results/dispatch_output_csv"
+dispatch_output_file_csv: "results/dispatch_output"
+#dispatch_output_file_nc: "results/dispatch_output.nc"
+uppercase: true
+
+run:
+  name: "tutorial" # use this to keep track of runs with different settings
+  disable_progressbar: false # set to true to disable the progressbar
+  shared_resources: false # set to true to share the default resources across runs
+  shared_cutouts: true # set to true to share the default cutout(s) across runs
+  validation: false # set to true to run back-casting plots
+
+load:
+  mode: "custom"
+  load_growth_filepath: "data/loads_forecast.csv"
+  ref_year: [2021]
+
+components:
+  # folder_name: "../pypsa_cad/pypsa_cad/preprocess/components"
+  folder_name: ""
+  components_dir: "pypsa_canada/workflow/scripts/components"
+  obps: true
+  technology_costs: ""
+  # technology_costs: "../pypsa_cad/pypsa_cad/preprocess/components"
+  # years: [2021, 2022]
+  years: [2021]
+  carbon_tax:
+    '2021': 50
+    '2025': 95
+    '2020': 170
+
+snapshots:
+  method: "OPT"
+  include_hydro: true
+  saving_folder_path: saves
+  rep_length: ""
+  cluster: [12, 20]
+  extreme_dats_select: ""
+  save_fig: ""
+  save_csv: ""
+  solver: ""
+  load_mode: "Default" 
+  years: [2021, 2025, 2030]
+  folder_name: data/base
+  ref_years: 2021
+  investment_periods: 25
+  provinces_selection: ""
+  aggregate: ""
+  extreme_days_select: ""
+
+extra_loads:
+  is_used: false
+  extra_loads: data/base
+  path: data/base
+
+planning:
+  reference_year: 2021
+  start_year: 2021
+  forecast_year: 2050
+  investment_period: [2021, 2025, 2030]
+  #investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
+  load_shedding: false
+  constraints:
+    add_spilling_variable: true
+    add_stop_production_constraint:
+      2030: ["gas"]
+
+dispatch:
+  #Snapshots related
+  horizon: 3 #336 #2 weeks in hours
+  overlap: 1 #48
+  investment_period: [] #If empty, it will take the planning investment periods
+
+  #Additional Solving options
+  load_shedding: true
+  linearized_unit_commitment: false
+
+  constraints:
+    add_spilling_variable: true
+    add_stop_production_constraint:
+      2030: ["gas"]
+    add_bidirection_link_constraint: {}
+    add_prevent_spill_if_not_fully_charged_constraint:
+      maximum_soc_storage_value: 2000
+
+
+solving:
+  solver:
+    name: highs
+    options: highs-default
+
+# countries: ["NG", "BJ"]
+
+# enable:
+#   retrieve_databundle: true
+#   retrieve_databundle_sector: true
+#   build_natura_raster: true
+#   progress_bar: false
+
+# scenario:
+#   clusters: [6]
+#   opts: [Co2L-4H]
+
+# snapshots:
+#   start: "2013-03-1"
+#   end: "2013-03-7"
+
+
+# clean_osm_data_options:
+#   threshold_voltage: 35000
+
+# base_network:
+#   min_voltage_substation_offshore: 35000
+#   min_voltage_rebase_voltage: 35000
+
+
+# electricity:
+#   co2limit: 1.487e+9
+#   co2base: 1.487e+9
+#   automatic_emission: true
+
+
+# atlite:
+#   nprocesses: 4
+#   cutouts:
+#     # use 'base' to determine geographical bounds and time span from config
+#     # base:
+#     # module: era5
+#     cutout-2013-era5-tutorial: {}
+
+# renewable:
+#   onwind:
+#     cutout: cutout-2013-era5-tutorial
+#   offwind-ac:
+#     cutout: cutout-2013-era5-tutorial
+#   offwind-dc:
+#     cutout: cutout-2013-era5-tutorial
+#   solar:
+#     cutout: cutout-2013-era5-tutorial
+#   hydro:
+#     cutout: cutout-2013-era5-tutorial
+#     hydrobasins_level: 4
+#     hydro_max_hours: "energy_capacity_totals_by_country"
+#   csp:
+#     cutout: cutout-2013-era5-tutorial
+
+
+

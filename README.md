@@ -1,14 +1,16 @@
-# Introduction 
+# Introduction
 Exploratory repo to check snakemake functionalities
 
 # Environments
 ```bash
-pip install -r requirements.txt
+cd [PROJECT_ROOT]
+pip install -e .
 ```
 
 # Steps to reproduce
 ```bash
-snakemake --cores 1 --configfile config.yaml
+cd $Model_Repository
+pypsa_canada run -f [CONFIG_FILENAME]
 ```
 
 # Authors

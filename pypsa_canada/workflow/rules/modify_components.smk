@@ -1,0 +1,11 @@
+rule modify_components:
+    input:
+        input_data=f"{RUN_NET_DIR}/add_extra_loads.nc",
+        snapshot_status=f"{RUN_NET_DIR}/snapshot_status"
+    output:
+        planning_unsolved_network=f"{RUN_NET_DIR}/planning_base_network.nc",
+        planning_unsolved_network_csv=directory(f"{RUN_NET_DIR}/planing_base_network_csv")
+    log:
+       f"{RUN_LOG_DIR}/modify_components.log"
+    script:
+        f"../scripts/modify_components.py"

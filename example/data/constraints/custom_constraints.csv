@@ -1,0 +1,15 @@
+name,constraint_group,type,component_type,attribute,attribute_name,bus,year,sense,value,include_existing
+Wind_West_2035,Wind_West,capacity_expansion_limit,Generator,carrier,wind_offshore,NS_East,2035,>=,5000,FALSE
+Wind_West_2050,Wind_West,capacity_expansion_limit,Generator,carrier,wind_offshore,NS_East,2050,>=,40000,FALSE
+Biomass_2025,Biomass_limit,capacity_expansion_limit,Generator,carrier,biomass,All,2025,<=,849,TRUE
+Biomass_2030,Biomass_limit,capacity_expansion_limit,Generator,carrier,biomass,All,2030,<=,1014,TRUE
+Biomass_2035,Biomass_limit,capacity_expansion_limit,Generator,carrier,biomass,All,2035,<=,2105,TRUE
+Biomass_2040,Biomass_limit,capacity_expansion_limit,Generator,carrier,biomass,All,2040,<=,3439,TRUE
+Biomass_2045,Biomass_limit,capacity_expansion_limit,Generator,carrier,biomass,All,2045,<=,5328,TRUE
+Biomass_2050,Biomass_limit,capacity_expansion_limit,Generator,carrier,biomass,All,2050,<=,8206,TRUE
+Eastern_Energy_Partnership_QC,Eastern_Energy_Partnership,capacity_expansion_limit,Link,carrier,DC,QC_East->NB_West,2035,>=,1150,FALSE
+Eastern_Energy_Partnership_NB,Eastern_Energy_Partnership,capacity_expansion_limit,Link,carrier,DC,NB_East->NS_West,2035,>=,800,FALSE
+Eastern_Energy_Partnership_NL,Eastern_Energy_Partnership,capacity_expansion_limit,Link,carrier,DC,NL_Newfoundland->NS_East,2035,>=,300,FALSE
+Darlington_SMR_2030,Darlington_SMR,capacity_expansion_limit,Generator,model,default_SMR,ON_East,2030,>=,300,FALSE
+Darlington_SMR_2035,Darlington_SMR,capacity_expansion_limit,Generator,model,default_SMR,ON_East,2035,>=,1200,FALSE
+Test_gen_optional3_SMR_2030,gen_optional3,capacity_expansion_limit,Generator,model,wind_new,bus0,2030,>=,1200,FALSE

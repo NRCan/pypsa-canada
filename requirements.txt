@@ -1,2 +1,3 @@
 snakemake
-pypsa==0.35.2
+pypsa
+fiona

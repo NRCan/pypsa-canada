@@ -1,0 +1,27 @@
+default_language_version:
+  python: python3
+
+default_stages: [manual]
+
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    -   id: check-merge-conflict
+        name: check-merge-conflict
+        description: Check for files that contain merge conflict strings.
+
+    -   id: trailing-whitespace
+        name: trailing-whitespace
+        description: Remove all trailing whitespace from the code
+        exclude: 'library/PyDSS/*'
+
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.9
+    hooks:
+    -   id: ruff
+        args:
+        -   --fix
+        exclude: 'library/PyDSS/*'
+    -   id: ruff-format
+        exclude: 'library/PyDSS/*'

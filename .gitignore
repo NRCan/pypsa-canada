@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/
 lib64/
 parts/
 sdist/
@@ -139,3 +139,7 @@ cython_debug/
 
 results/*
 .snakemake/*
+**/.snakemake/*
+networks/*
+example/networks/*
+example/results/

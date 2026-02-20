@@ -1,0 +1,5 @@
+name,constraint_group,type,component_type,attribute,attribute_name,bus,year,sense,value,include_existing
+Test_Wind_2030,Test_Wind,capacity_expansion_limit,Generator,carrier,wind_new,test_bus,2030,>=,1000,FALSE
+Test_Wind_2035,Test_Wind,capacity_expansion_limit,Generator,carrier,wind_new,test_bus,2035,>=,2000,FALSE
+Test_Solar_2030,Test_Solar,capacity_expansion_limit,Generator,carrier,solar,All,2030,<=,5000,TRUE
+Test_Battery_2030,Test_Battery,capacity_expansion_limit,StorageUnit,carrier,battery,test_bus,2030,<=,500,FALSE

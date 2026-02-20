@@ -1,0 +1,15 @@
+﻿name,co2_emissions,type,color
+biomass,0,solid,brown
+biogas,0,gas,chocolate
+coal,0.3,solid,olive
+diesel,0.25,liquid,pink
+gas,0.18,gas,red
+hydro,0,n.a,blue
+import,0,n.a,gray
+nuclear,0,n.a,cyan
+oil,0.27,liquid,yellow
+solar,0,n.a,green
+wind,0,n.a,skyblue
+liion,0,n.a,steelblue
+Load,0,n.a,linen
+co2_storage,-1,n.a,

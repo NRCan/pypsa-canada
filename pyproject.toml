@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["pypsa_canada"]
+
+#[tool.setuptools.package-data]
+#pypsa_canada = ["workflow/**"]
+
+[project]
+name = "pypsa_canada"
+description="PyPSA Workflow for Canada models"
+version = "0.0.1"
+requires-python = ">=3.12"
+readme = "README.md"
+authors = [
+]
+maintainers = []
+
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "snakemake",
+    "pypsa",
+    "fiona",
+    "pint",
+    "pytz",
+    "scikit-learn",
+    "scikit-learn-extra@git+https://github.com/TimotheeMathieu/scikit-learn-extra", #Fork of scikit learn extra with numpy v2 fix
+]
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit",
+    "pytest",
+]
+
+[project.scripts]
+pypsa_canada = "pypsa_canada.cli.pypsa_canada:cli"

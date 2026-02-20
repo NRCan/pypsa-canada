@@ -1,0 +1,93 @@
+from snakemake.io import directory
+from pathlib import Path
+import yaml
+from os.path import normpath, exists, join
+from shutil import copyfile, move, rmtree
+from snakemake.utils import min_version
+
+min_version("8.11")
+
+from scripts._helpers import (
+    path_provider,
+    get_scenarios,
+    get_rdir,
+    get_shadow,
+)
+
+run = config["run"]
+# scenarios = get_scenarios(run)
+
+# for run in config["runs"]:
+#     print(run["run"]["name"])
+#     print(run["name"])
+
+RDIR = get_rdir(run)
+
+RUN_NAME = f"{config["run"]["name"]}"
+
+NET_DIR = "networks"
+RES_DIR = "results"
+LOG_DIR = "logs"
+
+RUN_NET_DIR = f"{NET_DIR}/{RUN_NAME}"
+RUN_RES_DIR = f"{RES_DIR}/{RUN_NAME}"
+RUN_LOG_DIR = f"{LOG_DIR}/{RUN_NAME}"
+
+# shadow_config = get_shadow(run)
+
+# shared_resources = run["shared_resources"]["policy"]
+# exclude_from_shared = run["shared_resources"]["exclude"]
+# logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
+# benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
+# resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
+
+#cutout_dir = config["atlite"]["cutout_directory"]
+#CDIR = Path(cutout_dir).joinpath("" if run["shared_cutouts"] else RDIR)
+RESULTS = "results/" + RDIR
+
+
+if config.get("blank_network", None):
+    include: "rules/create_planning_network.smk"
+else:
+    # Rules are in order of use
+    include: "rules/load_network.smk"
+    include: "rules/add_components.smk"
+    include: "rules/add_loads.smk"
+    include: "rules/add_representative_days.smk"
+    include: "rules/add_snapshots.smk"
+    include: "rules/add_extra_loads.smk"
+    include: "rules/modify_components.smk"
+
+include: "rules/solve_planning.smk"
+
+include: "rules/create_dispatch_network.smk"
+include: "rules/solve_dispatch.smk"
+
+rule all:
+    input:
+        config["planning_output_file_csv"],
+        config["dispatch_output_file_csv"]
+
+rule clean_all:
+    message:
+        "Cleaning all"
+    shell:
+        "rm -rf {NET_DIR}/* {RES_DIR}/* {LOG_DIR}/*"
+
+rule clean_unsolved:
+    message:
+        "Cleaning run Unsolved"
+    shell:
+        "rm -rf {NET_DIR}/{RUN_NAME}"
+
+rule clean_results:
+    message:
+        "Cleaning run Results"
+    shell:
+        "rm -rf {RES_DIR}/{RUN_NAME}"
+
+rule clean_logs:
+    message:
+        "Cleaning run Logs"
+    shell:
+        "rm -rf {LOG_DIR}/{RUN_NAME}"
