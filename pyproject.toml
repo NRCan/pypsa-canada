@@ -15,6 +15,13 @@ version = "0.0.1"
 requires-python = ">=3.12"
 readme = "README.md"
 authors = [
+    {name = "Michel Bui", email = "michel.bui@nrcan-rncan.gc.ca"},
+    {name = "Serban Ivanescu", email = "serban.ivanescu@nrcan-rncan.gc.ca"},
+    {name = "Adrien Prigent", email = "adrien.prigent@nrcan-rncan.gc.ca"},
+    {name = "Nathan De Matos", email = "nathan.dematos@nrcan-rncan.gc.ca"},
+    {name = "Sophie Pelland", email = "sophie.pelland@nrcan-rncan.gc.ca"},
+    {name = "Steven Wong", email = "steven.wong@nrcan-rncan.gc.ca"},
+    {name = "Matheus Zambroni De Souza", email = "matheus.zambronidesouza@nrcan-rncan.gc.ca"},
 ]
 maintainers = []
 

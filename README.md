@@ -130,7 +130,7 @@ Copyright CanmetENERGY - Varennes, NRCan, Goverment of Canada
 * Sophie Pelland (Natural Resources Canada - CanmetENERGY)
 * Matheus Zambroni De Souza (Natural Resources Canada - CanmetENERGY)
 * Adrien Prigent (Natural Resources Canada - CanmetENERGY)
-* Serban Ivanescu (serban.ivanescu@nrcan-rncan.gc.ca)
+* Serban Ivanescu (Natural Resources Canada - CanmetENERGY)
 
 ## Contact Information
 * Steven Wong (steven.wong@nrcan-rncan.gc.ca)
