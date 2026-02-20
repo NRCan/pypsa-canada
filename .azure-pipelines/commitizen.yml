@@ -1,0 +1,40 @@
+trigger:
+- main
+
+variables:
+  isMain: $[eq(variables['build.sourceBranch'], 'refs/heads/main')]
+  CI_USERNAME: "CI Pipeline"
+  CI_EMAIL: ci_email@host.com
+
+jobs:
+- job: 'Version_Bumping'
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix:
+      Python312:
+        python.version: '3.12'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+
+  - checkout: self
+    persistCredentials: true
+    clean: true
+
+  - script: |
+      pip install commitizen pre-commit-update
+    displayName: Install Dependecies
+
+  - script: |
+      pre-commit-update -v
+    displayName: Pre-commit autoupdate
+
+  - script: |
+      git config --global user.email "$(CI_EMAIL)" && git config --global user.name "$(CI_USERNAME)"
+      cz bump --check-consistency
+      git push --tags origin HEAD:main
+    condition: eq(variables.isMain, true)
+    displayName: 'Bump package version number'
