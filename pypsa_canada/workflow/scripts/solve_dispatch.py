@@ -256,10 +256,26 @@ def main():
     else:
         investment_periods = dispatch_settings["investment_period"]
 
+    # Test mode: limit to first investment period only
+    if os.environ.get("PYPSA_TEST_MODE") == "1":
+        logging.info("Test mode enabled: limiting to first investment period only")
+        investment_periods = [investment_periods[0]]
+        logging.info(f"Running only period: {investment_periods[0]}")
+
     for period in investment_periods:
         # network.snapshots = original_snapshots
         logging.info(f"Loading Dispatch Network for period = {period}")
         period_snapshots = network.snapshots[network.snapshots.year == period]
+
+        # Test mode: limit to 24 snapshots for this period
+        if os.environ.get("PYPSA_TEST_MODE") == "1":
+            logging.info("Test mode enabled: limiting to 24 snapshots for dispatch")
+            original_snapshot_count = len(period_snapshots)
+            period_snapshots = period_snapshots[:24]
+            logging.info(
+                f"Reduced period snapshots from {original_snapshot_count} to {len(period_snapshots)}"
+            )
+
         period_network = network.copy()
 
         drop_inactive_assets(network=period_network, period=period)

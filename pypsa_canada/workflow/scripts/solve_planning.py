@@ -66,7 +66,6 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 
     constraint_dict = config["planning"]["constraints"]
     m = network.model
-    m = network.model
 
     # The snapshots must only contain one unique year
     period_list = network.snapshots.get_level_values(0).unique()
@@ -315,6 +314,24 @@ def main():
     network.storage_units_t.standing_loss = (
         network.storage_units_t.standing_loss.rename({"dim_0": "snapshot"})
     )
+
+    # Test mode: limit to 24 snapshots if PYPSA_TEST_MODE environment variable is set
+    if os.environ.get("PYPSA_TEST_MODE") == "1":
+        logging.info("Test mode enabled: limiting to 24 snapshots")
+        original_snapshot_count = len(network.snapshots)
+        network.snapshots = network.snapshots[:24]
+        logging.info(
+            f"Reduced snapshots from {original_snapshot_count} to {len(network.snapshots)}"
+        )
+
+        # Set all snapshot weightings to 1 for test mode
+        logging.info("Test mode: setting all snapshot weightings to 1")
+        network.snapshot_weightings.loc[:, ["objective", "stores", "generators"]] = 1
+        logging.info(
+            f"Snapshot weightings set to: {network.snapshot_weightings.head()}"
+        )
+
+    network.optimize.add_load_shedding(marginal_cost=1000000, sign=1.0)
 
     model = network.optimize.create_model(multi_investment_periods=True)  # NOQA
 

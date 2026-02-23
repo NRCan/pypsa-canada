@@ -92,3 +92,43 @@ planning:
     add_spilling_variable: true
     add_stop_production_constraint:
       2021: ["gas"]
+    planning_reserve_margin:
+      capacity_values_placeholder_filepath: "data/constraints/capacity_values_placeholder.csv"
+      provinces_list:
+        QC: 1.2
+
+dispatch:
+  #Snapshots related
+  horizon: 3 #336 #2 weeks in hours
+  overlap: 1 #48
+  investment_period: [] #If empty, it will take the planning investment periods
+
+  #Additional Solving options
+  load_shedding: true
+  linearized_unit_commitment: false
+
+  constraints:
+    # add_spilling_variable: true
+    add_stop_production_constraint:
+      2021: ["gas"]
+    add_bidirection_link_constraint: {}
+    # add_prevent_spill_if_not_fully_charged_constraint:
+    #   maximum_soc_storage_value: 2000
+    CER_constraint:
+      # modes = hourly, emissions
+      mode: 'emissions'
+      # aggregation levels: provincial, group, individual
+      aggregation: 'provincial'
+      # year that constraint becomes active
+      year: 2021
+      # carriers to include
+      carriers: ['oil', 'gas', 'diesel']
+      # values for hourly mode is number of hours, values for emissions mode is emission intensity (in tC02eq/GWh)
+      values: {
+        limit: {2021: 65},
+        offset: {2021: 35}
+        }
+      # minimum capacity
+      min_cap: 25
+      # forecast hours based on net load ('load'), uniformly ('uniform'), or assign max to first UC period and carry leftover ('carryover')
+      forecast_hours: 'carryover'

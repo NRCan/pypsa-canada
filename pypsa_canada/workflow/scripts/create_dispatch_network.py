@@ -485,8 +485,11 @@ def main():
 
     # Applying Optimal Generators Values to Unfiltered Network
     optimal_gen_values = pd.read_csv(
-        os.path.join(snakemake.input.planning_solved_network, "generators.csv")
+        os.path.join(snakemake.input.planning_solved_network, "generators.csv"),
+        index_col="name",
     )
+    optimal_gen_values = optimal_gen_values[optimal_gen_values["model"].notna()]
+
     network.generators.p_nom_opt = optimal_gen_values["p_nom_opt"].values
 
     # Re-establish correct weighting

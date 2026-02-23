@@ -63,19 +63,21 @@ os.environ.pop("SNAKEMAKE_OUTPUT_CACHE", None)  # no cache location => cache unu
     show_default=False,
     help="Unlock the working directory after a crash or interruption",
 )
-# @click.option(
-#     "--test",
-#     is_flag=True,
-#     default=False,
-#     show_default=False,
-#     help="Test mode on/off (default=false)",
-# )
-# @click.option(
-#     "--dispatch",
-#     help="Dispatch inputs files to run without running planning inputs",
-# )
+@click.option(
+    "--test",
+    is_flag=True,
+    default=False,
+    show_default=False,
+    help="Test mode: only use 24 snapshots during solve_planning (default=false)",
+)
+@click.option(
+    "-c",
+    "--cores",
+    type=int,
+    default=None,
+    help="Number of cores to use (default: all available cores)",
+)
 @click.command()
-# def run(file=None, dir=None, debug=False, test=False, dispatch=None):
 def run(
     file: str,
     targets: str,
@@ -102,6 +104,15 @@ def run(
         data_folder = str(Path.cwd())
     os.environ["PYPSA_CUSTOM_DATA_FOLDER"] = data_folder
     print(f"PYPSA_CUSTOM_DATA_FOLDER set to: {data_folder}")
+
+    # Set PYPSA_TEST_MODE environment variable
+    if test:
+        os.environ["PYPSA_TEST_MODE"] = "1"
+        print("Test mode enabled:")
+        print("  - solve_planning: using only 24 snapshots with weightings set to 1")
+        print(
+            "  - solve_dispatch: using only first investment period with 24 snapshots"
+        )
 
     wf_root = files("pypsa_canada.workflow")
     snakefile = Path(str(wf_root.joinpath("Snakefile")))

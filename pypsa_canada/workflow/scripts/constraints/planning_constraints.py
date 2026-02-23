@@ -192,14 +192,45 @@ def add_planning_reserve_margin(
             continue
 
         if component != "Link":
-            df["capacity_value_fractional"] = df.apply(
-                lambda row: capacity_value_by_carrier.loc[row.model, year], axis=1
+            # def get_capacity_value(row):
+            #     try:
+            #         return capacity_value_by_carrier.loc[row.model, year]
+            #     except KeyError as e:
+            #         print(f"KeyError: {e}")
+            #         print(f"  Problem at row index: {row.name}")
+            #         print(f"  Row data: {row.to_dict()}")
+            #         print(f"  Looking for model='{row.model}', year={year}")
+            #         print(f"  Available models: {capacity_value_by_carrier.index.tolist()}")
+            #         print(f"  Available years: {capacity_value_by_carrier.columns.tolist()}")
+            #         raise
+
+            # df["capacity_value_fractional"] = df.apply(get_capacity_value, axis=1)
+
+            # Create a mapping dictionary from the year column
+            capacity_map = (
+                capacity_value_by_carrier[year].to_dict()
+                if year in capacity_value_by_carrier.columns
+                else {}
             )
-            print(f"Step 1 = {df}")
+
+            # Check for models not in the mapping dictionary
+            missing_models = df[~df["model"].isin(capacity_map.keys())][
+                "model"
+            ].unique()
+            if len(missing_models) > 0:
+                logger.warning(
+                    f"Models not found in capacity_value_by_carrier for year {year}: {missing_models.tolist()}"
+                )
+                logger.warning(
+                    "  These models will be assigned capacity_value_fractional = 0"
+                )
+
+            df["capacity_value_fractional"] = df["model"].map(capacity_map).fillna(0)
+            # df["capacity_value_fractional"] = df.apply(
+            #     lambda row: capacity_value_by_carrier.loc[row.model, year], axis=1
+            # )
             df["capacity_value"] = df["p_nom"] * df["capacity_value_fractional"]
-            print(f"bus_province_list= {bus_province_list}")
             df = df.loc[df.bus.isin(bus_province_list)]
-            print(f"Step 2 (after bus filter)= {df}")
 
         else:
             df = df[df.index.str.contains("_turbine_link")]
