@@ -502,12 +502,9 @@ def main():
         network.generators.loc[
             network.generators.carrier.isin(["coal", "gas", "nuclear"]), "committable"
         ] = True
+    #TODO Validate if all links should be committable?
     if not network.links.empty:
         network.links.loc[:, "committable"] = True
-    if not network.storage_units.empty:
-        network.storage_units.loc[:, "committable"] = True
-    if not network.stores.empty:
-        network.stores.loc[:, "committable"] = True
 
     # Set Optimal Capacity to all Components
     network.optimize.fix_optimal_capacities()

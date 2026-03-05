@@ -15,3 +15,7 @@ def cli():
 
 cli.add_command(run)
 cli.add_command(dag)
+
+
+if __name__ == "__main__":
+    cli()
