@@ -1,3 +1,10 @@
+## 0.0.5 (2026-03-05)
+
+### Bug Fixes
+
+- Removed components set to committable except for generators
+- Removed components set to committable except for generators
+
 ## 0.0.4 (2026-02-23)
 
 ### Bug Fixes
