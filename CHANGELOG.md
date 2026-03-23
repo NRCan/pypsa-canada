@@ -1,3 +1,10 @@
+## 0.0.6 (2026-03-23)
+
+### Bug Fixes
+
+- Copy subsequent years
+- redo logic on adding load forecast + doc
+
 ## 0.0.5 (2026-03-05)
 
 ### Bug Fixes
