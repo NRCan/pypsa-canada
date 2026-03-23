@@ -156,13 +156,25 @@ def opt_quad_method(
     )
     periods = np.unique(snap_df.index.get_level_values("period"))
     # Load generators.csv
-    gen_df = n.df("Generator")
+    # gen_df = n.df("Generator")
+    gen_df = n.c["Generator"].static
+
+    gen_df["province"] = gen_df["bus"].map(n.buses["province"])
     # Load generators-p_max_pu.csv
     gen_max_df = n.generators_t.p_max_pu.copy()
+    # gen_max_df['province'] = gen_max_df['bus'].map(n.buses['province'])
+
+    # temp_load_prov = n.loads.static
+    load_prov_df = n.c["Load"].static
+    load_prov_df["province"] = load_prov_df["bus"].map(n.buses["province"])
     # Load loads-p_set.csv
-    load_df = n.loads_t.p_set.copy()
+    # load_df = n.loads_t.p_set.copy()
+    # load_df['province'] = load_df['bus'].map(n.buses['province'])
+
     # RES list
     RES = ["wind", "solar"]
+
+    print(f"Periods = {periods}")
     # Obtain yearly data in dictionaries
     if year is None:
         # Dictionary for year
@@ -177,27 +189,33 @@ def opt_quad_method(
                 filter_gen_df = gen_df[gen_df["carrier"].isin(RES)]
             else:
                 prov_info = {}
+
+                print("Provinces = ", provinces)
                 for prov in provinces:
                     # Filter generators
                     filter_gen_df = gen_df[
-                        gen_df["carrier"].isin(RES)
-                        & (gen_df["bus"].str.split("_").str[0] == prov)
+                        gen_df["carrier"].isin(RES) & (gen_df["province"] == prov)
                     ]
                     # Calculate net-load
                     # Load in province
-                    load_df_filtered = load_df.loc[
-                        :, load_df.columns.str.startswith(prov)
-                    ]
+                    load_columns = n.loads[load_prov_df["province"] == prov].index
+                    load_df_filtered = n.loads_t.p_set[load_columns]
+                    print(f"Load columns for province {prov}: {load_df_filtered}")
+                    # load_df_filtered = load_df.loc[
+                    #     :, load_df["province"] == prov
+                    # ]
                     # Load sum
                     load_agg = load_df_filtered.sum(axis=1)
                     load_agg = load_agg.to_frame()
+                    print(f"Load agg columns for province {prov}: {load_agg}")
+
                     # Select the period of interest
                     load_agg = load_agg.loc[pd.IndexSlice[period, :], :]
                     ############################################
                     # Hydro in province
                     filter_hydro = gen_df[
                         (gen_df["model"] == "hydro_ror")
-                        & (gen_df["bus"].str.split("_").str[0] == prov)
+                        & (gen_df["province"] == prov)
                         & (
                             (
                                 n.get_active_assets(
@@ -272,6 +290,8 @@ def opt_quad_method(
         for year_key, prov_dict in year_info.items():
             prov_dict = prov_dict["prov_info"]
             prov_opt = {}
+            print("=====Prov_dict======")
+            print(prov_dict.items())
             for prov_key, stats in prov_dict.items():
                 # Read net load and RES data, convert to numpy
                 # load_prov = stats["net_load"].to_numpy()
@@ -307,6 +327,16 @@ def opt_quad_method(
                 # df = pd.DataFrame(sort_wind)
                 # df.to_csv(f"{saving_folder_path}debug.csv", index=False)
                 # Get percentile values for bin edges
+                print(
+                    f"Sort load for province {prov_key} in year {year_key}: {sort_load}"
+                )
+                print(
+                    f"sort_wind for province {prov_key} in year {year_key}: {sort_wind}"
+                )
+                print(
+                    f"sort_solar for province {prov_key} in year {year_key}: {sort_solar}"
+                )
+
                 per_load = get_percentile_values(sort_load, edge_load, xaxis)
                 per_wind = get_percentile_values(sort_wind, edge_wind, xaxis)
                 per_solar = get_percentile_values(sort_solar, edge_solar, xaxis)

@@ -1,12 +1,9 @@
-
-# OUT_DIR = f"networks/{config["run"]["name"]}"
-# LOG_DIR = f"logs/{config["run"]["name"]}"
+# Previous rule: None
+# Next rule: add_snapshots
 rule add_loads:
-    input:
-        input_data=f"{RUN_NET_DIR}/add_components.nc"
+    # input:
     output:
-        planning_unsolved_network=f"{RUN_NET_DIR}/add_loads.nc",
-        planning_unsolved_network_csv=directory(f"{RUN_NET_DIR}/add_loads_csv")
+        loads_p_set=f"{RUN_NET_DIR}/add_loads.csv",
     log:
        f"{RUN_LOG_DIR}/add_loads.log"
     script:

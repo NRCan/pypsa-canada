@@ -286,7 +286,7 @@ def create_marginal_costs(
     costs_dir: str = comp_config["costs_dir"]
     years: list[int] = comp_config["years"]
     technology_costs: str = comp_config["technology_costs"]
-    carbon_tax: dict[str, int] = comp_config["carbon_tax"]
+    carbon_tax_dict: dict[str, int] = comp_config["carbon_tax"]
     obps: bool = comp_config["obps"]
     marginal_costs_result = pd.DataFrame()
     carbon_cost_result = pd.DataFrame()
@@ -330,9 +330,9 @@ def create_marginal_costs(
         tech_year = str(tech_years[(np.abs(tech_years - year)).argmin()])
 
         # adds carbon tax
-        carbon_tax_years = np.array(list(carbon_tax.keys()), dtype=int)
+        carbon_tax_years = np.array(list(carbon_tax_dict.keys()), dtype=int)
         carbon_tax_year = carbon_tax_years[(np.abs(carbon_tax_years - year)).argmin()]
-        carbon_tax = carbon_tax.get(f"{carbon_tax_year}", 0)
+        carbon_tax = carbon_tax_dict.get(f"{carbon_tax_year}", 0)
         print(f"Carbon tax for {year} = {carbon_tax}")
 
         for gen_name in marginal_costs.columns:
@@ -521,6 +521,8 @@ def preprocess_components(
         network,
         comp_config,
     )
+    print("Marginal Cost")
+    print(marginal_costs)
     network.generators_t.marginal_cost = marginal_costs.copy()
 
     print("-----CREATING STORAGE UNITS DATA-----")

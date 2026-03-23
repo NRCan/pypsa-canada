@@ -502,7 +502,7 @@ def main():
         network.generators.loc[
             network.generators.carrier.isin(["coal", "gas", "nuclear"]), "committable"
         ] = True
-    #TODO Validate if all links should be committable?
+    # TODO Validate if all links should be committable?
     if not network.links.empty:
         network.links.loc[:, "committable"] = True
 

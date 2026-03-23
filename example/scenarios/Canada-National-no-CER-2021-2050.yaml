@@ -16,7 +16,7 @@ dispatch_output_file_csv: "results/dispatch_output"
 uppercase: true
 
 run:
-  name: "canada-national-no-cer" # use this to keep track of runs with different settings
+  name: "canada-national-no-cer-2021-2050" # use this to keep track of runs with different settings
   disable_progressbar: false # set to true to disable the progressbar
   shared_resources: false # set to true to share the default resources across runs
   shared_cutouts: true # set to true to share the default cutout(s) across runs
@@ -26,6 +26,7 @@ year_settings:
   ref_year: &ref_year 2021
   start_year: &start_year 2021
   forecast_year: &forecast_year 2050
+  investment_period: &investment_period [2021, 2025, 2030, 2035, 2040, 2045, 2050]
 
 solving:
   solver:
@@ -43,24 +44,24 @@ components:
   costs_dir: "data/costs"
   obps: true
   technology_costs: "default_costs"
-  years: [*ref_year]
+  years: *investment_period
   carbon_tax:
-    '2021': 50 # $ per tonne, based on federal minimums
-    '2025': 125
-    '2030': 170
-    '2035': 170
-    '2040': 170
-    '2045': 170
-    '2050': 170
+    "2021": 50 # $ per tonne, based on federal minimums
+    "2025": 125
+    "2030": 170
+    "2035": 170
+    "2040": 170
+    "2045": 170
+    "2050": 170
 
 snapshots:
   method: "OPT_VRE_HYDRO"
   load_mode: *load_mode
   folder_name: "model/Canada-National"
   load_growth_forecast: "model/Canada-National/loads_forecast.csv"
-  years: [*ref_year]
+  years: *investment_period
   ref_year: *ref_year
-  investment_periods: 10
+  investment_periods: 5
 
   # Rep days config
   # rep_length: None
@@ -71,7 +72,7 @@ snapshots:
   save_fig: false
   save_csv: false
   saving_folder_path: saves
-  provinces_selection: [AB, BC, MB, NB, NS, 'ON', PE, QC, SK, NL]
+  provinces_selection: ["AB", "BC", "MB", "NB", "NS", "ON", "PE", "QC", "SK", "NL"]
   # year: None
   aggregate: false
 
@@ -84,23 +85,45 @@ planning:
   reference_year: 2021
   start_year: 2021
   forecast_year: 2021
-  investment_period: [2021]
-  #investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
+  investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
   load_shedding: false
-  test_mode: true  # Set to true to limit model to first 24 snapshots for quick testing
+  test_mode: true  # Set to true to limit model to first 6 snapshots per investment period for quick testing
   constraints:
     add_spilling_variable: true
     add_stop_production_constraint:
-      2021: ["gas"]
+      2030: ["coal"]
     planning_reserve_margin:
       capacity_values_placeholder_filepath: "data/constraints/capacity_values_placeholder.csv"
       provinces_list:
-        QC: 1.2
+        "PE": 1.2
+        "NB": 1.2
+        "NS": 1.2
+        "AB": 1.2
+        "BC": 1.2
+        "MB": 1.2
+        "ON": 1.2
+        "QC": 1.2
+        "SK": 1.2
+        "NL": 1.2
+    CER_constraint:
+      # aggregation levels: provincial, group, individual
+      aggregation: 'provincial'
+      # year that constraint becomes active
+      year: 2035
+      # carriers to include
+      carriers: ['oil', 'gas', 'diesel']
+      # values for emissions limit and offset is emission intensity (in tC02eq/GWh)
+      values: {
+        limit: {2035: 65, 2050: 0},
+        offset: {2035: 35, 2050: 42}
+        }
+      # minimum capacity
+      min_cap: 25
 
 dispatch:
   #Snapshots related
-  horizon: 3 #336 #2 weeks in hours
-  overlap: 1 #48
+  horizon: 336 #336 #2 weeks in hours
+  overlap: 48 #48
   investment_period: [] #If empty, it will take the planning investment periods
 
   #Additional Solving options
@@ -110,7 +133,7 @@ dispatch:
   constraints:
     # add_spilling_variable: true
     add_stop_production_constraint:
-      2021: ["gas"]
+      2030: ["coal"]
     add_bidirection_link_constraint: {}
     # add_prevent_spill_if_not_fully_charged_constraint:
     #   maximum_soc_storage_value: 2000
@@ -120,7 +143,7 @@ dispatch:
       # aggregation levels: provincial, group, individual
       aggregation: 'provincial'
       # year that constraint becomes active
-      year: 2021
+      year: 2035
       # carriers to include
       carriers: ['oil', 'gas', 'diesel']
       # values for hourly mode is number of hours, values for emissions mode is emission intensity (in tC02eq/GWh)

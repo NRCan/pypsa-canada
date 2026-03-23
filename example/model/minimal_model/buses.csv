@@ -1,8 +1,8 @@
-name,x,y
-BUS_1,,
-BUS_2,,
-BUS_3,,
-BUS_4,,
-BUS_5,,
-BUS_3 Heat,,
-BUS_3 Heat Store,,
+name,x,y,province
+BUS_1,,,QC
+BUS_2,,,ON
+BUS_3,,,BC
+BUS_4,,,QC
+BUS_5,,,QC
+BUS_3 Heat,,,ON
+BUS_3 Heat Store,,,NS

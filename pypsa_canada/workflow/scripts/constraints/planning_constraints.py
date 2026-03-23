@@ -17,9 +17,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def add_CER_constraint_planning(
-    constraint, m, network, snapshots, groups, CER_gens, year
-):
+def add_CER_constraint_planning(network, snapshots, constraint, groups, CER_gens, year):
     """
     Function to add the CER constraint according to the option parameters given.
 
@@ -27,8 +25,6 @@ def add_CER_constraint_planning(
     ----------
     constraint : dataframe
         CER constraint parameters
-    m : Linopy.model
-        The linopy model property from the pypsa network
     network : pypsa.Network
         The pypsa network class sent as an object
     snapshots : list
@@ -45,6 +41,7 @@ def add_CER_constraint_planning(
     boolean
         Zero value if constraint is added
     """
+    m = network.model
 
     # Set the limit and offset based on the year
     limit, offset = None, None
@@ -103,6 +100,8 @@ def add_CER_constraint_planning(
         # print(f"CER_constraint_{group}_{unit}_{year}")
         # print(lhs)
         # print(rhs)
+    print("Display constraints")
+    print(network.model.constraints)
     return 0
 
 

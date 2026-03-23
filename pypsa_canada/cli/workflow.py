@@ -109,9 +109,11 @@ def run(
     if test:
         os.environ["PYPSA_TEST_MODE"] = "1"
         print("Test mode enabled:")
-        print("  - solve_planning: using only 24 snapshots with weightings set to 1")
         print(
-            "  - solve_dispatch: using only first investment period with 24 snapshots"
+            "  - solve_planning: using first 6 snapshots per investment period with weightings set to 1"
+        )
+        print(
+            "  - solve_dispatch: using 1 UC period (horizon length) from each investment period"
         )
 
     wf_root = files("pypsa_canada.workflow")
@@ -217,3 +219,7 @@ def run(
 
         traceback.print_exc()
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    run()

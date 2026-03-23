@@ -1,7 +1,8 @@
-
+# Previous rule: add_components
+# Next rule: add_snapshots
 rule add_representative_days:
     input:
-        input_data=f"{RUN_NET_DIR}/add_loads.nc"
+        input_data=f"{RUN_NET_DIR}/add_components.nc"
     output:
         planning_unsolved_network=f"{RUN_NET_DIR}/add_representative_days.nc",
         planning_unsolved_network_csv=directory(f"{RUN_NET_DIR}/add_representative_days_csv"),

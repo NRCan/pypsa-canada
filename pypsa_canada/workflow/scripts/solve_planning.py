@@ -65,7 +65,7 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
     """
 
     constraint_dict = config["planning"]["constraints"]
-    m = network.model
+    # m = network.model
 
     # The snapshots must only contain one unique year
     period_list = network.snapshots.get_level_values(0).unique()
@@ -159,15 +159,17 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
                 CER_generators, _, CER_group_list = CER_generator_grouping(
                     network, CER_constraint, period, "planning"
                 )
+                logging.info(
+                    f"CER generators for period {period}: {CER_generators} - {CER_group_list}"
+                )
                 if not CER_generators.empty:
                     logging.info(
                         f"Adding CER constraint for {len(CER_generators)} generators"
                     )
                     add_CER_constraint_planning(
-                        CER_constraint,
-                        m,
                         network,
                         period_snapshots,
+                        CER_constraint,
                         CER_group_list,
                         CER_generators,
                         period,
@@ -232,6 +234,23 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
         component_capacity_expansion_constraint(
             network, custom_constraints.get("custom_constraint_filepath")
         )
+
+    # # Log final constraint count
+    # final_constraint_count = len(m.constraints) if hasattr(m, 'constraints') else 0
+    # logging.info(f"=== Finished add_all_planning_constraints ===")
+    # logging.info(f"Final constraint count: {final_constraint_count}")
+    # logging.info(f"Constraints added: {final_constraint_count - initial_constraint_count}")
+
+    # # Log constraint names for debugging
+    # if hasattr(m, 'constraints'):
+    #     # Linopy constraints are accessed via attributes, not keys()
+    #     planning_constraints = [name for name in dir(m.constraints)
+    #                            if not name.startswith('_') and
+    #                            ('Planning' in name or 'GlobalConstraint' in name)]
+    #     if planning_constraints:
+    #         logging.info(f"Custom planning constraints added ({len(planning_constraints)}):")
+    #         for name in planning_constraints:
+    #             logging.info(f"  - {name}")
 
 
 # def rename_dims(n):
@@ -310,16 +329,39 @@ def main():
     network = pypsa.Network(snakemake.input.planning_unsolved_network)
     disable_committable_for_OPT(network)
 
-    # TODO Temporary fix for standing_loss dim_0 issue - should be fixed in the network loading step instead
-    network.storage_units_t.standing_loss = (
-        network.storage_units_t.standing_loss.rename({"dim_0": "snapshot"})
-    )
+    # # TODO Temporary fix for standing_loss dim_0 issue - should be fixed in the network loading step instead
+    # network.storage_units_t.standing_loss = (
+    #     network.storage_units_t.standing_loss.rename({"dim_0": "snapshot"})
+    # )
 
-    # Test mode: limit to 24 snapshots if PYPSA_TEST_MODE environment variable is set
+    # Test mode: limit to first 6 snapshots per investment period if PYPSA_TEST_MODE environment variable is set
     if os.environ.get("PYPSA_TEST_MODE") == "1":
-        logging.info("Test mode enabled: limiting to 24 snapshots")
+        logging.info(
+            "Test mode enabled: limiting to first 6 snapshots per investment period"
+        )
         original_snapshot_count = len(network.snapshots)
-        network.snapshots = network.snapshots[:24]
+
+        # Get unique investment periods
+        if isinstance(network.snapshots, pd.MultiIndex):
+            # Multi-period model: take first 6 snapshots from each period
+            periods = network.snapshots.get_level_values(0).unique()
+            selected_snapshots = []
+            for period in periods:
+                period_snapshots = network.snapshots[
+                    network.snapshots.get_level_values(0) == period
+                ]
+                selected_snapshots.append(period_snapshots[:6])
+            network.snapshots = pd.MultiIndex.from_tuples(
+                [snap for sublist in selected_snapshots for snap in sublist],
+                names=network.snapshots.names,
+            )
+            logging.info(
+                f"Selected first 6 snapshots from each of {len(periods)} investment periods"
+            )
+        else:
+            # Single period model: just take first 6
+            network.snapshots = network.snapshots[:6]
+
         logging.info(
             f"Reduced snapshots from {original_snapshot_count} to {len(network.snapshots)}"
         )
@@ -343,7 +385,9 @@ def main():
         solver_name=solver_settings["name"],
         extra_functionality=add_all_planning_constraints,
     )
-    logging.info(f"Optimization Model: {network.model}")
+
+    logging.info(f"Optimization model: {network.model}")
+
     out_path = str(snakemake.output.solved_network_csv)
 
     network.export_to_csv_folder(out_path)

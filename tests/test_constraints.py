@@ -275,10 +275,9 @@ def test_cer_planning_constraint_added(minimal_planning_network, cer_config):
 
     network.optimize.create_model()
     add_CER_constraint_planning(
-        cer_config,
-        network.model,
         network,
         snapshots,
+        cer_config,
         CER_group_list,
         CER_generators,
         period,
@@ -307,10 +306,9 @@ def test_cer_planning_validated(minimal_planning_network, cer_config):
 
     network.optimize.create_model()
     add_CER_constraint_planning(
-        cer_config,
-        network.model,
         network,
         snapshots,
+        cer_config,
         CER_group_list,
         CER_generators,
         period,
