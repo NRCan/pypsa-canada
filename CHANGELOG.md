@@ -1,3 +1,10 @@
+## 0.0.7 (2026-03-25)
+
+### Bug Fixes
+
+- Integrate dispatch cer constraint + provinces buses validation
+- Integrated dispatch_cer contraints + province buses validation
+
 ## 0.0.6 (2026-03-23)
 
 ### Bug Fixes
