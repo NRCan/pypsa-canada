@@ -6,6 +6,7 @@ import traceback
 
 # import pandas as pd
 import pypsa
+from common import validate_bus_provinces
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
@@ -27,6 +28,8 @@ logging.basicConfig(
 
 def main():
     network = pypsa.Network(snakemake.input.input_data)
+
+    validate_bus_provinces(network)
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)

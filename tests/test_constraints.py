@@ -12,6 +12,9 @@ Updated: February 12, 2026 - Aligned with migrated constraint implementations
 import os
 
 import pytest
+from constraints.dispatch_constraints import (
+    add_CER_constraint_dispatch,
+)
 
 # Imports from constraint modules (path set up by conftest.py)
 from constraints.generic_constraints import (
@@ -566,11 +569,11 @@ def test_aggregate_generators_provincial(minimal_planning_network, cer_config):
     gens = gens[gens.carrier.isin(config["carriers"])]
 
     if not gens.empty:
-        result = aggregate_generators_into_group(config, gens)
+        result = aggregate_generators_into_group(config, gens, network)
         assert "group" in result.columns
-        # Provincial groups are first 2 chars of bus name
+        # Provincial groups should match the province column on the bus
         for idx, row in result.iterrows():
-            assert row["group"] == row["bus"][:2]
+            assert row["group"] == network.buses.loc[row["bus"], "province"]
 
 
 @pytest.mark.unit
@@ -585,8 +588,304 @@ def test_aggregate_generators_individual(minimal_planning_network, cer_config):
     gens = gens[gens.carrier.isin(config["carriers"])]
 
     if not gens.empty:
-        result = aggregate_generators_into_group(config, gens)
+        result = aggregate_generators_into_group(config, gens, network)
         assert "group" in result.columns
         # Individual groups should be generator indices
         for idx, row in result.iterrows():
             assert row["group"] == idx
+
+
+# ============================================================================
+# CER DISPATCH CONSTRAINT TESTS
+# ============================================================================
+
+
+@pytest.mark.unit
+@pytest.mark.dispatch
+def test_cer_dispatch_constraint_added(cer_dispatch_network, cer_dispatch_config):
+    """Test that CER dispatch constraint is added to the Linopy model"""
+    network = cer_dispatch_network
+    config = cer_dispatch_config
+    year = 2030
+    snapshots = network.snapshots
+
+    # Set p_nom_opt (mimics post-planning state)
+    network.generators["p_nom_opt"] = network.generators["p_nom"]
+
+    CER_generators, CER_group_budget, CER_group_list = CER_generator_grouping(
+        network, config, year, "dispatch"
+    )
+
+    if CER_generators.empty:
+        pytest.skip("No CER generators found for dispatch test")
+
+    network.optimize.create_model()
+    m = network.model
+
+    leftover = {group: 0 for group in CER_group_list}
+
+    add_CER_constraint_dispatch(
+        config,
+        m,
+        network,
+        snapshots,
+        0,
+        0,
+        CER_group_budget,
+        CER_group_list,
+        leftover,
+        CER_generators,
+    )
+
+    constraint_names = [str(c) for c in network.model.constraints]
+    assert any("CER_constraint" in name for name in constraint_names), (
+        f"CER dispatch constraint not added. Constraints: {constraint_names}"
+    )
+
+
+@pytest.mark.unit
+@pytest.mark.dispatch
+def test_cer_dispatch_budget_tracking(cer_dispatch_network, cer_dispatch_config):
+    """Test that CER budget is tracked and returned correctly across UC periods"""
+    network = cer_dispatch_network
+    config = cer_dispatch_config
+    year = 2030
+
+    network.generators["p_nom_opt"] = network.generators["p_nom"]
+
+    CER_generators, CER_group_budget, CER_group_list = CER_generator_grouping(
+        network, config, year, "dispatch"
+    )
+
+    if CER_generators.empty:
+        pytest.skip("No CER generators found for dispatch test")
+
+    # Simulate two UC periods (first 24h, then next 24h)
+    snapshots_1 = network.snapshots[:24]
+    snapshots_2 = network.snapshots[24:]
+
+    leftover = {group: 0 for group in CER_group_list}
+
+    # UC period 0
+    network.optimize.create_model(snapshots=snapshots_1)
+    m = network.model
+    budget_after_uc0 = add_CER_constraint_dispatch(
+        config,
+        m,
+        network,
+        snapshots_1,
+        0,
+        0,
+        CER_group_budget,
+        CER_group_list,
+        leftover,
+        CER_generators,
+    )
+
+    assert not budget_after_uc0.empty, (
+        "Budget should not be empty after first UC period"
+    )
+    assert len(budget_after_uc0) == 1, "Should have one row per UC period"
+
+    # UC period 1
+    network.optimize.create_model(snapshots=snapshots_2)
+    m = network.model
+    budget_after_uc1 = add_CER_constraint_dispatch(
+        config,
+        m,
+        network,
+        snapshots_2,
+        1,
+        0,
+        budget_after_uc0,
+        CER_group_list,
+        leftover,
+        CER_generators,
+    )
+
+    assert len(budget_after_uc1) == 2, "Should have two rows after two UC periods"
+
+
+@pytest.mark.unit
+@pytest.mark.dispatch
+@pytest.mark.parametrize("forecast_mode", ["carryover", "uniform"])
+def test_cer_dispatch_forecast_modes(
+    cer_dispatch_network, cer_dispatch_config, forecast_mode
+):
+    """Test that CER dispatch works with different forecast_hours modes"""
+    network = cer_dispatch_network
+    config = cer_dispatch_config.copy()
+    config["forecast_hours"] = forecast_mode
+    year = 2030
+
+    network.generators["p_nom_opt"] = network.generators["p_nom"]
+
+    CER_generators, CER_group_budget, CER_group_list = CER_generator_grouping(
+        network, config, year, "dispatch"
+    )
+
+    if CER_generators.empty:
+        pytest.skip("No CER generators found for dispatch test")
+
+    snapshots = network.snapshots[:24]
+    leftover = {group: 0 for group in CER_group_list}
+
+    if forecast_mode == "carryover":
+        period_value = 0  # carryover gives 100% in first period
+    else:
+        period_value = len(snapshots) / 8760  # uniform fraction
+
+    network.optimize.create_model(snapshots=snapshots)
+    m = network.model
+
+    budget = add_CER_constraint_dispatch(
+        config,
+        m,
+        network,
+        snapshots,
+        0,
+        period_value,
+        CER_group_budget,
+        CER_group_list,
+        leftover,
+        CER_generators,
+    )
+
+    assert not budget.empty, f"Budget empty for forecast mode {forecast_mode}"
+    constraint_names = [str(c) for c in network.model.constraints]
+    assert any("CER_constraint" in name for name in constraint_names), (
+        f"CER constraint not added for mode {forecast_mode}"
+    )
+
+
+@pytest.mark.slow
+@pytest.mark.dispatch
+def test_cer_dispatch_emissions_validated(cer_dispatch_network, cer_dispatch_config):
+    """
+    Test that CER constraint limits emissions across multiple UC periods.
+
+    Splits snapshots into 24h UC periods, solves each sequentially with
+    CER budget carried over, then validates total emissions <= total budget.
+    """
+    network = cer_dispatch_network
+    config = cer_dispatch_config.copy()
+    config["mode"] = "emissions"
+    config["forecast_hours"] = "carryover"
+    year = 2030
+
+    network.generators["p_nom_opt"] = network.generators["p_nom"]
+
+    # Set wind p_max_pu < 1 so gas must run to meet load
+    network.generators_t.p_max_pu = network.generators_t.p_max_pu.reindex(
+        columns=network.generators.index, fill_value=1.0
+    )
+    network.generators_t.p_max_pu["wind_gen_1"] = 0.3
+
+    CER_generators, CER_group_budget, CER_group_list = CER_generator_grouping(
+        network, config, year, "dispatch"
+    )
+
+    if CER_generators.empty:
+        pytest.skip("No CER generators found for dispatch test")
+
+    # --- Solve two UC periods sequentially (like optimize_uc_period) ---
+    horizon = 24
+    all_snapshots = network.snapshots
+    nb_uc = len(all_snapshots) // horizon
+    leftover = {group: 0 for group in CER_group_list}
+    budget = CER_group_budget.copy()
+
+    for uc in range(nb_uc):
+        a = uc * horizon
+        b = min((uc + 1) * horizon, len(all_snapshots))
+        uc_snapshots = all_snapshots[a:b]
+
+        # For carryover mode: uc_period==0 gets full budget, later periods get 0 new budget
+        period_value = 0
+
+        # Closure capturing this UC period's state
+        _budget_ref = budget.copy()
+        _leftover_ref = leftover.copy()
+
+        def extra_func(
+            n,
+            sns,
+            _cfg=config,
+            _gens=CER_generators,
+            _groups=CER_group_list,
+            _bud=_budget_ref,
+            _left=_leftover_ref,
+            _pv=period_value,
+            _uc=uc,
+            _uc_sns=uc_snapshots,
+        ):
+            m = n.model
+            return add_CER_constraint_dispatch(
+                _cfg,
+                m,
+                n,
+                _uc_sns,
+                _uc,
+                _pv,
+                _bud,
+                _groups,
+                _left,
+                _gens,
+            )
+
+        status, condition = network.optimize(
+            snapshots=uc_snapshots,
+            solver_name="highs",
+            extra_functionality=extra_func,
+        )
+        assert status == "ok", f"UC period {uc} failed: {status}, {condition}"
+
+        # Update leftover: budget allocated minus actual emissions this period
+        for group in CER_group_list:
+            gens = CER_generators[CER_generators.group == group]
+            actual_this_uc = 0
+            for gen, data in gens.iterrows():
+                gen_energy = network.generators_t.p[gen].loc[uc_snapshots].sum()
+                co2_rate = (
+                    network.carriers.loc[data.carrier].co2_emissions / data.efficiency
+                )
+                actual_this_uc += gen_energy * co2_rate
+
+            # For carryover: UC 0 gets full annual budget, UC 1+ gets leftover only
+            if uc == 0:
+                limit = config["values"]["limit"][year]
+                offset = config["values"]["offset"][year]
+                allocated = sum(
+                    (limit + offset) * row.p_nom_opt * 8760 / 1000
+                    for _, row in gens.iterrows()
+                )
+            else:
+                allocated = leftover[group]
+
+            leftover[group] = max(allocated - actual_this_uc, 0)
+
+    # --- Validate total emissions across all UC periods ---
+    for group in CER_group_list:
+        gens = CER_generators[CER_generators.group == group]
+        total_emissions = 0
+        for gen, data in gens.iterrows():
+            gen_energy = network.generators_t.p[gen].loc[all_snapshots].sum()
+            co2_rate = (
+                network.carriers.loc[data.carrier].co2_emissions / data.efficiency
+            )
+            total_emissions += gen_energy * co2_rate
+
+        limit = config["values"]["limit"][year]
+        offset = config["values"]["offset"][year]
+        total_budget = sum(
+            (limit + offset) * row.p_nom_opt * 8760 / 1000 for _, row in gens.iterrows()
+        )
+
+        print(
+            f"Group {group}: total emissions={total_emissions:.2f} tCO2, "
+            f"annual budget={total_budget:.2f} tCO2"
+        )
+        assert total_emissions <= total_budget + 1e-2, (
+            f"CER emissions exceeded budget for {group}: "
+            f"{total_emissions:.2f} > {total_budget:.2f} tCO2eq"
+        )

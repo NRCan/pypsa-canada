@@ -65,7 +65,9 @@ def CER_generator_grouping(network, CER_constraint, year: int, mode: str):
         if CER_generators.empty:
             return CER_generators, None, None
 
-        CER_generators = aggregate_generators_into_group(CER_constraint, CER_generators)
+        CER_generators = aggregate_generators_into_group(
+            CER_constraint, CER_generators, network
+        )
 
     else:
         CER_generators_existing = (
@@ -97,10 +99,10 @@ def CER_generator_grouping(network, CER_constraint, year: int, mode: str):
             return CER_generators, None, None
 
         CER_generators_existing = aggregate_generators_into_group(
-            CER_constraint, CER_generators_existing
+            CER_constraint, CER_generators_existing, network
         )
         CER_generators_extendable = aggregate_generators_into_group(
-            CER_constraint, CER_generators_extendable
+            CER_constraint, CER_generators_extendable, network
         )
         CER_generators = pd.concat([CER_generators_existing, CER_generators_extendable])
 
@@ -110,7 +112,7 @@ def CER_generator_grouping(network, CER_constraint, year: int, mode: str):
     return CER_generators, CER_group_budget, CER_group_list
 
 
-def aggregate_generators_into_group(CER_constraint, CER_generators):
+def aggregate_generators_into_group(CER_constraint, CER_generators, network):
     """
     Aggregate generators into group
 
@@ -119,6 +121,8 @@ def aggregate_generators_into_group(CER_constraint, CER_generators):
     CER_constraint : dict
         Dictionary containing all informations needed for CER contraint
     CER_generators : DataFrame
+    network : pypsa.Network
+        The pypsa network (used to look up bus province column)
 
     Returns
     -------
@@ -127,7 +131,7 @@ def aggregate_generators_into_group(CER_constraint, CER_generators):
     if CER_constraint["aggregation"] == "individual":
         CER_generators["group"] = CER_generators.index
     elif CER_constraint["aggregation"] == "provincial":
-        CER_generators["group"] = CER_generators.bus.astype(str).str[:2]
+        CER_generators["group"] = CER_generators.bus.map(network.buses["province"])
     elif CER_constraint["aggregation"] == "group":
         pass
     return CER_generators

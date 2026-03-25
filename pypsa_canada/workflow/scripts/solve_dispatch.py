@@ -9,7 +9,12 @@ from itertools import chain, groupby
 
 import pandas as pd
 import pypsa
+from constraints.dispatch_constraints import (
+    add_CER_constraint_dispatch,
+    distribute_CER_hours_dispatch,
+)
 from constraints.generic_constraints import (
+    CER_generator_grouping,
     add_bidirection_link_constraint,
     add_stop_prod_constraint,
     prevent_spill_if_not_fully_charged,
@@ -108,6 +113,7 @@ def optimize_uc_period(
     solver_name: str,
     solver_options: dict = {},
     linearized_unit_commitment: bool = False,
+    period_year: int = 0,
 ):
     solvetime_df = pd.DataFrame(
         {
@@ -120,6 +126,38 @@ def optimize_uc_period(
         }
     )
 
+    # --- CER constraint initialisation (state shared across UC periods) ---
+    constraint_dict = config.get("dispatch", {}).get("constraints", {})
+    CER_constraint_cfg = constraint_dict.get("CER_constraint")
+    CER_generators = pd.DataFrame()
+    CER_group_list = []
+    CER_data = pd.DataFrame()
+    CER_total_hours = 0
+    CER_group_budget = pd.DataFrame()
+    CER_leftover = {}
+    cer_enabled = False
+
+    if CER_constraint_cfg and period_year >= CER_constraint_cfg.get("year", 9999):
+        CER_generators, CER_group_budget, CER_group_list = CER_generator_grouping(
+            network, CER_constraint_cfg, period_year, "dispatch"
+        )
+        if CER_generators is not None and not CER_generators.empty:
+            cer_enabled = True
+            logging.info(
+                f"CER constraint active for {period_year}: "
+                f"{len(CER_generators)} generators, groups={list(CER_group_list)}"
+            )
+            if CER_constraint_cfg.get("forecast_hours") == "load":
+                CER_data = distribute_CER_hours_dispatch(network, period_year)
+                CER_total_hours = (
+                    CER_data[CER_data["above_avg_load"] > 0].count().values[0]
+                )
+                logging.info(f"CER total hours (above average load): {CER_total_hours}")
+            for group in CER_group_list:
+                CER_leftover[group] = 0
+        else:
+            logging.info(f"No CER generators found for year {period_year}")
+
     # Committable generators
     com_gens = network.generators[network.generators.committable]
 
@@ -129,7 +167,8 @@ def optimize_uc_period(
     nb_uc_period = int(nb_uc_period)
     logging.info(f"Number of UC periods (rounded): {nb_uc_period}")
 
-    # for uc_period in range(self.settings.uc_periods_per_yr):
+    hours_per_yr = 8760
+
     for uc_period in range(nb_uc_period):
         starttime = pd.Timestamp.now()
         a = uc_period * horizon
@@ -177,15 +216,86 @@ def optimize_uc_period(
                 network.generators_t.status.columns, "down_time_before"
             ] = ((1 - network.generators_t.status) * cumcount).iloc[a - 1, :]
 
+        # Build the extra_functionality callback for this UC period.
+        # Base constraints are always applied via add_all_dispatch_constraints.
+        # CER constraint is layered on top when active.
+        if cer_enabled:
+            is_last_uc = b >= length_snapshot
+            _cer_snapshots = snapshots if is_last_uc else snapshots[:-overlap]
+
+            # Calculate CER hours fraction for this UC period
+            forecast_mode = CER_constraint_cfg["forecast_hours"]
+            if forecast_mode == "load":
+                CER_hours = (
+                    CER_data[CER_data["above_avg_load"] > 0.1]
+                    .loc[_cer_snapshots[0] : _cer_snapshots[-1]]
+                    .count()
+                    / CER_total_hours
+                ).values[0]
+            elif forecast_mode == "uniform":
+                CER_hours = len(_cer_snapshots) / hours_per_yr
+            else:  # carryover
+                CER_hours = 0
+
+            logging.info(
+                f"CER UC {uc_period}: forecast_mode={forecast_mode}, "
+                f"CER_hours={CER_hours:.4f}, "
+                f"cer_snapshots={_cer_snapshots[0]} to {_cer_snapshots[-1]} "
+                f"({len(_cer_snapshots)} steps)"
+            )
+
+            # Closure captures CER state for this UC period
+            def _extra_func(
+                n,
+                sns,
+                _cfg=CER_constraint_cfg,
+                _gens=CER_generators,
+                _groups=CER_group_list,
+                _budget=CER_group_budget,
+                _leftover=CER_leftover,
+                _hours=CER_hours,
+                _uc=uc_period,
+                _cer_sns=_cer_snapshots,
+            ):
+                add_all_dispatch_constraints(n, sns)
+                m = n.model
+                nonlocal CER_group_budget
+                CER_group_budget = add_CER_constraint_dispatch(
+                    _cfg,
+                    m,
+                    n,
+                    _cer_sns,
+                    _uc,
+                    _hours,
+                    _budget,
+                    _groups,
+                    _leftover,
+                    _gens,
+                )
+                logging.info(
+                    f"CER budget after UC {_uc}:\n{CER_group_budget.to_string()}"
+                )
+        else:
+            _extra_func = add_all_dispatch_constraints
+
         status, condition = network.optimize(
             snapshots=snapshots,
             linearized_unit_commitment=linearized_unit_commitment,
             solver_name=solver_name,
             solver_options=solver_options,
-            extra_functionality=add_all_dispatch_constraints,
+            extra_functionality=_extra_func,
         )
         logging.info("Constraints:")
         logging.info(network.model.constraints)
+        cer_constraints = [
+            c for c in dir(network.model.constraints) if "cer" in c.lower()
+        ]
+        if cer_constraints:
+            logging.info(f"CER constraints in model: {cer_constraints}")
+            for cname in cer_constraints:
+                con = getattr(network.model.constraints, cname, None)
+                if con is not None and hasattr(con, "dual"):
+                    logging.info(f"  {cname} dual values: {con.dual}")
         if status != "ok":
             logging.warning(
                 "Optimization failed with status %s and condition %s",
@@ -256,11 +366,11 @@ def main():
     else:
         investment_periods = dispatch_settings["investment_period"]
 
-    # Test mode: limit to first investment period only
-    if os.environ.get("PYPSA_TEST_MODE") == "1":
-        logging.info("Test mode enabled: limiting to first investment period only")
-        investment_periods = [investment_periods[0]]
-        logging.info(f"Running only period: {investment_periods[0]}")
+    # # Test mode: limit to first investment period only
+    # if os.environ.get("PYPSA_TEST_MODE") == "1":
+    #     logging.info("Test mode enabled: limiting to first investment period only")
+    #     # investment_periods = [investment_periods[0]]
+    #     logging.info(f"Running only period: {investment_periods}")
 
     for period in investment_periods:
         # network.snapshots = original_snapshots
@@ -269,9 +379,9 @@ def main():
 
         # Test mode: limit to 24 snapshots for this period
         if os.environ.get("PYPSA_TEST_MODE") == "1":
-            logging.info("Test mode enabled: limiting to 24 snapshots for dispatch")
+            logging.info("Test mode enabled: limiting to 6 snapshots for dispatch")
             original_snapshot_count = len(period_snapshots)
-            period_snapshots = period_snapshots[:24]
+            period_snapshots = period_snapshots[:6]
             logging.info(
                 f"Reduced period snapshots from {original_snapshot_count} to {len(period_snapshots)}"
             )
@@ -300,6 +410,7 @@ def main():
             solver_name=solver_name,
             solver_options={},
             linearized_unit_commitment=linearized_uc_ena,
+            period_year=period,
         )
 
         # os.makedirs(os.path.dirname(str(snakemake.output.dispatch_output_file_csv)), exist_ok=True)

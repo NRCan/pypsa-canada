@@ -4,6 +4,56 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import pypsa
 
+# Official 2-letter codes for Canadian provinces and territories
+CANADIAN_PROVINCES = {
+    "AB",  # Alberta
+    "BC",  # British Columbia
+    "MB",  # Manitoba
+    "NB",  # New Brunswick
+    "NL",  # Newfoundland and Labrador
+    "NS",  # Nova Scotia
+    "NT",  # Northwest Territories
+    "NU",  # Nunavut
+    "ON",  # Ontario
+    "PE",  # Prince Edward Island
+    "QC",  # Quebec
+    "SK",  # Saskatchewan
+    "YT",  # Yukon
+}
+
+
+def validate_bus_provinces(network: "pypsa.Network") -> None:
+    """
+    Validate that every bus has a 'province' column with a valid Canadian province code.
+
+    Raises
+    ------
+    ValueError
+        If the 'province' column is missing or contains invalid values.
+    """
+    if "province" not in network.buses.columns:
+        raise ValueError(
+            "buses DataFrame is missing a 'province' column. "
+            "Each bus must have a province assigned."
+        )
+
+    provinces_in_data = set(network.buses["province"].dropna().unique())
+    invalid = provinces_in_data - CANADIAN_PROVINCES
+    if invalid:
+        raise ValueError(
+            f"buses contain invalid province codes: {sorted(invalid)}. "
+            f"Valid codes are: {sorted(CANADIAN_PROVINCES)}"
+        )
+
+    missing = network.buses["province"].isna()
+    if missing.any():
+        raise ValueError(
+            f"The following buses are missing a province value: "
+            f"{list(network.buses.index[missing])}"
+        )
+
+    logging.info(f"Bus province validation passed: {sorted(provinces_in_data)}")
+
 
 def drop_inactive_assets(
     network: "pypsa.Network", period: int, components_to_deactivate: str | None = None

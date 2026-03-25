@@ -53,7 +53,7 @@ def minimal_planning_network():
     )
 
     # Add minimal components
-    network.add("Bus", "test_bus", carrier="AC")
+    network.add("Bus", "test_bus", province="AB")
 
     network.add(
         "Generator",
@@ -101,7 +101,7 @@ def minimal_dispatch_network():
     network.set_snapshots(snapshots)
 
     # Add minimal components
-    network.add("Bus", "test_bus", carrier="AC")
+    network.add("Bus", "test_bus", province="AB")
 
     network.add(
         "Generator",
@@ -161,7 +161,7 @@ def network_with_storage(minimal_planning_network):
 def network_with_links(minimal_planning_network):
     """Add bidirectional links to planning network"""
     network = minimal_planning_network
-    network.add("Bus", "test_bus_2", carrier="AC")
+    network.add("Bus", "test_bus_2", province="BC")
     network.add(
         "Link",
         "link_forward",
@@ -191,6 +191,79 @@ def cer_config():
         "values": {"limit": {2035: 30}, "offset": {2035: 0}},
         "min_cap": 25,
     }
+
+
+@pytest.fixture
+def cer_dispatch_config():
+    """
+    CER constraint configuration for dispatch tests (emissions mode, carryover).
+
+    Budget = (limit + offset) * p_nom_opt * 8760 / 1000.
+    With limit=1.2, offset=0, p_nom_opt=100 → budget ≈ 1051 tCO2.
+    Gas minimum need (120h, 20 MW gap) ≈ 889 tCO2 → feasible.
+    Gas unconstrained (120h, 100 MW) ≈ 2667 tCO2 → binding.
+    """
+    return {
+        "year": 2030,
+        "carriers": ["gas_CC"],
+        "aggregation": "provincial",
+        "mode": "emissions",
+        "forecast_hours": "carryover",
+        "values": {"limit": {2030: 1.2}, "offset": {2030: 0.0}},
+        "min_cap": 25,
+    }
+
+
+@pytest.fixture
+def cer_dispatch_network():
+    """
+    Dispatch network with enough structure for CER constraint testing.
+
+    Single bus, gas_CC + wind generators, 48h snapshots (2 days) in 2030.
+    gas_CC generator has p_nom_opt set (as it would be after planning solve).
+    """
+    network = pypsa.Network()
+    snapshots = pd.date_range("2030-01-01", periods=120, freq="h")
+    network.set_snapshots(snapshots)
+
+    network.add("Bus", "AB_bus", province="AB")
+
+    network.add(
+        "Generator",
+        "gas_gen_1",
+        bus="AB_bus",
+        p_nom=100,
+        p_nom_opt=100,
+        carrier="gas_CC",
+        marginal_cost=50,
+        efficiency=0.54,
+        p_nom_extendable=False,
+        committable=True,
+        build_year=2020,
+        lifetime=30,
+    )
+
+    network.add(
+        "Generator",
+        "wind_gen_1",
+        bus="AB_bus",
+        p_nom=200,
+        p_nom_opt=200,
+        carrier="wind_new",
+        marginal_cost=0,
+        p_nom_extendable=False,
+        build_year=2020,
+        lifetime=25,
+    )
+
+    network.add("Load", "AB_load", bus="AB_bus", p_set=80)
+
+    network.add("Carrier", "gas_CC", co2_emissions=0.2)
+    network.add("Carrier", "wind_new", co2_emissions=0.0)
+
+    network.generators["model"] = network.generators["carrier"]
+
+    return network
 
 
 @pytest.fixture
