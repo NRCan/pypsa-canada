@@ -1,3 +1,9 @@
+## 0.0.8 (2026-03-26)
+
+### Bug Fixes
+
+- [#1971][#2023] default config + folder structure
+
 ## 0.0.7 (2026-03-25)
 
 ### Bug Fixes
