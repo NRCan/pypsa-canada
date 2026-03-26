@@ -45,7 +45,7 @@ def get_scenarios(run):
 def load_default_config():
     """
     Load the default configuration file.
-    
+
     Returns
     -------
     dict
@@ -63,7 +63,7 @@ def load_default_config():
             script_dir = Path(__file__).parent.resolve()
             root_dir = script_dir.parent.parent.parent
             default_config_path = root_dir / "example" / "config" / "default_config.yaml"
-        
+
         if default_config_path.exists():
             with open(default_config_path, 'r') as f:
                 return yaml.safe_load(f)
@@ -85,7 +85,7 @@ def merge_with_defaults(config):
     ----------
     config : dict
         User-provided configuration dictionary
-        
+
     Returns
     -------
     dict
