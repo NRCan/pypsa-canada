@@ -99,7 +99,7 @@ def create_p_max_pu(network: Network, comp_config: dict[str, Any]) -> Network:
 
     Duplicates existing p_max_pu columns for each future year after the generator's build year.
     """
-    years: list[int] = comp_config["years"]
+    years: list[int] = config["year_settings"]["investment_period"]
     generators = network.generators[network.generators.p_nom_extendable]
     generator_t_p_max_pu_ref_df = network.generators_t.p_max_pu.copy()
     p_max_pu = generator_t_p_max_pu_ref_df.copy()
@@ -152,7 +152,7 @@ def create_extendable_components(
     costs_dir: str = comp_config["costs_dir"]
     # Use default technology costs if not specified
     technology_costs: str = comp_config.get("technology_costs", "default_costs")
-    years: list[int] = comp_config["years"]
+    years: list[int] = config["year_settings"]["investment_period"]
     # Get the data for the specified component type
     if component == "Generator":
         data = network.generators.copy()
@@ -284,7 +284,7 @@ def create_marginal_costs(
     """
     override_dir: str = comp_config["override_dir"]
     costs_dir: str = comp_config["costs_dir"]
-    years: list[int] = comp_config["years"]
+    years: list[int] = config["year_settings"]["investment_period"]
     technology_costs: str = comp_config["technology_costs"]
     carbon_tax_dict: dict[str, int] = comp_config["carbon_tax"]
     obps: bool = comp_config["obps"]

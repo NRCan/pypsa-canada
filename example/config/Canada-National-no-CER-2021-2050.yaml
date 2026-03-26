@@ -8,10 +8,10 @@ run:
   validation: false # set to true to run back-casting plots
 
 year_settings:
-  ref_year: &ref_year 2021
-  start_year: &start_year 2021
-  forecast_year: &forecast_year 2050
-  investment_period: &investment_period [2021, 2025, 2030, 2035, 2040, 2045, 2050]
+  ref_year: 2021
+  start_year: 2021
+  forecast_year: 2050
+  investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
 
 solving:
   solver:
@@ -21,7 +21,6 @@ solving:
 load:
   load_mode: &load_mode "custom"
   load_growth_filepath: "model/Canada-National/loads_forecast.csv"
-  ref_year: [*ref_year]
 
 components:
   override_dir: ""
@@ -29,7 +28,6 @@ components:
   costs_dir: "data/costs"
   obps: true
   technology_costs: "default_costs"
-  years: *investment_period
   carbon_tax:
     "2021": 50 # $ per tonne, based on federal minimums
     "2025": 125
@@ -44,8 +42,6 @@ snapshots:
   load_mode: *load_mode
   folder_name: "model/Canada-National"
   load_growth_forecast: "model/Canada-National/loads_forecast.csv"
-  years: *investment_period
-  ref_year: *ref_year
   investment_periods: 5
 
   # Rep days config
@@ -67,10 +63,6 @@ extra_loads:
   path: data/base
 
 planning:
-  reference_year: 2021
-  start_year: 2021
-  forecast_year: 2021
-  investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
   load_shedding: false
   test_mode: true  # Set to true to limit model to first 6 snapshots per investment period for quick testing
   constraints:

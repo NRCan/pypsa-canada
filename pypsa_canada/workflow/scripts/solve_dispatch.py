@@ -362,7 +362,7 @@ def main():
     solver_name = solver_settings["name"]
 
     if len(dispatch_settings["investment_period"]) == 0:
-        investment_periods = config["planning"]["investment_period"]
+        investment_periods = config["year_settings"]["investment_period"]
     else:
         investment_periods = dispatch_settings["investment_period"]
 

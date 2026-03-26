@@ -44,8 +44,8 @@ def create_yearly_snapshots(network: Network, snapshot_config: dict) -> Network:
     """
 
     folder_name: str = snapshot_config["folder_name"]
-    years: list[int] = snapshot_config["years"]
-    ref_year: int = snapshot_config["ref_year"]
+    years: list[int] = config["year_settings"]["investment_period"]
+    ref_year: int = config["year_settings"]["ref_year"]
     snapshot_new_df: pd.DatetimeIndex = pd.DatetimeIndex([])
     period_df: pd.DatetimeIndex = pd.DatetimeIndex([])
 
@@ -101,7 +101,7 @@ def save_ref_year_data(
     links_t_p_max_pu = network_ref.links_t.p_max_pu.copy()
     links_t_p_min_pu = network_ref.links_t.p_min_pu.copy()
 
-    for i in range(0, len(snapshot_config["years"])):
+    for i in range(0, len(config["year_settings"]["investment_period"])):
         a = i * 8760
         b = (i + 1) * 8760
         network.snapshot_weightings[a:b] = 1
@@ -138,7 +138,7 @@ def create_yearly_weightings(
     Returns:
         Network configured for multi-period optimization with investment weightings.
     """
-    years = snapshot_config["years"]
+    years = config["year_settings"]["investment_period"]
     load_mode = LoadProfile[snapshot_config["load_mode"].upper()]
     snapshot_new_df = network.snapshots
 
@@ -271,7 +271,7 @@ def apply_growth_load_from_forecast(
     """
     load_growth_node = load_load_forecast(load_mode, load_growth_forecast)
     load_growth_forecast = snapshot_config["load_growth_forecast"]
-    years = snapshot_config["years"]
+    years = config["year_settings"]["investment_period"]
     load_mode = LoadProfile[config["load"]["load_mode"].upper()]
 
     loads_t_p_set_ref_df = load_df.copy()
