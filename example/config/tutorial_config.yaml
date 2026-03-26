@@ -6,21 +6,6 @@ version: 0.7.0
 
 input_data: "data/base"
 
-#Unsolved Networks
-planning_unsolved_network_unfiltered_nc: networks/unsolved/planning_base_network_unfiltered.nc
-planning_unsolved_network_csv: networks/unsolved/planning_base_network_csv
-planning_unsolved_network_nc: networks/unsolved/planning_base_network.nc
-dispatch_unsolved_network_csv: networks/unsolved/dispatch_base_network_csv
-dispatch_unsolved_network_nc: networks/unsolved/dispatch_base_network.nc
-
-#Solved Networks
-planning_output_file_csv: "results/planning_output_csv"
-planning_output_file_nc: "results/planning_output.nc"
-#dispatch_output_file_csv: "results/dispatch_output_csv"
-dispatch_output_file_csv: "results/dispatch_output"
-#dispatch_output_file_nc: "results/dispatch_output.nc"
-uppercase: true
-
 run:
   name: "tutorial" # use this to keep track of runs with different settings
   disable_progressbar: false # set to true to disable the progressbar

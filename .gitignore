@@ -140,8 +140,7 @@ cython_debug/
 results/*
 .snakemake/*
 **/.snakemake/*
-networks/*
-example/networks/*
+example/resources/
 example/results/
 example/*.csv
 .vscode/*
