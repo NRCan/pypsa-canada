@@ -12,24 +12,29 @@ from scripts._helpers import (
     get_scenarios,
     get_rdir,
     get_shadow,
+    merge_with_defaults,
 )
 
-run = config["run"]
+# Merge config with defaults to ensure all required keys are present
+config = merge_with_defaults(config)
+
 # scenarios = get_scenarios(run)
 
 # for run in config["runs"]:
 #     print(run["run"]["name"])
 #     print(run["name"])
 
+run = config["run"]
 RDIR = get_rdir(run)
 
 RUN_NAME = f"{config["run"]["name"]}"
 
 NET_DIR = "networks"
+RCS_DIR = "resources"
 RES_DIR = "results"
 LOG_DIR = "logs"
 
-RUN_NET_DIR = f"{NET_DIR}/{RUN_NAME}"
+RUN_NET_DIR = f"{RCS_DIR}/{RUN_NAME}/{NET_DIR}"
 RUN_RES_DIR = f"{RES_DIR}/{RUN_NAME}"
 RUN_LOG_DIR = f"{LOG_DIR}/{RUN_NAME}"
 
@@ -65,14 +70,14 @@ include: "rules/solve_dispatch.smk"
 
 rule all:
     input:
-        config["planning_output_file_csv"],
-        config["dispatch_output_file_csv"]
+        f"{RUN_RES_DIR}/planning_solved_network_csv",
+        f"{RUN_RES_DIR}/dispatch_solved_network_csv"
 
 rule clean_all:
     message:
         "Cleaning all"
     shell:
-        "rm -rf {NET_DIR}/* {RES_DIR}/* {LOG_DIR}/*"
+        "rm -rf {RCS_DIR}/* {RES_DIR}/* {LOG_DIR}/*"
 
 rule clean_unsolved:
     message:

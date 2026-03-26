@@ -42,6 +42,65 @@ def get_scenarios(run):
     return {}
 
 
+def load_default_config():
+    """
+    Load the default configuration file.
+
+    Returns
+    -------
+    dict
+        Default configuration dictionary
+    """
+    # Get the path to the default config file
+    # Try to find it relative to the workflow directory
+    try:
+        # Try to get the config from the custom data folder environment variable
+        data_folder = os.environ.get("PYPSA_CUSTOM_DATA_FOLDER")
+        if data_folder:
+            default_config_path = Path(data_folder) / "config" / "default_config.yaml"
+        else:
+            # Fallback to the example config directory
+            script_dir = Path(__file__).parent.resolve()
+            root_dir = script_dir.parent.parent.parent
+            default_config_path = root_dir / "example" / "config" / "default_config.yaml"
+
+        if default_config_path.exists():
+            with open(default_config_path, 'r') as f:
+                return yaml.safe_load(f)
+        else:
+            logger.warning(f"Default config file not found at {default_config_path}")
+            return {}
+    except Exception as e:
+        logger.warning(f"Could not load default config: {e}")
+        return {}
+
+
+def merge_with_defaults(config):
+    """
+    Merge the provided config with default values.
+
+    Only adds missing keys from defaults, does not overwrite existing values.
+
+    Parameters
+    ----------
+    config : dict
+        User-provided configuration dictionary
+
+    Returns
+    -------
+    dict
+        Merged configuration dictionary
+    """
+    default_config = load_default_config()
+    if default_config:
+        # Use snakemake's update_config to merge, but reverse order
+        # so user config takes precedence
+        merged = copy.deepcopy(default_config)
+        update_config(merged, config)
+        return merged
+    return config
+
+
 def get_rdir(run):
     scenario_config = run.get("scenarios", {})
     if run["name"] and scenario_config.get("enable"):
