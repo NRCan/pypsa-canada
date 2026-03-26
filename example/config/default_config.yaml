@@ -1,7 +1,7 @@
-input_data: model/Canada-National
+# input_data: model/Canada-National
 
 run:
-  name: "default-run" # use this to keep track of runs with different settings
+  # name: "default-run" # use this to keep track of runs with different settings
   disable_progressbar: false # set to true to disable the progressbar
   shared_resources: false # set to true to share the default resources across runs
   shared_cutouts: true # set to true to share the default cutout(s) across runs
@@ -20,8 +20,8 @@ solving:
 
 load:
   load_mode: &load_mode "custom"
-  load_growth_filepath: "model/Canada-National/loads_forecast.csv"
-  ref_year: [*ref_year]
+  # load_growth_filepath: "model/Canada-National/loads_forecast.csv"
+  # ref_year: [*ref_year]
 
 components:
   override_dir: ""
@@ -29,21 +29,21 @@ components:
   costs_dir: "data/costs"
   obps: true
   technology_costs: "default_costs"
-  years: *investment_period
-  carbon_tax:
-    "2021": 50 # $ per tonne, based on federal minimums
-    "2025": 125
-    "2030": 170
-    "2035": 170
-    "2040": 170
-    "2045": 170
-    "2050": 170
+  # years: *investment_period
+  # carbon_tax:
+  #   "2021": 50 # $ per tonne, based on federal minimums
+  #   "2025": 125
+  #   "2030": 170
+  #   "2035": 170
+  #   "2040": 170
+  #   "2045": 170
+  #   "2050": 170
 
 snapshots:
   method: "OPT_VRE_HYDRO"
   load_mode: *load_mode
-  folder_name: "model/Canada-National"
-  load_growth_forecast: "model/Canada-National/loads_forecast.csv"
+  # folder_name: "model/Canada-National"
+  # load_growth_forecast: "model/Canada-National/loads_forecast.csv"
   years: *investment_period
   ref_year: *ref_year
   investment_periods: 5
@@ -57,7 +57,7 @@ snapshots:
   save_fig: false
   save_csv: false
   saving_folder_path: saves
-  provinces_selection: ["AB", "BC", "MB", "NB", "NS", "ON", "PE", "QC", "SK", "NL"]
+  # provinces_selection: ["AB", "BC", "MB", "NB", "NS", "ON", "PE", "QC", "SK", "NL"]
   # year: None
   aggregate: false
 
@@ -67,10 +67,10 @@ extra_loads:
   path: data/base
 
 planning:
-  reference_year: 2021
-  start_year: 2021
-  forecast_year: 2021
-  investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
+  reference_year: *ref_year
+  start_year: *start_year
+  forecast_year: *forecast_year
+  investment_period: *investment_period
   load_shedding: false
   test_mode: true  # Set to true to limit model to first 6 snapshots per investment period for quick testing
   constraints:
@@ -79,17 +79,17 @@ planning:
       2030: ["coal"]
     planning_reserve_margin:
       capacity_values_placeholder_filepath: "data/constraints/capacity_values_placeholder.csv"
-      provinces_list:
-        "PE": 1.2
-        "NB": 1.2
-        "NS": 1.2
-        "AB": 1.2
-        "BC": 1.2
-        "MB": 1.2
-        "ON": 1.2
-        "QC": 1.2
-        "SK": 1.2
-        "NL": 1.2
+      # provinces_list:
+      #   "PE": 1.2
+      #   "NB": 1.2
+      #   "NS": 1.2
+      #   "AB": 1.2
+      #   "BC": 1.2
+      #   "MB": 1.2
+      #   "ON": 1.2
+      #   "QC": 1.2
+      #   "SK": 1.2
+      #   "NL": 1.2
     CER_constraint:
       # aggregation levels: provincial, group, individual
       aggregation: 'provincial'

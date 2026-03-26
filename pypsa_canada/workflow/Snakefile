@@ -12,9 +12,12 @@ from scripts._helpers import (
     get_scenarios,
     get_rdir,
     get_shadow,
+    merge_with_defaults,
 )
 
-run = config["run"]
+# Merge config with defaults to ensure all required keys are present
+config = merge_with_defaults(config)
+
 # scenarios = get_scenarios(run)
 
 # for run in config["runs"]:
