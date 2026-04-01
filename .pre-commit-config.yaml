@@ -24,3 +24,8 @@ repos:
         exclude: 'pypsa_canada/workflow/rules/*'
     -   id: ruff-format
         exclude: 'pypsa_canada/workflow/rules/*'
+
+# -   repo: https://github.com/DavidAnson/markdownlint-cli2
+#     rev: v0.22.0
+#     hooks:
+#         - id: markdownlint-cli2
