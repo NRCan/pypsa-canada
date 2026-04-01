@@ -1,3 +1,10 @@
+## 0.0.9 (2026-04-01)
+
+### Maintenance
+
+- Added open source files
+- Added open source files
+
 ## 0.0.8 (2026-03-26)
 
 ### Bug Fixes
