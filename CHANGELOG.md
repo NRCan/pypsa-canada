@@ -1,3 +1,11 @@
+## 0.0.10 (2026-04-09)
+
+### Bug Fixes
+
+- Added solver_options + discount rates
+- Added discount_rate arg in config file
+- Added solver options + linearized options in config file
+
 ## 0.0.9 (2026-04-01)
 
 ### Maintenance
