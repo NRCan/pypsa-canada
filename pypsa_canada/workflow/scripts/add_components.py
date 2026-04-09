@@ -443,7 +443,7 @@ def apply_OBPS(
     # assume OBPS doesn't apply after 2035
     if fuel_type in obps_standard.keys() and not (int(year) >= 2035):
         # apply OBPS
-        print(f"Applying OBPS in {year}")
+        # print(f"Applying OBPS in {year}")
         match fuel_type:
             case "solid":
                 if str(year) not in obps_standard["solid"].keys():

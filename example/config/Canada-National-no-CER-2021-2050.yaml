@@ -12,8 +12,20 @@ year_settings:
   start_year: 2021
   forecast_year: 2050
   investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
+  discount_rate: 0.05
 
 solving:
+  options:
+    planning:
+      load_shedding: false
+      linearized_unit_commitment: true
+      keep_files: false
+      store_model: false
+    dispatch:
+      load_shedding: true
+      linearized_unit_commitment: true
+      keep_files: false
+      store_model: false
   solver:
     name: &solver_name highs
     options: highs-default
@@ -56,6 +68,7 @@ snapshots:
   provinces_selection: ["AB", "BC", "MB", "NB", "NS", "ON", "PE", "QC", "SK", "NL"]
   # year: None
   aggregate: false
+  mip_gap: 0.01
 
 extra_loads:
   is_used: false
@@ -63,8 +76,6 @@ extra_loads:
   path: data/base
 
 planning:
-  load_shedding: false
-  test_mode: true  # Set to true to limit model to first 6 snapshots per investment period for quick testing
   constraints:
     add_spilling_variable: true
     add_stop_production_constraint:
@@ -102,11 +113,6 @@ dispatch:
   horizon: 336 #336 #2 weeks in hours
   overlap: 48 #48
   investment_period: [] #If empty, it will take the planning investment periods
-
-  #Additional Solving options
-  load_shedding: true
-  linearized_unit_commitment: false
-
   constraints:
     # add_spilling_variable: true
     add_stop_production_constraint:

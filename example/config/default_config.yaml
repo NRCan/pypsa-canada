@@ -12,11 +12,101 @@ year_settings:
   start_year: 2021
   forecast_year: 2050
   investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
+  discount_rate: 0.05
 
 solving:
+  options:
+    planning:
+      load_shedding: false
+      linearized_unit_commitment: false
+      keep_files: false
+      store_model: false
+    dispatch:
+      load_shedding: false
+      linearized_unit_commitment: false
+      keep_files: false
+      store_model: false
   solver:
     name: &solver_name highs
     options: highs-default
+  solver_options:
+    "highs-default":
+      threads: 1
+      solver: ipm
+      run_crossover: 'off'
+      small_matrix_value: 1.0e-06
+      large_matrix_value: 1000000000.0
+      primal_feasibility_tolerance: 1.0e-05
+      dual_feasibility_tolerance: 1.0e-05
+      ipm_optimality_tolerance: 0.0001
+      parallel: 'on'
+      random_seed: 123
+    "highs-simplex":
+      solver: simplex
+      parallel: 'on'
+      primal_feasibility_tolerance: 1.0e-05
+      dual_feasibility_tolerance: 1.0e-05
+      random_seed: 123
+    "gurobi-default":
+      threads: 32
+      method: 2
+      crossover: 0
+      BarConvTol: 1.0e-05
+      Seed: 123
+      AggFill: 0
+      PreDual: 0
+      GURO_PAR_BARDENSETHRESH: 200
+    "gurobi-numeric-focus":
+      NumericFocus: 3
+      method: 2
+      crossover: 0
+      BarHomogeneous: 1
+      BarConvTol: 1.0e-05
+      FeasibilityTol: 0.0001
+      OptimalityTol: 0.0001
+      ObjScale: -0.5
+      threads: 8
+      Seed: 123
+    "gurobi-fallback":
+      crossover: 0
+      method: 2
+      BarHomogeneous: 1
+      BarConvTol: 1.0e-05
+      FeasibilityTol: 1.0e-05
+      OptimalityTol: 1.0e-05
+      Seed: 123
+      threads: 8
+    "cplex-default":
+      threads: 4
+      lpmethod: 4
+      solutiontype: 2
+      barrier.convergetol: 1.0e-05
+      feasopt.tolerance: 1.0e-06
+    "copt-default":
+      Threads: 8
+      LpMethod: 2
+      Crossover: 0
+      RelGap: 1.0e-06
+      Dualize: 0
+    "copt-gpu":
+      LpMethod: 6
+      GPUMode: 1
+      PDLPTol: 1.0e-05
+      Crossover: 0
+    "xpress-default":
+      threads: 8
+      lpflags: 4
+      crossover: 0
+      bargaptarget: 1.0e-05
+      baralg: 2
+    "xpress-gpu":
+      lpflags: 4
+      crossover: 0
+      baralg: 4
+      barhggpu: 1
+      barhgreltol: 1.0e-05
+    "cbc-default": {}
+    "glpk-default": {}
 
 load:
   load_mode: &load_mode "custom"

@@ -78,9 +78,7 @@ def create_yearly_snapshots(network: Network, snapshot_config: dict) -> Network:
     return network
 
 
-def save_ref_year_data(
-    network: Network, network_ref: Network, snapshot_config: dict
-) -> Network:
+def save_ref_year_data(network: Network, network_ref: Network) -> Network:
     """
     Copy reference year time-series data to all investment periods.
 
@@ -96,6 +94,7 @@ def save_ref_year_data(
         Network with time-series data populated for all periods.
     """
     # Store reference year time-series data
+    # network_ref = network.copy()
     generator_t_p_max_pu = network_ref.generators_t.p_max_pu.copy()
     storage_units_t_inflow_old_df = network_ref.storage_units_t.inflow.copy()
     links_t_p_max_pu = network_ref.links_t.p_max_pu.copy()
@@ -118,7 +117,6 @@ def save_ref_year_data(
 
 def create_yearly_weightings(
     network: Network,
-    network_ref: Network,
     snapshot_config: dict,
     discount_rate: float = 0.05,
 ) -> Network:
@@ -131,7 +129,6 @@ def create_yearly_weightings(
 
     Args:
         network: Target network to configure with multi-period data.
-        network_ref: Reference network with base year data.
         snapshot_config: Configuration dictionary
         discount_rate: Discount rate for net present value calculations. Default 0.05.
 
@@ -187,11 +184,6 @@ def generate_investment_weightings(
         discounts = [(1 / (1 + discount_rate) ** t) for t in range(T, T + nyears)]
         n.investment_period_weightings.at[period, "objective"] = sum(discounts)
         T += nyears
-
-    # print("Investment Weightings:")
-    # print(50 * "=")
-    # print(n.investment_period_weightings)
-    # print(50 * "=")
 
     return n
 
@@ -318,12 +310,15 @@ def apply_growth_load_from_forecast(
 
 def main():
     network = Network(snakemake.input.input_data)
+    discount_rate = config["year_settings"]["discount_rate"]
     network_ref = network.copy()
     snapshot_config = config["snapshots"]
 
-    network = create_yearly_snapshots(network, snapshot_config)
-    network = save_ref_year_data(network, network_ref, snapshot_config)
-    network = create_yearly_weightings(network, network_ref, snapshot_config)
+    network = create_yearly_snapshots(network=network, snapshot_config=snapshot_config)
+    network = save_ref_year_data(network, network_ref)
+    network = create_yearly_weightings(
+        network=network, snapshot_config=snapshot_config, discount_rate=discount_rate
+    )
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)

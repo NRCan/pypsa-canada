@@ -11,6 +11,7 @@ year_settings:
   ref_year: &ref_year 2021
   start_year: &start_year 2021
   forecast_year: &forecast_year 2050
+  discount_rate: 0.05
 
 solving:
   solver:
@@ -59,6 +60,7 @@ snapshots:
   provinces_selection: [AB, BC, MB, NB, NS, 'ON', PE, QC, SK, NL]
   # year: None
   aggregate: false
+  mip_gap: 0.01
 
 extra_loads:
   is_used: false

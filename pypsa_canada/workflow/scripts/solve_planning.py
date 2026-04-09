@@ -65,65 +65,16 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
     """
 
     constraint_dict = config["planning"]["constraints"]
-    # m = network.model
 
     # The snapshots must only contain one unique year
     period_list = network.snapshots.get_level_values(0).unique()
     logging.info(f"Period list = {period_list}")
 
-    # Add binary spilling variable (1: spilling, 0: not spilling) to Linopy model
-    # spilling_variable_ena = constraint_dict.get("add_spilling_variable")
-    # logging.info(f'Add Spilling Variable has been set to {spilling_variable_ena}')
-    # if spilling_variable_ena:
-    #     add_spilling_variable(
-    #         network=network,
-    #         snapshots=network.snapshots
-    #     )
-
     # Add bidirectional link constraint (applies to all periods)
     if "add_bidirection_link_constraint" in constraint_dict:
         links_constraint_dict = constraint_dict["add_bidirection_link_constraint"]
         logging.info(f"Adding bidirectional link constraint: {links_constraint_dict}")
         add_bidirection_link_constraint(network, links_constraint_dict)
-
-    # # Add prevent spill if not fully charged constraint (applies to all periods)
-    # if "add_prevent_spill_if_not_fully_charged_constraint" in constraint_dict:
-    #     if ("maximum_soc_storage_value" in
-    #         constraint_dict["add_prevent_spill_if_not_fully_charged_constraint"]):
-    #         maximum_soc_storage_value = constraint_dict[
-    #             "add_prevent_spill_if_not_fully_charged_constraint"
-    #         ]["maximum_soc_storage_value"]
-    #         logging.info(f"Adding prevent spill constraint with M={maximum_soc_storage_value}")
-    #         prevent_spill_if_not_fully_charged(
-    #             network, network.snapshots, maximum_soc_storage_value
-    #         )
-
-    # Per-period constraints
-    # spilling_variable_ena = constraint_dict.get("add_spilling_variable")
-    # logging.info(f'Add Spilling Variable has been set to {spilling_variable_ena}')
-    # if spilling_variable_ena:
-    #     add_spilling_variable(
-    #         network=network,
-    #         snapshots=network.snapshots
-    #     )
-
-    # Add bidirectional link constraint (applies to all periods)
-    if "add_bidirection_link_constraint" in constraint_dict:
-        links_constraint_dict = constraint_dict["add_bidirection_link_constraint"]
-        logging.info(f"Adding bidirectional link constraint: {links_constraint_dict}")
-        add_bidirection_link_constraint(network, links_constraint_dict)
-
-    # # Add prevent spill if not fully charged constraint (applies to all periods)
-    # if "add_prevent_spill_if_not_fully_charged_constraint" in constraint_dict:
-    #     if ("maximum_soc_storage_value" in
-    #         constraint_dict["add_prevent_spill_if_not_fully_charged_constraint"]):
-    #         maximum_soc_storage_value = constraint_dict[
-    #             "add_prevent_spill_if_not_fully_charged_constraint"
-    #         ]["maximum_soc_storage_value"]
-    #         logging.info(f"Adding prevent spill constraint with M={maximum_soc_storage_value}")
-    #         prevent_spill_if_not_fully_charged(
-    #             network, network.snapshots, maximum_soc_storage_value
-    #         )
 
     # Per-period constraints
     for period in period_list:
@@ -133,8 +84,6 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
         logging.info(f"Processing constraints for period {period}")
         logging.info(f"Processing constraints for period {period}")
         logging.info(f"Network multi-index = {period_snapshots}")
-
-        # Stop production constraint
 
         # Stop production constraint
         if "add_stop_production_constraint" in constraint_dict:
@@ -209,20 +158,6 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
                 network, period, prov, margin, capacity_values_filepath
             )
 
-            # add_planning_reserve_margin(m, self.network, year, prov, margin)
-            # if "provinces" in reserve_margin_config:
-            #     provinces = reserve_margin_config["provinces"]
-            #     margin = reserve_margin_config.get("margin", 1.2)
-            #     # Check for province-specific margins
-            #     province_margins = reserve_margin_config.get("province_margins", {})
-            #     for province in provinces:
-            #         prov_margin = province_margins.get(province, margin)
-            #         logging.info(f"Adding reserve margin constraint for {province} in {period} with margin {prov_margin}")
-
-            #         add_planning_reserve_margin(
-            #             network, period_snapshots, province, prov_margin
-            #         )
-
     # Custom capacity expansion constraints (applies to all periods)
     custom_constraints = constraint_dict.get(
         "component_capacity_expansion_constraint", False
@@ -235,95 +170,6 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
             network, custom_constraints.get("custom_constraint_filepath")
         )
 
-    # # Log final constraint count
-    # final_constraint_count = len(m.constraints) if hasattr(m, 'constraints') else 0
-    # logging.info(f"=== Finished add_all_planning_constraints ===")
-    # logging.info(f"Final constraint count: {final_constraint_count}")
-    # logging.info(f"Constraints added: {final_constraint_count - initial_constraint_count}")
-
-    # # Log constraint names for debugging
-    # if hasattr(m, 'constraints'):
-    #     # Linopy constraints are accessed via attributes, not keys()
-    #     planning_constraints = [name for name in dir(m.constraints)
-    #                            if not name.startswith('_') and
-    #                            ('Planning' in name or 'GlobalConstraint' in name)]
-    #     if planning_constraints:
-    #         logging.info(f"Custom planning constraints added ({len(planning_constraints)}):")
-    #         for name in planning_constraints:
-    #             logging.info(f"  - {name}")
-
-
-# def rename_dims(n):
-#     for c in ["generators", "links", "storage_units"]:
-#         df = getattr(n, c)
-#         if "committable" in df.columns:
-#             print(f"\n{c} committable:", df[(df.committable)&(df.p_nom_extendable)].index.tolist())
-#         # if "p_nom_extendable" in df.columns:
-#             # print(f"{c} extendable:", df[df.p_nom_extendable].index.tolist())
-
-
-# def fix_network_dataarray_dims(network):
-#     """
-#     Fix DataArray dimension names after loading from netCDF.
-
-#     When snapshots are MultiIndex, PyPSA may create DataArrays with generic
-#     dimension names like 'dim_0' instead of 'snapshot', causing alignment errors.
-#     This fixes those dimension names before model creation.
-#     """
-#     # Ensure all time-varying component DataFrames have properly named indices
-#     for component_t in ['generators_t', 'storage_units_t', 'loads_t', 'links_t', 'stores_t']:
-#         if hasattr(network, component_t):
-#             comp_t_obj = getattr(network, component_t)
-#             for attr_name in dir(comp_t_obj):
-#                 if not attr_name.startswith('_'):
-#                     try:
-#                         attr = getattr(comp_t_obj, attr_name)
-#                         if hasattr(attr, 'index'):
-#                             # Fix the index.name attribute (not .names for level names)
-#                             if attr.index.name == 'dim_0' or attr.index.name is None:
-#                                 attr.index.name = 'snapshot'
-#                                 logging.info(f"Fixed index name for {component_t}.{attr_name}")
-#                             # Also ensure MultiIndex level names are correct
-#                             if hasattr(attr.index, 'names') and len(attr.index.names) == 2:
-#                                 if attr.index.names[0] is None or attr.index.names[1] is None:
-#                                     attr.index.names = ['period', 'timestep']
-#                                     logging.info(f"Fixed index level names for {component_t}.{attr_name}")
-#                     except (AttributeError, TypeError):
-#                         pass
-
-#     # Also fix the main snapshots index
-#     if hasattr(network.snapshots, 'name'):
-#         if network.snapshots.name == 'dim_0' or network.snapshots.name is None:
-#             network.snapshots.name = 'snapshot'
-#             logging.info("Fixed snapshots index name")
-
-#     return network
-
-# def fix_snapshot_dim(n):
-#     """Rename dim_0 -> snapshot in all dynamic component dataframes."""
-#     # Iterate over time-varying (_t) component attributes instead of using deprecated dynamic()
-#     # for component_t_name in ['generators_t', 'storage_units_t', 'loads_t', 'links_t', 'stores_t', 'lines_t', 'transformers_t']:
-#     for component_t_name in ['storage_units_t']:
-#         if not hasattr(n, component_t_name):
-#             continue
-
-#         component_t = getattr(n, component_t_name)
-#         print(f'Component {component_t_name}')
-#         print(f'component_t {component_t}')
-
-#         # Iterate over attributes (e.g., p_max_pu, inflow, etc.)
-#         for key in dir(component_t):
-#             if key.startswith('_'):
-#                 continue
-#             try:
-#                 da = getattr(component_t, key)
-#                 if hasattr(da, 'dims') and "dim_0" in da.dims:
-#                     renamed_da = da.rename({"dim_0": "snapshot"})
-#                     setattr(component_t, key, renamed_da)
-#                     print(f"Fixed dim_0 -> snapshot in {component_t_name}.{key}")
-#             except (AttributeError, TypeError):
-#                 pass
-
 
 def main():
     network = pypsa.Network(snakemake.input.planning_unsolved_network)
@@ -333,6 +179,16 @@ def main():
     # network.storage_units_t.standing_loss = (
     #     network.storage_units_t.standing_loss.rename({"dim_0": "snapshot"})
     # )
+    solving_settings = config["solving"]
+
+    options_settings = solving_settings["options"]["planning"]
+    load_shedding = options_settings["load_shedding"]
+    linearized_unit_commitment = options_settings["linearized_unit_commitment"]
+
+    solver_settings = solving_settings["solver"]
+    solver_name = solver_settings["name"]
+    solver_options_select = solver_settings.get("options", {})
+    solver_options = solving_settings["solver_options"].get(solver_options_select, {})
 
     # Test mode: limit to first 6 snapshots per investment period if PYPSA_TEST_MODE environment variable is set
     if os.environ.get("PYPSA_TEST_MODE") == "1":
@@ -372,17 +228,41 @@ def main():
         logging.info(
             f"Snapshot weightings set to: {network.snapshot_weightings.head()}"
         )
+    else:
+        # Identify snapshots where objective is NOT 0
+        valid_snapshots = network.snapshot_weightings[
+            network.snapshot_weightings["objective"] != 0
+        ].index
 
-    network.optimize.add_load_shedding(marginal_cost=1000000, sign=1.0)
+        # Update the network to only include those snapshots
+        network.set_snapshots(valid_snapshots)
 
-    model = network.optimize.create_model(multi_investment_periods=True)  # NOQA
+    if linearized_unit_commitment:
+        linearized_uc_ena = True
+        logging.info("Linearized Unit Commitment Flag has been enabled")
+    else:
+        linearized_uc_ena = False
+        logging.info("Linearized Unit Commitment Flag has been disabled")
 
-    solver_settings = config["solving"]["solver"]
+    # Load shedding feature if needed
+    if load_shedding:
+        logging.info("Adding Load shedding option")
+        network.optimize.add_load_shedding(marginal_cost=1000000, sign=1.0)
+
+    network.optimize.create_model(
+        multi_investment_periods=True,
+        linearized_unit_commitment=linearized_uc_ena,
+    )
+
+    logging.info(
+        f"Solving optimization model with solver: {solver_name} and options: {solver_options}"
+    )
 
     solve_status, solve_condition = network.optimize.solve_model(
         # multi_investment_periods=True,
         # assign_all_duals=True,
-        solver_name=solver_settings["name"],
+        solver_name=solver_name,
+        solver_options=solver_options,
         extra_functionality=add_all_planning_constraints,
     )
 

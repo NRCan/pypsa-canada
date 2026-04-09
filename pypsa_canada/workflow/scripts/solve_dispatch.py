@@ -137,6 +137,8 @@ def optimize_uc_period(
     CER_leftover = {}
     cer_enabled = False
 
+    logging.info(f"Solver options for {solver_name}: {solver_options}")
+
     if CER_constraint_cfg and period_year >= CER_constraint_cfg.get("year", 9999):
         CER_generators, CER_group_budget, CER_group_list = CER_generator_grouping(
             network, CER_constraint_cfg, period_year, "dispatch"
@@ -355,22 +357,23 @@ def main():
     dispatch_settings = config["dispatch"]
     horizon = dispatch_settings["horizon"]
     overlap = dispatch_settings["overlap"]
-    load_shedding = dispatch_settings["load_shedding"]
-    linearized_unit_commitment = dispatch_settings["linearized_unit_commitment"]
     logging.debug(f"Dispatch_settings = {dispatch_settings}")
-    solver_settings = config["solving"]["solver"]
+
+    solving_settings = config["solving"]
+
+    options_settings = solving_settings["options"]["dispatch"]
+    load_shedding = options_settings["load_shedding"]
+    linearized_unit_commitment = options_settings["linearized_unit_commitment"]
+
+    solver_settings = solving_settings["solver"]
     solver_name = solver_settings["name"]
+    solver_options_select = solver_settings.get("options", {})
+    solver_options = solving_settings["solver_options"].get(solver_options_select, {})
 
     if len(dispatch_settings["investment_period"]) == 0:
         investment_periods = config["year_settings"]["investment_period"]
     else:
         investment_periods = dispatch_settings["investment_period"]
-
-    # # Test mode: limit to first investment period only
-    # if os.environ.get("PYPSA_TEST_MODE") == "1":
-    #     logging.info("Test mode enabled: limiting to first investment period only")
-    #     # investment_periods = [investment_periods[0]]
-    #     logging.info(f"Running only period: {investment_periods}")
 
     for period in investment_periods:
         # network.snapshots = original_snapshots
@@ -401,6 +404,7 @@ def main():
 
         # Load shedding feature if needed
         if load_shedding:
+            logging.info("Adding Load shedding option")
             period_network.optimize.add_load_shedding(marginal_cost=1000000, sign=1.0)
 
         period_network = optimize_uc_period(
@@ -408,7 +412,7 @@ def main():
             horizon=horizon,
             overlap=overlap,
             solver_name=solver_name,
-            solver_options={},
+            solver_options=solver_options,
             linearized_unit_commitment=linearized_uc_ena,
             period_year=period,
         )

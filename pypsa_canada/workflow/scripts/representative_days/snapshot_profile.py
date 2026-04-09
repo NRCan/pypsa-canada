@@ -300,6 +300,7 @@ def snapshots_selection(
                     save_fig=snapshot_config["save_fig"],
                     save_csv=snapshot_config["save_csv"],
                     saving_folder_path=snapshot_config["saving_folder_path"],
+                    mip_gap=snapshot_config["mip_gap"],
                 )
                 snapshot_status = SnapshotStatus.Completed
 
