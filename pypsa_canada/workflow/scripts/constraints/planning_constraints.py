@@ -1,8 +1,9 @@
 import logging
 import os
+import warnings
 
 # from pypsa.descriptors import get_active_assets, get_extendable_i
-import warnings
+from pathlib import Path
 
 import pandas as pd
 import pypsa
@@ -172,9 +173,9 @@ def add_planning_reserve_margin(
 
     # Import file with capacity value (fractional) vs. carrier/model
     # Check for custom data folder path from environment variable
-    custom_data_folder = os.environ.get("PYPSA_CUSTOM_DATA_FOLDER")
+    # custom_data_folder = os.environ.get("PYPSA_CUSTOM_DATA_FOLDER")
     # data_filepath = os.path.join(custom_data_folder, "data", "constraints", capacity_values_filepath)
-    data_filepath = os.path.join(str(custom_data_folder), str(capacity_values_filepath))
+    data_filepath = os.path.join(str(Path.cwd()), str(capacity_values_filepath))
 
     capacity_value_by_carrier = pd.read_csv(data_filepath, index_col="Carrier")
     capacity_value_by_carrier.columns = capacity_value_by_carrier.columns.astype(int)
@@ -354,10 +355,7 @@ def component_capacity_expansion_constraint(network, constraints_csv_filepath: s
     work-around for pypsa global_constraints since they don't work properly
     """
     m = network.model
-    custom_data_folder = os.environ.get("PYPSA_CUSTOM_DATA_FOLDER")
-    # file_path = os.path.join(str(custom_data_folder), "data", "constraints", "custom_constraints.csv")
-    # file_path = os.path.join(str(custom_data_folder), constraints)
-    file_path = os.path.join(str(custom_data_folder), str(constraints_csv_filepath))
+    file_path = os.path.join(str(Path.cwd()), str(constraints_csv_filepath))
 
     logger.info(f"Custom filepath = {file_path}")
     if os.path.exists(file_path):

@@ -553,7 +553,8 @@ def main() -> None:
     network = preprocess_components(network, comp_config)
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
-    network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
+    if(config["run"]["export_csv"]):
+        network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
 
 
 if __name__ == "__main__":

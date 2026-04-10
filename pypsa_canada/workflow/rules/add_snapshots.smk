@@ -5,8 +5,7 @@ rule add_snapshots:
         input_data=f"{RUN_NET_DIR}/add_representative_days.nc",
         loads_p_set=f"{RUN_NET_DIR}/add_loads.csv"
     output:
-        planning_unsolved_network=f"{RUN_NET_DIR}/add_snapshots.nc",
-        planning_unsolved_network_csv=directory(f"{RUN_NET_DIR}/add_snapshots_csv"),
+        planning_unsolved_network=f"{RUN_NET_DIR}/add_snapshots.nc"
     log:
        f"{RUN_LOG_DIR}/add_snapshots.log"
     script:

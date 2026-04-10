@@ -37,12 +37,12 @@ os.environ.pop("SNAKEMAKE_OUTPUT_CACHE", None)  # no cache location => cache unu
 #     type=click.Path(exists=True),
 #     default=None,
 # )
-@click.option(
-    "--data-folder",
-    type=click.Path(exists=True),
-    default=None,
-    help="Path to custom data folder (default: current working directory). Sets PYPSA_CUSTOM_DATA_FOLDER environment variable.",
-)
+# @click.option(
+#     "--data-folder",
+#     type=click.Path(exists=True),
+#     default=None,
+#     help="Path to custom data folder (default: current working directory). Sets PYPSA_CUSTOM_DATA_FOLDER environment variable.",
+# )
 @click.option(
     "-t",
     "--targets",
@@ -77,6 +77,13 @@ os.environ.pop("SNAKEMAKE_OUTPUT_CACHE", None)  # no cache location => cache unu
     default=None,
     help="Number of cores to use (default: all available cores)",
 )
+@click.option(
+    "--keep-network",
+    is_flag=True,
+    default=False,
+    show_default=False,
+    help="Keep existing network outputs and only rerun modified rules (sets forceall=False)",
+)
 @click.command()
 def run(
     file: str,
@@ -86,6 +93,7 @@ def run(
     test: bool = False,
     cores: int | None = None,
     unlock: bool = False,
+    keep_network: bool = False,
 ):
     # Configure logging level
     log_level = logging.DEBUG if debug else logging.INFO
@@ -98,12 +106,6 @@ def run(
     # Set Snakemake logger to the same level
     snakemake_logger = logging.getLogger("snakemake")
     snakemake_logger.setLevel(log_level)
-
-    # Set PYPSA_CUSTOM_DATA_FOLDER environment variable
-    if data_folder is None:
-        data_folder = str(Path.cwd())
-    os.environ["PYPSA_CUSTOM_DATA_FOLDER"] = data_folder
-    print(f"PYPSA_CUSTOM_DATA_FOLDER set to: {data_folder}")
 
     # Set PYPSA_TEST_MODE environment variable
     if test:
@@ -191,7 +193,7 @@ def run(
             )
 
             # Create DAG settings
-            dag_settings = DAGSettings(targets=targets)
+            dag_settings = DAGSettings(targets=targets, forceall=not keep_network)
 
             # Create DAG
             dag_api = workflow_api.dag(dag_settings=dag_settings)

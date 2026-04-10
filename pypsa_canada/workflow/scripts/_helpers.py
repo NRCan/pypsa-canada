@@ -54,17 +54,9 @@ def load_default_config():
     # Get the path to the default config file
     # Try to find it relative to the workflow directory
     try:
-        # Try to get the config from the custom data folder environment variable
-        data_folder = os.environ.get("PYPSA_CUSTOM_DATA_FOLDER")
-        if data_folder:
-            default_config_path = Path(data_folder) / "config" / "default_config.yaml"
-        else:
-            # Fallback to the example config directory
-            script_dir = Path(__file__).parent.resolve()
-            root_dir = script_dir.parent.parent.parent
-            default_config_path = (
-                root_dir / "example" / "config" / "default_config.yaml"
-            )
+        work_dir = Path.cwd()
+        print(f"Current work dir:{work_dir}")
+        default_config_path = work_dir / "config" / "default_config.yaml"
 
         if default_config_path.exists():
             with open(default_config_path) as f:

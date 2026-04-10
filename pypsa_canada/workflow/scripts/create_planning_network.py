@@ -318,7 +318,8 @@ def main():
     network.snapshot_weightings = weightings.loc[positive_snapshots]
     network.snapshot_weightings = network.snapshot_weightings.loc[network.snapshots]
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
-    network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
+    if(config["run"]["export_csv"]):
+        network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
 
 
 if __name__ == "__main__":

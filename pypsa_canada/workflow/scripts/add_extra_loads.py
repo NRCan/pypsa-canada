@@ -117,7 +117,8 @@ def main():
         network = add_extra_load_p_set(network, extra_load_config)
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
-    network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
+    if(config["run"]["export_csv"]):
+        network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
 
     return
 

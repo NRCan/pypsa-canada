@@ -6,6 +6,7 @@ run:
   shared_resources: false # set to true to share the default resources across runs
   shared_cutouts: true # set to true to share the default cutout(s) across runs
   validation: false # set to true to run back-casting plots
+  export_csv: false # set to true to export csv files of the model outputs
 
 year_settings:
   ref_year: 2021

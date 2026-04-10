@@ -357,7 +357,7 @@ def test_reserve_margin_validated(
     period = config["period"]
 
     network.optimize.create_model()
-    data_folder = os.environ["PYPSA_CUSTOM_DATA_FOLDER"]
+    data_folder = os.environ["TEST_DATA_FOLDER"]
     filepath = os.path.join(
         data_folder, "constraints", "capacity_values_placeholder.csv"
     )
@@ -487,7 +487,7 @@ def test_component_capacity_expansion_requires_csv():
 
     network.optimize.create_model()
 
-    data_folder = os.environ["PYPSA_CUSTOM_DATA_FOLDER"]
+    data_folder = os.environ["TEST_DATA_FOLDER"]
     filepath = os.path.join(data_folder, "constraints", "custom_constraints.csv")
 
     result = component_capacity_expansion_constraint(network, filepath)

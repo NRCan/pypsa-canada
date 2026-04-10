@@ -77,12 +77,6 @@ def dag(
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    # Set PYPSA_CUSTOM_DATA_FOLDER environment variable
-    if data_folder is None:
-        data_folder = str(Path.cwd())
-    os.environ["PYPSA_CUSTOM_DATA_FOLDER"] = data_folder
-    print(f"PYPSA_CUSTOM_DATA_FOLDER set to: {data_folder}")
-
     wf_root = files("pypsa_canada.workflow")
     snakefile = Path(str(wf_root.joinpath("Snakefile")))
     workdir = Path.cwd()

@@ -480,7 +480,6 @@ def flatten_multiperiod_network(network: pypsa.Network) -> pypsa.Network:
 
 
 def main():
-
     network = pypsa.Network(snakemake.input.planning_unsolved_network_unfiltered)
 
     # Applying Optimal Generators Values to Unfiltered Network

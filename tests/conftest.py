@@ -27,11 +27,11 @@ def data_folder():
 @pytest.fixture(autouse=True)
 def setup_data_folder(data_folder):
     """Automatically set up custom data folder for all tests"""
-    os.environ["PYPSA_CUSTOM_DATA_FOLDER"] = str(data_folder.resolve())
+    os.environ["TEST_DATA_FOLDER"] = str(data_folder.resolve())
     yield
     # Cleanup after test
-    if "PYPSA_CUSTOM_DATA_FOLDER" in os.environ:
-        del os.environ["PYPSA_CUSTOM_DATA_FOLDER"]
+    if "TEST_DATA_FOLDER" in os.environ:
+        del os.environ["TEST_DATA_FOLDER"]
 
 
 @pytest.fixture
