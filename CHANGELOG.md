@@ -1,3 +1,10 @@
+## 0.0.11 (2026-04-10)
+
+### Bug Fixes
+
+- [#2022] [#2005] [#2054] Various fixes
+- Modified CLI to always recreate the network
+
 ## 0.0.10 (2026-04-09)
 
 ### Bug Fixes
