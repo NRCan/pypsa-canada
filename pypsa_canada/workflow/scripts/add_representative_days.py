@@ -4,7 +4,7 @@ import sys
 import traceback
 
 from pypsa import Network
-from representative_days.snapshot_selection import SnapshotStatus, snapshots_selection
+from representative_days.snapshot_selection import snapshots_selection
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
@@ -28,18 +28,13 @@ config = snakemake.config
 
 def main():
     network = Network(snakemake.input.input_data)
-    snapshot_status: SnapshotStatus
-    # network_ref = network.copy()
     snapshots_conf = config["snapshots"]
 
     network.copy().export_to_netcdf(
         snakemake.output.planning_unsolved_network_unfiltered
     )
 
-    network, snapshot_status = snapshots_selection(network, snapshots_conf)
-
-    with open(snakemake.output.snapshot_status, "w") as f:
-        f.write(str(snapshot_status.value))
+    network = snapshots_selection(network, snapshots_conf)
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     if config["run"]["export_csv"]:

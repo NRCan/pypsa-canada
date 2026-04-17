@@ -111,14 +111,14 @@ solving:
 
 load:
   load_mode: &load_mode "custom"
-  # load_growth_filepath: "model/Canada-National/loads_forecast.csv"
+  # load_growth_forecast: "model/Canada-National/loads_forecast.csv"
 
 components:
   override_dir: ""
   components_dir: "data/components"
   costs_dir: "data/costs"
   obps: true
-  technology_costs: "default_costs"
+  technology_costs: "Default_costs"
   # carbon_tax:
   #   "2021": 50 # $ per tonne, based on federal minimums
   #   "2025": 125
@@ -132,7 +132,6 @@ snapshots:
   method: "OPT_VRE_HYDRO"
   load_mode: *load_mode
   # folder_name: "model/Canada-National"
-  # load_growth_forecast: "model/Canada-National/loads_forecast.csv"
   investment_periods: 5
 
   # Rep days config
@@ -216,8 +215,8 @@ dispatch:
       carriers: ['oil', 'gas', 'diesel']
       # values for hourly mode is number of hours, values for emissions mode is emission intensity (in tC02eq/GWh)
       values: {
-        limit: {2021: 65},
-        offset: {2021: 35}
+        limit: {2035: 65, 2050: 0},
+        offset: {2035: 35, 2050: 42}
         }
       # minimum capacity
       min_cap: 25

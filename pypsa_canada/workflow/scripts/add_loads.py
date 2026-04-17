@@ -42,10 +42,10 @@ def apply_forecast_load(load_config: dict) -> pd.DataFrame:
         KeyError: If required configuration keys are missing.
     """
     load_mode: LoadProfile = LoadProfile[load_config["load_mode"].upper()]
-    load_growth_filepath = load_config["load_growth_filepath"]
+    load_growth_forecast = load_config["load_growth_forecast"]
 
     print(f"Loading load profile: {load_mode.name}")
-    load_growth = load_load_forecast(load_mode, load_growth_filepath)
+    load_growth = load_load_forecast(load_mode, load_growth_forecast)
 
     match load_mode:
         case LoadProfile.DEFAULT:

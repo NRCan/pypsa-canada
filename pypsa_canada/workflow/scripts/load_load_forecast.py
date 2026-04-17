@@ -28,12 +28,12 @@ class LoadProfile(Enum):
     CODERS = 4
 
 
-def load_year_forecast(load_growth_filepath: str, year: list[int]) -> pd.DataFrame:
+def load_year_forecast(load_growth_forecast: str, year: list[int]) -> pd.DataFrame:
     """
     Load load growth forecast data for specific years.
 
     Args:
-        load_growth_filepath: Path to the load growth CSV file.
+        load_growth_forecast: Path to the load growth CSV file.
         year: List of years to filter the forecast data.
 
     Returns:
@@ -43,19 +43,19 @@ def load_year_forecast(load_growth_filepath: str, year: list[int]) -> pd.DataFra
         FileNotFoundError: If the load growth file doesn't exist.
         LoadGrowthFileMissing: If the file is invalid or cannot be parsed.
     """
-    load_growth = pd.read_csv(load_growth_filepath, index_col=0, parse_dates=[0])
+    load_growth = pd.read_csv(load_growth_forecast, index_col=0, parse_dates=[0])
     return load_growth[load_growth.index.year.isin(year)]
 
 
 def load_load_forecast(
-    load_mode: LoadProfile, load_growth_filepath: str
+    load_mode: LoadProfile, load_growth_forecast: str
 ) -> pd.DataFrame:
     """
     Load load growth forecast based on the specified profile type.
 
     Args:
         load_mode: Type of load profile to use (from LoadProfile enum).
-        load_growth_filepath: Path to the load growth CSV file.
+        load_growth_forecast: Path to the load growth CSV file.
 
     Returns:
         DataFrame containing the load growth forecast data.
@@ -64,7 +64,7 @@ def load_load_forecast(
         LoadGrowthFileMissing: If the load growth filepath is missing or invalid.
         NotImplementedError: If the selected load mode is not yet implemented.
     """
-    if not load_growth_filepath and load_mode in {
+    if not load_growth_forecast and load_mode in {
         LoadProfile.DEFAULT,
         LoadProfile.CUSTOM,
     }:
@@ -73,27 +73,27 @@ def load_load_forecast(
     match load_mode:
         # Loads default load forecast from csv file
         case LoadProfile.DEFAULT:
-            print(f"Loading load growth path = {load_growth_filepath}")
+            print(f"Loading load growth path = {load_growth_forecast}")
             try:
                 load_growth = pd.read_csv(
-                    load_growth_filepath, index_col=0, parse_dates=[0]
+                    load_growth_forecast, index_col=0, parse_dates=[0]
                 )
             except FileNotFoundError:
                 raise LoadGrowthFileMissing(
-                    f"Load growth file not found at {load_growth_filepath}"
+                    f"Load growth file not found at {load_growth_forecast}"
                 )
             load_growth = load_growth.set_index("name")
 
         # Loads custom load forecast from user-provided CSV file
         case LoadProfile.CUSTOM:
-            print(f"Loading load growth path = {load_growth_filepath}")
+            print(f"Loading load growth path = {load_growth_forecast}")
             try:
                 load_growth = pd.read_csv(
-                    load_growth_filepath, index_col=0, parse_dates=[0]
+                    load_growth_forecast, index_col=0, parse_dates=[0]
                 )
             except FileNotFoundError:
                 raise LoadGrowthFileMissing(
-                    f"Load growth file not found at {load_growth_filepath}"
+                    f"Load growth file not found at {load_growth_forecast}"
                 )
             # TODO: check why this is used in old workflow
             # load_growth = load_growth[load_growth.index.year.isin(specific_year)]

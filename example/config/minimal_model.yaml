@@ -1,52 +1,59 @@
 input_data: model/minimal_model
 
 run:
-  name: "minimal_model" # use this to keep track of runs with different settings
+  name: "minimal_model-2021-2050" # use this to keep track of runs with different settings
   disable_progressbar: false # set to true to disable the progressbar
   shared_resources: false # set to true to share the default resources across runs
   shared_cutouts: true # set to true to share the default cutout(s) across runs
   validation: false # set to true to run back-casting plots
 
 year_settings:
-  ref_year: &ref_year 2021
-  start_year: &start_year 2021
-  forecast_year: &forecast_year 2050
+  ref_year: 2021
+  start_year: 2021
+  forecast_year: 2050
+  investment_period: [2021, 2035, 2050]
   discount_rate: 0.05
 
 solving:
+  options:
+    planning:
+      load_shedding: false
+      linearized_unit_commitment: true
+      keep_files: false
+      store_model: false
+    dispatch:
+      load_shedding: true
+      linearized_unit_commitment: false
+      keep_files: false
+      store_model: false
   solver:
     name: &solver_name highs
     options: highs-default
 
 load:
   load_mode: &load_mode "custom"
-  load_growth_filepath: "model/minimal_model/load_growth.csv"
-  ref_year: [*ref_year]
+  load_growth_forecast: "model/minimal_model/loads_forecast.csv"
 
 components:
   override_dir: ""
   components_dir: "data/components"
   costs_dir: "data/costs"
   obps: true
-  technology_costs: "default_costs"
-  years: [*ref_year]
+  technology_costs: "Default_costs"
   carbon_tax:
-    '2021': 50 # $ per tonne, based on federal minimums
-    '2025': 125
-    '2030': 170
-    '2035': 170
-    '2040': 170
-    '2045': 170
-    '2050': 170
+    "2021": 50 # $ per tonne, based on federal minimums
+    "2025": 125
+    "2030": 170
+    "2035": 170
+    "2040": 170
+    "2045": 170
+    "2050": 170
 
 snapshots:
   method: "OPT_VRE_HYDRO"
   load_mode: *load_mode
   folder_name: "model/minimal_model"
-  load_growth_forecast: "model/minimal_model/load_growth.csv"
-  years: [*ref_year]
-  ref_year: *ref_year
-  investment_periods: 29
+  investment_periods: 5
 
   # Rep days config
   # rep_length: None
@@ -57,7 +64,7 @@ snapshots:
   save_fig: false
   save_csv: false
   saving_folder_path: saves
-  provinces_selection: [AB, BC, MB, NB, NS, 'ON', PE, QC, SK, NL]
+  provinces_selection: ["BC", "ON", "QC"]
   # year: None
   aggregate: false
   mip_gap: 0.01
@@ -68,14 +75,58 @@ extra_loads:
   path: data/base
 
 planning:
-  reference_year: 2021
-  start_year: 2021
-  forecast_year: 2050
-  investment_period: [2021, 2050]
-  #investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
-  load_shedding: false
-  test_mode: true  # Set to true to limit model to first 6 snapshots per investment period for quick testing
   constraints:
     add_spilling_variable: true
     add_stop_production_constraint:
-      2050: ["gas"]
+      2030: ["coal"]
+    planning_reserve_margin:
+      capacity_values_placeholder_filepath: "data/constraints/capacity_values_placeholder.csv"
+      provinces_list:
+        "BC": 1.2
+        "ON": 1.2
+        "QC": 1.2
+    # CER_constraint:
+    #   # aggregation levels: provincial, group, individual
+    #   aggregation: 'provincial'
+    #   # year that constraint becomes active
+    #   year: 2035
+    #   # carriers to include
+    #   carriers: ['oil', 'gas', 'diesel']
+    #   # values for emissions limit and offset is emission intensity (in tC02eq/GWh)
+    #   values: {
+    #     limit: {2035: 65, 2050: 0},
+    #     offset: {2035: 35, 2050: 42}
+    #     }
+    #   # minimum capacity
+    #   min_cap: 25
+
+dispatch:
+  #Snapshots related
+  horizon: 336 #336 #2 weeks in hours
+  overlap: 48 #48
+  investment_period: [] #If empty, it will take the planning investment periods
+  constraints:
+    # add_spilling_variable: true
+    add_stop_production_constraint:
+      2030: ["coal"]
+    # add_bidirection_link_constraint: {}
+    # add_prevent_spill_if_not_fully_charged_constraint:
+    #   maximum_soc_storage_value: 2000
+    # CER_constraint:
+    #   # modes = hourly, emissions
+    #   mode: 'emissions'
+    #   # aggregation levels: provincial, group, individual
+    #   aggregation: 'provincial'
+    #   # year that constraint becomes active
+    #   year: 2035
+    #   # carriers to include
+    #   carriers: ['oil', 'gas', 'diesel']
+    #   # values for hourly mode is number of hours, values for emissions mode is emission intensity (in tC02eq/GWh)
+    #   values: {
+    #     limit: {2035: 65, 2050: 0},
+    #     offset: {2035: 35, 2050: 42}
+    #     }
+    #   # minimum capacity
+    #   min_cap: 25
+    #   # forecast hours based on net load ('load'), uniformly ('uniform'), or assign max to first UC period and carry leftover ('carryover')
+    #   forecast_hours: 'carryover'

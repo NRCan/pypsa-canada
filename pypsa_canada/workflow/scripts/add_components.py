@@ -151,7 +151,7 @@ def create_extendable_components(
     """
     costs_dir: str = comp_config["costs_dir"]
     # Use default technology costs if not specified
-    technology_costs: str = comp_config.get("technology_costs", "default_costs")
+    technology_costs: str = comp_config.get("technology_costs", "Default_costs")
     years: list[int] = config["year_settings"]["investment_period"]
     # Get the data for the specified component type
     if component == "Generator":

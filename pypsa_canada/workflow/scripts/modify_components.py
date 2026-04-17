@@ -5,7 +5,6 @@ import sys
 import traceback
 
 from pypsa import Network
-from representative_days.snapshot_selection import SnapshotStatus, snapshots_selection
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
@@ -83,9 +82,7 @@ def modify_component(self, component, name, col=None, value=None, action="Modify
 
 def main():
     network = Network(snakemake.input.input_data)
-    snapshots_status: SnapshotStatus
 
-    snapshot_config = config.get("snapshots")
     # Components modification
     modify_components = {
         "Link": {},
@@ -110,14 +107,6 @@ def main():
                     network = modify_component(
                         component=component, name=component_name, action="Delete"
                     )
-
-    with open(snakemake.input.snapshot_status) as f:
-        snapshots_status = SnapshotStatus(int(f.read()))
-
-    if snapshots_status == SnapshotStatus.Delayed:
-        network, _snapshot_status = snapshots_selection(
-            network, snapshot_config, snapshots_status
-        )
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)

@@ -210,7 +210,6 @@ def apply_growth_load(
     """
     loads_df: pd.DataFrame = pd.read_csv(snakemake.input.loads_p_set, index_col=[0])
     # years = snapshot_config["years"]
-    # load_growth_forecast = snapshot_config["load_growth_filepath"]
 
     match load_mode:
         case LoadProfile.DEFAULT:
@@ -262,7 +261,7 @@ def apply_growth_load_from_forecast(
         ValueError: If no load growth file is provided or if data is invalid.
     """
     load_growth_node = load_load_forecast(load_mode, load_growth_forecast)
-    load_growth_forecast = snapshot_config["load_growth_forecast"]
+    load_growth_forecast = config["load"]["load_growth_forecast"]
     years = config["year_settings"]["investment_period"]
     load_mode = LoadProfile[config["load"]["load_mode"].upper()]
 

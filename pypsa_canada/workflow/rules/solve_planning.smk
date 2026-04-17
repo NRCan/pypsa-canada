@@ -1,4 +1,5 @@
-
+# Previous rule: modify_components
+# Next rule: create_dispatch_network
 rule solve_planning:
     input:
         planning_unsolved_network=f"{RUN_NET_DIR}/planning_base_network.nc"

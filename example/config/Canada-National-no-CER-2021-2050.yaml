@@ -23,7 +23,7 @@ solving:
       store_model: false
     dispatch:
       load_shedding: true
-      linearized_unit_commitment: true
+      linearized_unit_commitment: false
       keep_files: false
       store_model: false
   solver:
@@ -32,14 +32,14 @@ solving:
 
 load:
   load_mode: &load_mode "custom"
-  load_growth_filepath: "model/Canada-National/loads_forecast.csv"
+  load_growth_forecast: "model/Canada-National/loads_forecast.csv"
 
 components:
   override_dir: ""
   components_dir: "data/components"
   costs_dir: "data/costs"
   obps: true
-  technology_costs: "default_costs"
+  technology_costs: "Default_costs"
   carbon_tax:
     "2021": 50 # $ per tonne, based on federal minimums
     "2025": 125
@@ -53,7 +53,6 @@ snapshots:
   method: "OPT_VRE_HYDRO"
   load_mode: *load_mode
   folder_name: "model/Canada-National"
-  load_growth_forecast: "model/Canada-National/loads_forecast.csv"
   investment_periods: 5
 
   # Rep days config
