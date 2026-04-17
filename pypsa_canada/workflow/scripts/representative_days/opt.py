@@ -9,8 +9,8 @@ import xarray as xr
 
 
 def opt_method(
-    n: pypsa.Network(),
-    nload_data: pd.DataFrame,
+    n: pypsa.Network,
+    nload_data: pd.DataFrame = None,
     bin: int = 12,
     solver: str = "cbc",
     mip_gap: float = 0.01,

@@ -1,7 +1,7 @@
 import os
 
 
-def net_load_calculation(n, with_hydro=False, save_file=False, filepath="./"):
+def net_load_calculation(n, provinces=None, with_hydro=False, save_file=False, filepath="./"):
     """
     The net_load_v1.py aggregates the loads in NB, NS and PEI, identifies the wind and solar
     generation from these provinces, and subtracts the aggregated load by the aggregated generation.
@@ -13,6 +13,8 @@ def net_load_calculation(n, with_hydro=False, save_file=False, filepath="./"):
     ----------
     n : _type_
         _description_
+    provinces : list, optional
+        List of provinces to include in the calculation, by default None (excludes QC)
     with_hydro : bool, optional
         include hydro within the carrier selected, by default False
     save_file : bool, optional
@@ -26,6 +28,10 @@ def net_load_calculation(n, with_hydro=False, save_file=False, filepath="./"):
     # Load generators.csv
     # generators_df = pd.read_csv('generators.csv')
     generators_df = n.df("Generator")
+
+    # Map provinces from buses
+    generators_df['province'] = generators_df['bus'].map(n.buses['province'])
+
     # print(generators_df)
     # Filter rows with "carrier" equal to "wind" or "solar PV" and pnom not equal to 0
     if with_hydro:
@@ -36,6 +42,12 @@ def net_load_calculation(n, with_hydro=False, save_file=False, filepath="./"):
     filtered_generators_df = generators_df[
         (generators_df["carrier"].isin(carrier_list)) & (generators_df["p_nom"] != 0)
     ]
+
+    # Filter by provinces if specified
+    if provinces is not None:
+        filtered_generators_df = filtered_generators_df[
+            filtered_generators_df["province"].isin(provinces)
+        ]
     # print(filtered_generators_df)
     # Load generators-p_max_pu.csv
     # p_max_pu_df = pd.read_csv('generators-p_max_pu.csv')
@@ -66,11 +78,20 @@ def net_load_calculation(n, with_hydro=False, save_file=False, filepath="./"):
         :, ~loads_p_set_df.columns.str.contains("^Unnamed")
     ]
 
-    # Exclude the "QC" column from the sum
-    # summed_loads_rows = loads_p_set_df.drop(columns=['QC_a']).sum(axis=1)
-    summed_loads_rows = loads_p_set_df.loc[
-        :, ~loads_p_set_df.columns.str.contains("QC")
-    ].values.sum(axis=1)
+    # Map provinces from buses to loads
+    load_prov_df = n.c["Load"].static.copy()
+    load_prov_df['province'] = load_prov_df['bus'].map(n.buses['province'])
+
+    # Filter loads by provinces
+    if provinces is not None:
+        # Get load columns for specified provinces
+        load_columns = load_prov_df[load_prov_df['province'].isin(provinces)].index
+        summed_loads_rows = loads_p_set_df[load_columns].sum(axis=1)
+    else:
+        # Exclude the "QC" column from the sum (original behavior)
+        # summed_loads_rows = loads_p_set_df.drop(columns=['QC_a']).sum(axis=1)
+        load_columns = load_prov_df[~load_prov_df['province'].str.contains("QC", na=False)].index
+        summed_loads_rows = loads_p_set_df[load_columns].sum(axis=1)
 
     # To not exclude "QC"
     # summed_loads_rows = loads_p_set_df.loc[:, :].values.sum(axis=1)
