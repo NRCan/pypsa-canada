@@ -1,36 +1,39 @@
 import os
 
 
-def net_load_calculation(n, provinces=None, with_hydro=False, save_file=False, filepath="./"):
+def net_load_calculation(network, provinces=None, with_hydro=False, save_file=False, filepath="./"):
     """
     The net_load_v1.py aggregates the loads in NB, NS and PEI, identifies the wind and solar
     generation from these provinces, and subtracts the aggregated load by the aggregated generation.
     The output file from this script is used as input in rep_days_kmedoid_v1.py and rep_days_OPT_v1.py.
     The net_load_v2.py is similar to net_load_v1.py, but also subtract must-run hydro from the aggregated load
-    #TODO to be redone
 
     Parameters
     ----------
-    n : _type_
-        _description_
+    network : pypsa.Network
+        PyPSA network object containing generators, loads, and buses
     provinces : list, optional
         List of provinces to include in the calculation, by default None (excludes QC)
     with_hydro : bool, optional
-        include hydro within the carrier selected, by default False
+        Include hydro within the carrier selected, by default False
     save_file : bool, optional
-        save intermediary csv file, by default False
+        Save intermediary net_load.csv file, by default False
+    filepath : str, optional
+        Directory path for saving the output file, by default "./"
 
     Returns
     -------
-    pd.DataFrame
-        _description_
+    tuple[pypsa.Network, pd.Series]
+        A tuple containing:
+        - network: The PyPSA network object
+        - net_load: Series containing the net load time series (loads - renewable generation)
     """
     # Load generators.csv
     # generators_df = pd.read_csv('generators.csv')
-    generators_df = n.df("Generator")
+    generators_df = network.df("Generator")
 
     # Map provinces from buses
-    generators_df['province'] = generators_df['bus'].map(n.buses['province'])
+    generators_df['province'] = generators_df['bus'].map(network.buses['province'])
 
     # print(generators_df)
     # Filter rows with "carrier" equal to "wind" or "solar PV" and pnom not equal to 0
@@ -51,7 +54,7 @@ def net_load_calculation(n, provinces=None, with_hydro=False, save_file=False, f
     # print(filtered_generators_df)
     # Load generators-p_max_pu.csv
     # p_max_pu_df = pd.read_csv('generators-p_max_pu.csv')
-    p_max_pu_df = n.generators_t.p_max_pu.copy()
+    p_max_pu_df = network.generators_t.p_max_pu.copy()
 
     # Filter columns based on the names obtained from the first file
     selected_names = filtered_generators_df.index
@@ -69,7 +72,7 @@ def net_load_calculation(n, provinces=None, with_hydro=False, save_file=False, f
 
     # Load loads-p_set.csv
     # loads_p_set_df = pd.read_csv('loads-p_set.csv')
-    loads_p_set_df = n.loads_t.p_set.copy()
+    loads_p_set_df = network.loads_t.p_set
     if loads_p_set_df.shape[0] > 8760:
         loads_p_set_df = loads_p_set_df.iloc[0:8760, :]
     # TODO not sure if really useful anymore now
@@ -79,8 +82,8 @@ def net_load_calculation(n, provinces=None, with_hydro=False, save_file=False, f
     ]
 
     # Map provinces from buses to loads
-    load_prov_df = n.c["Load"].static.copy()
-    load_prov_df['province'] = load_prov_df['bus'].map(n.buses['province'])
+    load_prov_df = network.c["Load"].static
+    load_prov_df['province'] = load_prov_df['bus'].map(network.buses['province'])
 
     # Filter loads by provinces
     if provinces is not None:
@@ -110,4 +113,4 @@ def net_load_calculation(n, provinces=None, with_hydro=False, save_file=False, f
     if save_file:
         net_load.to_csv(f"{filepath}{filename_csv}", index=False)
 
-    return net_load
+    return (network, net_load)

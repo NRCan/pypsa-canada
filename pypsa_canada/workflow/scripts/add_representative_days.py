@@ -4,7 +4,7 @@ import sys
 import traceback
 
 from pypsa import Network
-from representative_days.snapshot_profile import SnapshotStatus, snapshots_selection
+from representative_days.snapshot_selection import SnapshotStatus, snapshots_selection
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
