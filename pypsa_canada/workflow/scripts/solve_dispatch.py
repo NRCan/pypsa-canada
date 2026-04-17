@@ -129,6 +129,7 @@ def optimize_uc_period(
     # --- CER constraint initialisation (state shared across UC periods) ---
     constraint_dict = config.get("dispatch", {}).get("constraints", {})
     CER_constraint_cfg = constraint_dict.get("CER_constraint")
+    logging.info(f"CER constraint config: {CER_constraint_cfg}")
     CER_generators = pd.DataFrame()
     CER_group_list = []
     CER_data = pd.DataFrame()

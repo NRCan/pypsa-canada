@@ -267,6 +267,16 @@ def main():
     )
 
     logging.info(f"Optimization model: {network.model}")
+    if "infeasible" in solve_condition:
+        if solver_name in ["gurobi", "xpress"]:
+            logging.info("Computing IIS for infeasibility diagnosis")
+            labels = network.model.compute_infeasibilities()
+            logging.info(f"Labels:\n{labels}")
+            network.model.print_infeasibilities()
+            logging.info(
+                "Infeasibility report written to infeasibility_report.ilp (ILP format)"
+            )
+        raise RuntimeError("Model is infeasible. Check logs for details.")
 
     out_path = str(snakemake.output.solved_network_csv)
 

@@ -131,8 +131,8 @@ dispatch:
       carriers: ['oil', 'gas', 'diesel']
       # values for hourly mode is number of hours, values for emissions mode is emission intensity (in tC02eq/GWh)
       values: {
-        limit: {2021: 65},
-        offset: {2021: 35}
+        limit: {2035: 65, 2050: 0},
+        offset: {2035: 35, 2050: 42}
         }
       # minimum capacity
       min_cap: 25

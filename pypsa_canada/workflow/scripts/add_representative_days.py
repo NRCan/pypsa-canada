@@ -42,7 +42,7 @@ def main():
         f.write(str(snapshot_status.value))
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
-    if(config["run"]["export_csv"]):
+    if config["run"]["export_csv"]:
         network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
 
     return

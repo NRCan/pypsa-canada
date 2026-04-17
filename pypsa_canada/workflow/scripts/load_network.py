@@ -27,13 +27,14 @@ logging.basicConfig(
 
 config = snakemake.config
 
+
 def main():
     network = pypsa.Network(snakemake.input.input_data)
 
     validate_bus_provinces(network)
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
-    if(config["run"]["export_csv"]):
+    if config["run"]["export_csv"]:
         network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
 
 
