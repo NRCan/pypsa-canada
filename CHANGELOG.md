@@ -1,3 +1,10 @@
+## 0.0.13 (2026-04-22)
+
+### Bug Fixes
+
+- Update pypsa version and remove pandas and xarray pinned versions
+- Update pypsa version and remove pandas and xarray pinned versions
+
 ## 0.0.12 (2026-04-17)
 
 ### Bug Fixes
