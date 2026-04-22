@@ -36,14 +36,12 @@ classifiers=[
 
 dependencies = [
     "snakemake",
-    "pypsa",
+    "pypsa>=1.2.0",
     "fiona",
     "pint",
     "pytz",
     "scikit-learn",
     "scikit-learn-extra@git+https://github.com/TimotheeMathieu/scikit-learn-extra", #Fork of scikit learn extra with numpy v2 fix
-    "xarray<2026.4",
-    "pandas<3.0.0",
 ]
 
 [project.optional-dependencies]
