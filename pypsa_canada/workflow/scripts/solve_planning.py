@@ -56,16 +56,21 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
     """
 
     constraint_dict = config["planning"]["constraints"]
+    bidirectional_link_constraint_cfg = constraint_dict["add_bidirection_link"]
+    stop_production_cfg = constraint_dict["add_stop_production"]
+    CER_constraint_cfg = constraint_dict["CER_constraint"]
+    NZ_constraint_cfg = constraint_dict["NZ_constraint"]
+    planning_reserve_margin_cfg = constraint_dict["planning_reserve_margin"]
+    custom_constraints_cfg = constraint_dict["component_capacity_expansion_constraint"]
 
     # The snapshots must only contain one unique year
     period_list = network.snapshots.get_level_values(0).unique()
     logging.info(f"Period list = {period_list}")
 
     # Add bidirectional link constraint (applies to all periods)
-    if "add_bidirection_link_constraint" in constraint_dict:
-        links_constraint_dict = constraint_dict["add_bidirection_link_constraint"]
-        logging.info(f"Adding bidirectional link constraint: {links_constraint_dict}")
-        add_bidirection_link_constraint(network, links_constraint_dict)
+    if bidirectional_link_constraint_cfg["enable"]:
+        logging.info(f"Adding bidirectional link constraint: {bidirectional_link_constraint_cfg}")
+        add_bidirection_link_constraint(network, bidirectional_link_constraint_cfg.items())
 
     # Per-period constraints
     for period in period_list:
@@ -73,31 +78,23 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
             network.snapshots.get_level_values(0) == period
         ]
         logging.info(f"Processing constraints for period {period}")
-        logging.info(f"Processing constraints for period {period}")
         logging.info(f"Network multi-index = {period_snapshots}")
 
         # Stop production constraint
-        if "add_stop_production_constraint" in constraint_dict:
-            stop_production_dict = constraint_dict["add_stop_production_constraint"]
-            logging.debug(f"Stop_production_dictionary = {stop_production_dict}")
-            if period in stop_production_dict:
-                logging.info(
-                    f"Adding stop production constraint for {stop_production_dict[period]}"
-                )
-                logging.info(
-                    f"Adding stop production constraint for {stop_production_dict[period]}"
-                )
-                add_stop_prod_constraint(
-                    network, period_snapshots, stop_production_dict[period]
-                )
+        if stop_production_cfg["enable"]:
+            logging.info(
+                f"Adding stop production constraint for {stop_production_cfg[period]}"
+            )
+            add_stop_prod_constraint(
+                network, period_snapshots, stop_production_cfg[period]
+            )
 
         # CER constraint for planning
-        CER_constraint = constraint_dict.get("CER_constraint")
-        if CER_constraint:
-            if period >= CER_constraint["year"]:
+        if CER_constraint_cfg["enable"]:
+            if period >= CER_constraint_cfg["year"]:
                 logging.info(f"CER constraint active for year {period}")
                 CER_generators, _, CER_group_list = CER_generator_grouping(
-                    network, CER_constraint, period, "planning"
+                    network, CER_constraint_cfg, period, "planning"
                 )
                 logging.info(
                     f"CER generators for period {period}: {CER_generators} - {CER_group_list}"
@@ -109,56 +106,49 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
                     add_CER_constraint_planning(
                         network,
                         period_snapshots,
-                        CER_constraint,
+                        CER_constraint_cfg,
                         CER_group_list,
                         CER_generators,
                         period,
                     )
 
         # Net-zero/Emissions constraint
-        NZ_constraint = constraint_dict.get("NZ_constraint")
-        if NZ_constraint:
-            if period in NZ_constraint:
-                emissions_limit = NZ_constraint[period]
-                logging.info(
-                    f"Adding emissions constraint for {period}: {emissions_limit} MtCO2eq"
-                )
-                add_emission_constraint_planning(
-                    network, period_snapshots, emissions_limit, period
-                )
+        if NZ_constraint_cfg["enable"]:
+            emissions_limit = NZ_constraint_cfg[period]
+            logging.info(
+                f"Adding emissions constraint for {period}: {emissions_limit} MtCO2eq"
+            )
+            add_emission_constraint_planning(
+                network, period_snapshots, emissions_limit, period
+            )
 
         # Planning reserve margin constraint
-        reserve_margin_config = constraint_dict.get("planning_reserve_margin").get(
-            "provinces_list", {}
-        )
-        capacity_values_filepath = constraint_dict.get("planning_reserve_margin").get(
-            "capacity_values_placeholder_filepath", None
-        )
-        for prov, margin in reserve_margin_config.items():
-            logging.info(
-                f"Adding reserve margin constraint for {prov} in {period} with margin {margin}"
+        if planning_reserve_margin_cfg["enable"]:
+            prov_list = planning_reserve_margin_cfg.get(
+                "provinces_list", {}
             )
-            print(
-                f"Adding reserve margin constraint for {prov} in {period} with margin {margin}"
+            capacity_values_filepath = planning_reserve_margin_cfg.get(
+                "capacity_values_placeholder_filepath", None
             )
-            if capacity_values_filepath is None:
-                raise ValueError(
-                    "capacity_values_placeholder_filename must be provided in the configuration for planning reserve margin constraint"
+            for prov, margin in prov_list.items():
+                logging.info(
+                    f"Adding reserve margin constraint for {prov} in {period} with margin {margin}"
                 )
-            add_planning_reserve_margin(
-                network, period, prov, margin, capacity_values_filepath
-            )
+                if capacity_values_filepath is None:
+                    raise ValueError(
+                        "capacity_values_placeholder_filename must be provided in the configuration for planning reserve margin constraint"
+                    )
+                add_planning_reserve_margin(
+                    network, period, prov, margin, capacity_values_filepath
+                )
 
     # Custom capacity expansion constraints (applies to all periods)
-    custom_constraints = constraint_dict.get(
-        "component_capacity_expansion_constraint", False
-    )
-    if custom_constraints:
+    if custom_constraints_cfg["enable"]:
         logging.info(
-            f"Adding custom capacity expansion constraints: {custom_constraints}"
+            f"Adding custom capacity expansion constraints: {custom_constraints_cfg}"
         )
         component_capacity_expansion_constraint(
-            network, custom_constraints.get("custom_constraint_filepath")
+            network, custom_constraints_cfg["custom_constraint_filepath"]
         )
 
 
