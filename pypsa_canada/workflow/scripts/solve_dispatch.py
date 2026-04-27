@@ -374,7 +374,7 @@ def main():
         logging.info(f"Loading Dispatch Network for period = {period}")
         period_snapshots = network.snapshots[network.snapshots.year == period]
 
-        # Test mode: limit to 24 snapshots for this period
+        # Test mode: limit to 6 snapshots for this period
         if os.environ.get("PYPSA_TEST_MODE") == "1":
             logging.info("Test mode enabled: limiting to 6 snapshots for dispatch")
             original_snapshot_count = len(period_snapshots)

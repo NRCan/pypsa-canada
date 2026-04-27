@@ -69,7 +69,7 @@ os.environ.pop("SNAKEMAKE_OUTPUT_CACHE", None)  # no cache location => cache unu
     is_flag=True,
     default=False,
     show_default=False,
-    help="Test mode: only use 24 snapshots during solve_planning (default=false)",
+    help="Test mode: only use 6 snapshots during solve_planning (default=false)",
 )
 @click.option(
     "-c",

@@ -129,7 +129,7 @@ components:
   #   "2050": 170
 
 snapshots:
-  method: "OPT_VRE_HYDRO"
+  method: "DEFAULT"
   load_mode: *load_mode
   # folder_name: "model/Canada-National"
   investment_periods: 5

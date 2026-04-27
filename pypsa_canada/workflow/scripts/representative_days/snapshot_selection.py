@@ -55,7 +55,7 @@ def snapshots_selection(
         If invalid snapshot method is specified
     """
     snapshot_method: SnapshotProfile = SnapshotProfile[
-        snapshot_config.get("method", "Default").upper()
+        snapshot_config["method"].upper()
     ]
 
     provinces = snapshot_config.get("provinces_selection")

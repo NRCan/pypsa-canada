@@ -76,7 +76,7 @@ extra_loads:
 
 planning:
   constraints:
-    add_spilling_variable: 
+    add_spilling_variable:
       enable: true
     add_stop_production_constraint:
       enable: true
