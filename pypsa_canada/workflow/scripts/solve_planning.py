@@ -18,6 +18,7 @@ from constraints.planning_constraints import (
     add_planning_reserve_margin,
     component_capacity_expansion_constraint,
 )
+from helpers import setup_script_logging
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -26,18 +27,8 @@ if TYPE_CHECKING:
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
 LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/solve_planning.log"
 
-# Ensure log directory exists
-os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 
-# Configure logging to both file and stdout (handy for --show-failed-logs)
-logging.basicConfig(
-    level=logging.INFO,
-    handlers=[
-        logging.FileHandler(LOG_PATH, mode="w", encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
-    ],
-    format="%(asctime)s %(levelname)s %(message)s",
-)
+setup_script_logging(LOG_PATH)
 
 config = snakemake.config
 

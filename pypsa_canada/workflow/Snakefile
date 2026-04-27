@@ -13,8 +13,8 @@ from scripts._helpers import (
     get_scenarios,
     get_rdir,
     get_shadow,
-    merge_with_defaults,
 )
+from scripts.helpers import merge_with_defaults
 
 # Merge config with defaults to ensure all required keys are present
 config = merge_with_defaults(config)

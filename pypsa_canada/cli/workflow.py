@@ -18,6 +18,7 @@ from snakemake.settings.types import (
     ConfigSettings,
     DAGSettings,
     DeploymentSettings,
+    OutputSettings,
     ResourceSettings,
 )
 
@@ -161,7 +162,7 @@ def run(
 
     # Initialize and run the workflow
     try:
-        with SnakemakeApi() as api:
+        with SnakemakeApi(OutputSettings(verbose=False, show_failed_logs=True)) as api:
             config_settings = None
             if configfile.exists():
                 config_settings = ConfigSettings(configfiles=[configfile])

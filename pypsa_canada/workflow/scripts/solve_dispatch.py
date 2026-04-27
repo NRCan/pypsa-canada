@@ -19,6 +19,7 @@ from constraints.generic_constraints import (
     add_stop_prod_constraint,
     prevent_spill_if_not_fully_charged,
 )
+from helpers import setup_script_logging
 
 from pypsa_canada.workflow.scripts.common import drop_inactive_assets
 
@@ -26,18 +27,8 @@ from pypsa_canada.workflow.scripts.common import drop_inactive_assets
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
 LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/solve_dispatch.log"
 
-# Ensure log directory exists
-os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 
-# Configure logging to both file and stdout (handy for --show-failed-logs)
-logging.basicConfig(
-    level=logging.INFO,
-    handlers=[
-        logging.FileHandler(LOG_PATH, mode="w", encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
-    ],
-    format="%(asctime)s %(levelname)s %(message)s",
-)
+setup_script_logging(LOG_PATH)
 
 config = snakemake.config
 

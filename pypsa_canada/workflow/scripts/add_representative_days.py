@@ -3,6 +3,7 @@ import os
 import sys
 import traceback
 
+from helpers import setup_script_logging
 from pypsa import Network
 from representative_days.snapshot_selection import snapshots_selection
 
@@ -10,18 +11,8 @@ from representative_days.snapshot_selection import snapshots_selection
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
 LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/temp.log"
 
-# Ensure log directory exists
-os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 
-# Configure logging to both file and stdout (handy for --show-failed-logs)
-logging.basicConfig(
-    level=logging.INFO,
-    handlers=[
-        logging.FileHandler(LOG_PATH, mode="w", encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
-    ],
-    format="%(asctime)s %(levelname)s %(message)s",
-)
+setup_script_logging(LOG_PATH)
 
 config = snakemake.config
 
