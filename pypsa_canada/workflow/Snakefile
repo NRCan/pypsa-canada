@@ -15,7 +15,7 @@ from scripts._helpers import (
     get_rdir,
     get_shadow,
 )
-from scripts.helpers import merge_with_defaults
+from scripts.helpers import merge_with_defaults, collect_crash_artifacts
 
 # Merge config with defaults to ensure all required keys are present
 config = merge_with_defaults(config)
@@ -30,7 +30,8 @@ run = config["run"]
 RDIR = get_rdir(run)
 
 RUN_NAME = f"{config["run"]["name"]}"
-TIMESTAMP = datetime.now().strftime("%Y-%m-%d_%H-%M")
+RUN_START = datetime.now()
+TIMESTAMP = RUN_START.strftime("%Y-%m-%d_%Hh%M")
 
 NET_DIR = "networks"
 RCS_DIR = "resources"
@@ -89,31 +90,12 @@ def get_all_targets():
         # f"{RUN_OUTPUT_DIR}/planning_corridor_utilization_map.html",
         # f"{RUN_OUTPUT_DIR}/dispatch_corridor_utilization_map.html",
         f"{RUN_OUTPUT_DIR}/compare_results",
-        f"{RUN_RES_DIR}/config.yaml",
-        f"{RUN_RES_DIR}/run.log"
+        f"{RUN_OUTPUT_DIR}/config.yaml",
+        f"{RUN_OUTPUT_DIR}/run.log"
     ]
     if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
         targets.append(f"{RUN_OUTPUT_DIR}/idea_outputs.csv")
     return targets
-
-rule copy_config:
-    input:
-        planning=f"{RUN_RES_DIR}/planning_solved_network_{TIMESTAMP}",
-        dispatch=f"{RUN_RES_DIR}/dispatch_solved_network_{TIMESTAMP}",
-    output:
-        f"{RUN_RES_DIR}/config_{TIMESTAMP}.yaml"
-    run:
-        import shutil
-        shutil.copy(workflow.configfiles[0], str(output[0]))
-
-rule collect_logs:
-    input:
-        planning=f"{RUN_RES_DIR}/planning_solved_network_{TIMESTAMP}",
-        dispatch=f"{RUN_RES_DIR}/dispatch_solved_network_{TIMESTAMP}",
-    output:
-        f"{RUN_RES_DIR}/run_{TIMESTAMP}.log"
-    shell:
-        "cat {RUN_LOG_DIR}/*.log > {output}"
 
 rule all:
     input:
@@ -121,26 +103,55 @@ rule all:
 
 rule copy_config:
     output:
-        f"{RUN_RES_DIR}/config_{TIMESTAMP}.yaml"
+        f"{RUN_OUTPUT_DIR}/config.yaml"
     run:
-        shutil.copy(workflow.configfiles[0], str(output[0]))
+        with open(str(output[0]), "w") as f:
+            yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
 
 rule collect_logs:
     input:
-        f"{RUN_LOG_DIR}/load_network.log",
-        f"{RUN_LOG_DIR}/add_components.log",
-        f"{RUN_LOG_DIR}/add_loads.log",
-        f"{RUN_LOG_DIR}/add_snapshots.log",
-        f"{RUN_LOG_DIR}/add_representative_days.log",
-        f"{RUN_LOG_DIR}/add_extra_loads.log",
-        f"{RUN_LOG_DIR}/modify_components.log",
-        f"{RUN_LOG_DIR}/solve_planning_{TIMESTAMP}.log",
-        f"{RUN_LOG_DIR}/create_dispatch_network.log",
-        f"{RUN_LOG_DIR}/solve_dispatch_{TIMESTAMP}.log",
+        rules.load_network.log,
+        rules.add_components.log,
+        rules.add_loads.log,
+        rules.add_snapshots.log,
+        rules.add_representative_days.log,
+        rules.add_extra_loads.log,
+        rules.modify_components.log,
+        rules.solve_planning.log,
+        rules.create_dispatch_network.log,
+        rules.solve_dispatch.log,
+        rules.post_process_planning.log,
+        rules.post_process_dispatch.log,
+        rules.compare_results.log,
     output:
-        f"{RUN_RES_DIR}/run_{TIMESTAMP}.log"
+        f"{RUN_OUTPUT_DIR}/run.log"
     shell:
         "cat {input} > {output}"
+
+onerror:
+    crash_dir = Path(RUN_RES_DIR) / f"crash_{TIMESTAMP}"
+    run_output_dir = Path(RUN_OUTPUT_DIR)
+    if run_output_dir.exists():
+        run_output_dir.rename(crash_dir)
+    print(f"\n--- Crash detected: collecting artifacts to {crash_dir} ---")
+    log_files = [
+        *rules.load_network.log,
+        *rules.add_components.log,
+        *rules.add_loads.log,
+        *rules.add_snapshots.log,
+        *rules.add_representative_days.log,
+        *rules.add_extra_loads.log,
+        *rules.modify_components.log,
+        *rules.solve_planning.log,
+        *rules.create_dispatch_network.log,
+        *rules.solve_dispatch.log,
+        *rules.post_process_planning.log,
+        *rules.post_process_dispatch.log,
+        *rules.compare_results.log,
+    ]
+    collect_crash_artifacts(crash_dir, log_files, config, RUN_NET_DIR, RUN_START.timestamp())
+    print(f"--- Crash artifacts saved to {crash_dir} ---\n")
+
 
 rule clean_all:
     message:

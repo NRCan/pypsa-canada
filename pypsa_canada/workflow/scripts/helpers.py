@@ -1,6 +1,7 @@
 import copy
 import logging
 import os
+import shutil
 from pathlib import Path
 
 import yaml
@@ -112,3 +113,46 @@ def setup_script_logging(log_path, level=logging.DEBUG):
         handlers=[logging.StreamHandler(sys.stdout)],
         format="%(asctime)s %(levelname)s %(message)s",
     )
+
+def collect_crash_artifacts(
+    crash_dir: Path,
+    log_files,
+    config: dict,
+    net_dir: Path,
+    run_start_time: float,
+) -> None:
+    """Collect config, logs, and any intermediate networks into crash_dir on failure."""
+    crash_dir.mkdir(parents=True, exist_ok=True)
+
+    # Write merged config (includes defaults, not just the user file)
+    with open(crash_dir / "config.yaml", "w") as f:
+        yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
+
+    # Concatenate only log files written during this run (mtime >= run start)
+    combined_log = crash_dir / "crash_run.log"
+    with open(combined_log, "w") as out:
+        for log_path in log_files:
+            p = Path(str(log_path))
+            if p.exists() and p.stat().st_mtime >= run_start_time:
+                out.write(f"=== {p.name} ===\n")
+                out.write(p.read_text())
+                out.write("\n")
+
+    # Collect only network files written during this run (mtime >= run start)
+    net_dir = Path(net_dir)
+    if net_dir.exists():
+        crash_nets_dir = crash_dir / "networks"
+        crash_nets_dir.mkdir(exist_ok=True)
+        this_run_nets = [
+            net_file
+            for net_file in net_dir.rglob("*.nc")
+            if net_file.stat().st_mtime >= run_start_time
+        ]
+        for net_file in this_run_nets:
+            shutil.copy(net_file, crash_nets_dir / net_file.name)
+
+        # Surface the most recently written network as the crash-point network
+        if this_run_nets:
+            latest = max(this_run_nets, key=lambda f: f.stat().st_mtime)
+            shutil.copy(latest, crash_dir / "crash_network.nc")
+
