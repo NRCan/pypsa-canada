@@ -69,39 +69,60 @@ def create_yearly_snapshots(network: Network, snapshot_config: dict) -> Network:
     return network
 
 
-def save_ref_year_data(network: Network, network_ref: Network) -> Network:
+# TODO Verify why canada model doesn't do this part auto. when applying I.P.
+def save_ref_year_data(
+    network: Network, network_ref: Network, timestep: int = 8760
+) -> Network:
     """
-    Copy reference year time-series data to all investment periods.
+    Replicate reference-year time-series data across all investment periods.
 
-    Replicates the reference year's hourly data for generators, storage units,
-    and links across all years in the multi-period optimization.
+    After ``create_yearly_snapshots`` expands the snapshot index to cover every
+    investment year, the newly added rows are empty.  This function fills them
+    by tiling the reference-year data (taken from ``network_ref``) once per
+    period for each supported time-varying attribute.
+
+    Only attributes that are non-empty in ``network_ref`` are replicated, so
+    optional CSVs (e.g. ``generators-p_min_pu.csv``) are handled gracefully
+    without raising errors when they are absent.
 
     Args:
-        network: Target network with multi-year snapshots to populate.
-        network_ref: Reference network containing the base year data.
-        snapshot_config: Configuration dictionary
+        network: Target network whose expanded snapshot index needs populating.
+        network_ref: Copy of the network before snapshot expansion, holding the
+            single reference-year time series.
+        timestep: Number of hourly timesteps per investment period. Default 8760
+            (one non-leap year).
 
     Returns:
-        Network with time-series data populated for all periods.
+        Network with all time-varying attributes replicated for every period.
     """
-    # Store reference year time-series data
-    # network_ref = network.copy()
-    generator_t_p_max_pu = network_ref.generators_t.p_max_pu.copy()
-    storage_units_t_inflow_old_df = network_ref.storage_units_t.inflow.copy()
-    links_t_p_max_pu = network_ref.links_t.p_max_pu.copy()
-    links_t_p_min_pu = network_ref.links_t.p_min_pu.copy()
+    # Declare every (reference component_t, target component_t, attribute) triplet
+    # that should be tiled across investment periods.
+    component_timeseries = [
+        (network_ref.generators_t, network.generators_t, "p_max_pu"),
+        (network_ref.generators_t, network.generators_t, "p_min_pu"),
+        (network_ref.generators_t, network.generators_t, "marginal_cost"),
+        (network_ref.storage_units_t, network.storage_units_t, "inflow"),
+        (network_ref.links_t, network.links_t, "p_max_pu"),
+        # not needed? TODO verify
+        # (network_ref.links_t, network.links_t, "p_min_pu"),
+    ]
 
-    for i in range(0, len(config["year_settings"]["investment_period"])):
-        a = i * 8760
-        b = (i + 1) * 8760
-        network.snapshot_weightings[a:b] = 1
-        network.generators_t.p_max_pu[a:b] = generator_t_p_max_pu.values
-        network.storage_units_t.inflow[a:b] = storage_units_t_inflow_old_df.values
-        if hasattr(network, "links_t_p_max_pu"):
-            network.links_t.p_max_pu[a:b] = links_t_p_max_pu.values
-        if hasattr(network, "links_t_p_min_pu"):
-            network.links_t.p_min_pu[a:b] = links_t_p_min_pu.values
-        # network.generators_t.marginal_cost[a:b] = marginal_cost_ref.loc[str(years[i])].values
+    # Pre-filter to attributes that actually contain data in the reference network,
+    # and snapshot the reference values before any in-place writes occur.
+    replication_targets = [
+        (getattr(target_component, attr), getattr(ref_component, attr).copy())
+        for ref_component, target_component, attr in component_timeseries
+        if not getattr(ref_component, attr).empty
+    ]
+
+    for i in range(len(config["year_settings"]["investment_period"])):
+        # Compute the flat integer slice for this period's rows.
+        start, end = i * timestep, (i + 1) * timestep
+        # Weight each hourly snapshot equally within the period.
+        network.snapshot_weightings[start:end] = 1
+        # Tile each reference time series into the corresponding period slice.
+        for target_ts, ref_ts in replication_targets:
+            target_ts[start:end] = ref_ts.values
 
     return network
 
@@ -312,7 +333,7 @@ def main():
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     if config["run"]["export_csv"]:
-        network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
+        network.export_to_csv_folder(f"{snakemake.output.planning_unsolved_network[:-3]}_csv")
 
     return
 
