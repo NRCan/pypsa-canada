@@ -42,7 +42,9 @@ def apply_forecast_load(load_config: dict) -> pd.DataFrame:
             raise NotImplementedError(
                 "DEFAULT load profile processing not yet implemented"
             )
-        case LoadProfile.CUSTOM:
+        case LoadProfile.FULL_LOAD:
+            return load_growth
+        case LoadProfile.GROWTH_FORECAST:
             return load_growth
         case LoadProfile.CER:
             raise NotImplementedError("CER load profile processing not yet implemented")

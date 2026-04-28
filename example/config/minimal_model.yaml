@@ -31,8 +31,9 @@ solving:
     options: highs-fast
 
 load:
-  load_mode: &load_mode "custom"
-  load_growth_forecast: "model/minimal_model/loads_forecast.csv"
+  load_mode: &load_mode "GROWTH_FORECAST"
+  load_growth_forecast: "model/minimal_model/load_growth.csv"
+  # load_growth_forecast: "model/minimal_model/loads_forecast.csv"
 
 components:
   override_dir: ""
