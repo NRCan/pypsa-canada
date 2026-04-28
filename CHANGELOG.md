@@ -1,3 +1,10 @@
+## 0.0.15 (2026-04-28)
+
+### Bug Fixes
+
+- Set generator snapshot weighting = objective weighting
+- Set generator snapshot weighting = objective weighting
+
 ## 0.0.14 (2026-04-28)
 
 ### Bug Fixes
