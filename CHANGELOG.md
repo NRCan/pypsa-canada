@@ -1,3 +1,9 @@
+## 0.0.14 (2026-04-28)
+
+### Bug Fixes
+
+- [#2025] Representative days refactor + various other fixes
+
 ## 0.0.13 (2026-04-22)
 
 ### Bug Fixes
