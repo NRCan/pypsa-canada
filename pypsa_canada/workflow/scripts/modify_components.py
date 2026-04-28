@@ -4,25 +4,15 @@ import os
 import sys
 import traceback
 
+from helpers import setup_script_logging
 from pypsa import Network
-from representative_days.snapshot_profile import SnapshotStatus, snapshots_selection
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
 LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/temp.log"
 
-# Ensure log directory exists
-os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 
-# Configure logging to both file and stdout (handy for --show-failed-logs)
-logging.basicConfig(
-    level=logging.INFO,
-    handlers=[
-        logging.FileHandler(LOG_PATH, mode="w", encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
-    ],
-    format="%(asctime)s %(levelname)s %(message)s",
-)
+setup_script_logging(LOG_PATH)
 
 config = snakemake.config
 
@@ -83,9 +73,7 @@ def modify_component(self, component, name, col=None, value=None, action="Modify
 
 def main():
     network = Network(snakemake.input.input_data)
-    snapshots_status: SnapshotStatus
 
-    snapshot_config = config.get("snapshots")
     # Components modification
     modify_components = {
         "Link": {},
@@ -110,14 +98,6 @@ def main():
                     network = modify_component(
                         component=component, name=component_name, action="Delete"
                     )
-
-    with open(snakemake.input.snapshot_status) as f:
-        snapshots_status = SnapshotStatus(int(f.read()))
-
-    if snapshots_status == SnapshotStatus.Delayed:
-        network, _snapshot_status = snapshots_selection(
-            network, snapshot_config, snapshots_status
-        )
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)

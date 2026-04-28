@@ -257,9 +257,13 @@ def opt_quad_method(
                         # names = current_res["Generator"].tolist()
                         names = current_res["name"].tolist()
                         # Columns of the respective RES
-                        RES_col = gen_max_df.loc[:, names]
-                        # Now their average
-                        RES_cf[res] = RES_col.mean(axis=1)
+                        if not names:
+                            # No generators of this type in the province; treat as zero
+                            RES_cf[res] = pd.Series(0.0, index=gen_max_df_period.index)
+                        else:
+                            RES_col = gen_max_df.loc[:, names]
+                            # Now their average
+                            RES_cf[res] = RES_col.mean(axis=1)
                         RES_cf = RES_cf.loc[pd.IndexSlice[period, :], :]
                         # RES_cf.to_csv(f"{saving_folder_path}rescf.csv")
                     prov_info[prov] = {

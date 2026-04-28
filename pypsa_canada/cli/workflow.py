@@ -18,6 +18,7 @@ from snakemake.settings.types import (
     ConfigSettings,
     DAGSettings,
     DeploymentSettings,
+    OutputSettings,
     ResourceSettings,
 )
 
@@ -68,7 +69,7 @@ os.environ.pop("SNAKEMAKE_OUTPUT_CACHE", None)  # no cache location => cache unu
     is_flag=True,
     default=False,
     show_default=False,
-    help="Test mode: only use 24 snapshots during solve_planning (default=false)",
+    help="Test mode: only use 6 snapshots during solve_planning (default=false)",
 )
 @click.option(
     "-c",
@@ -161,7 +162,7 @@ def run(
 
     # Initialize and run the workflow
     try:
-        with SnakemakeApi() as api:
+        with SnakemakeApi(OutputSettings(verbose=False, show_failed_logs=True)) as api:
             config_settings = None
             if configfile.exists():
                 config_settings = ConfigSettings(configfiles=[configfile])

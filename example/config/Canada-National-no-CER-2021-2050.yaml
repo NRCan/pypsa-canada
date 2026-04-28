@@ -23,7 +23,7 @@ solving:
       store_model: false
     dispatch:
       load_shedding: true
-      linearized_unit_commitment: true
+      linearized_unit_commitment: false
       keep_files: false
       store_model: false
   solver:
@@ -32,14 +32,14 @@ solving:
 
 load:
   load_mode: &load_mode "custom"
-  load_growth_filepath: "model/Canada-National/loads_forecast.csv"
+  load_growth_forecast: "model/Canada-National/loads_forecast.csv"
 
 components:
   override_dir: ""
   components_dir: "data/components"
   costs_dir: "data/costs"
   obps: true
-  technology_costs: "default_costs"
+  technology_costs: "Default_costs"
   carbon_tax:
     "2021": 50 # $ per tonne, based on federal minimums
     "2025": 125
@@ -53,7 +53,6 @@ snapshots:
   method: "OPT_VRE_HYDRO"
   load_mode: *load_mode
   folder_name: "model/Canada-National"
-  load_growth_forecast: "model/Canada-National/loads_forecast.csv"
   investment_periods: 5
 
   # Rep days config
@@ -77,10 +76,13 @@ extra_loads:
 
 planning:
   constraints:
-    add_spilling_variable: true
+    add_spilling_variable:
+      enable: true
     add_stop_production_constraint:
+      enable: true
       2030: ["coal"]
     planning_reserve_margin:
+      enable: true
       capacity_values_placeholder_filepath: "data/constraints/capacity_values_placeholder.csv"
       provinces_list:
         "PE": 1.2
@@ -94,6 +96,7 @@ planning:
         "SK": 1.2
         "NL": 1.2
     CER_constraint:
+      enable: true
       # aggregation levels: provincial, group, individual
       aggregation: 'provincial'
       # year that constraint becomes active
@@ -114,13 +117,18 @@ dispatch:
   overlap: 48 #48
   investment_period: [] #If empty, it will take the planning investment periods
   constraints:
-    # add_spilling_variable: true
+    add_spilling_variable:
+      enable: false
     add_stop_production_constraint:
+      enable: true
       2030: ["coal"]
-    add_bidirection_link_constraint: {}
-    # add_prevent_spill_if_not_fully_charged_constraint:
+    add_bidirection_link_constraint:
+      enable: true
+    add_prevent_spill_if_not_fully_charged_constraint:
+      enable: false
     #   maximum_soc_storage_value: 2000
     CER_constraint:
+      enable: true
       # modes = hourly, emissions
       mode: 'emissions'
       # aggregation levels: provincial, group, individual

@@ -1,4 +1,5 @@
-
+# Previous rule: create_dispatch_network
+# Next rule: None
 rule solve_dispatch:
     input:
         unsolved_dispatch_network=f"{RUN_NET_DIR}/dispatch_planning_unsolved_network.nc",

@@ -7,24 +7,15 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from helpers import setup_script_logging
 from pypsa import Network
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
 LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/temp.log"
 
-# Ensure log directory exists
-os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 
-# Configure logging to both file and stdout (handy for --show-failed-logs)
-logging.basicConfig(
-    level=logging.INFO,
-    handlers=[
-        logging.FileHandler(LOG_PATH, mode="w", encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
-    ],
-    format="%(asctime)s %(levelname)s %(message)s",
-)
+setup_script_logging(LOG_PATH)
 
 config = snakemake.config
 
@@ -151,7 +142,7 @@ def create_extendable_components(
     """
     costs_dir: str = comp_config["costs_dir"]
     # Use default technology costs if not specified
-    technology_costs: str = comp_config.get("technology_costs", "default_costs")
+    technology_costs: str = comp_config.get("technology_costs", "Default_costs")
     years: list[int] = config["year_settings"]["investment_period"]
     # Get the data for the specified component type
     if component == "Generator":
@@ -554,7 +545,7 @@ def main() -> None:
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     if config["run"]["export_csv"]:
-        network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
+        network.export_to_csv_folder(f"{snakemake.output.planning_unsolved_network[:-3]}_csv")
 
 
 if __name__ == "__main__":

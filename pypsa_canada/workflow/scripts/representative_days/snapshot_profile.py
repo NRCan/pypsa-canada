@@ -35,11 +35,13 @@ class GenerateSnapshotProfile:
     def __init__(
         self,
         n: Network,
+        provinces=None,
         with_hydro=False,
         save_file=False,
         netload_filepath="./",
     ):
         self.n = n
+        self.provinces = provinces
         self.with_hydro = with_hydro
         self.save_file = save_file
         self.netload_filepath = netload_filepath
@@ -55,7 +57,7 @@ class GenerateSnapshotProfile:
         saving_folder_path: str = "./",
     ):
         self.net_load = net_load_calculation(
-            self.n, self.with_hydro, self.save_file, self.netload_filepath
+            self.n, self.provinces, self.with_hydro, self.save_file, self.netload_filepath
         )
 
         return kmedoid_method(
@@ -79,7 +81,7 @@ class GenerateSnapshotProfile:
         saving_folder_path: str = "./",
     ):
         self.net_load = net_load_calculation(
-            self.n, self.with_hydro, self.save_file, self.netload_filepath
+            self.n, self.provinces, self.with_hydro, self.save_file, self.netload_filepath
         )
 
         return opt_method(
@@ -192,7 +194,7 @@ def snapshots_selection(
     network: Network,
     snapshot_config: dict,
     snapshot_status: SnapshotStatus = SnapshotStatus.Initialize,
-) -> Network:
+) -> tuple[Network, SnapshotStatus]:
     """
     Snapshots method selection function
 
@@ -206,6 +208,7 @@ def snapshots_selection(
     ]
     snapshot_profile = GenerateSnapshotProfile(
         network,
+        provinces=snapshot_config.get("provinces_selection", None),
         with_hydro=snapshot_config["include_hydro"],
         save_file=True,
         netload_filepath=snapshot_config["saving_folder_path"],

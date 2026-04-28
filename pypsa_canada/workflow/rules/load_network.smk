@@ -1,4 +1,5 @@
-
+# Previous rule: None
+# Next rule: add_components
 rule load_network:
     input:
         input_data=config["input_data"]

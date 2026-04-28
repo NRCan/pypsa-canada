@@ -1,8 +1,8 @@
-# Previous rules: add_loads, add_representative_days
-# Next rule: modify_components
+# Previous rules: add_loads, add_components
+# Next rule: add_representative_days
 rule add_snapshots:
     input:
-        input_data=f"{RUN_NET_DIR}/add_representative_days.nc",
+        input_data=f"{RUN_NET_DIR}/add_components.nc",
         loads_p_set=f"{RUN_NET_DIR}/add_loads.csv"
     output:
         planning_unsolved_network=f"{RUN_NET_DIR}/add_snapshots.nc"

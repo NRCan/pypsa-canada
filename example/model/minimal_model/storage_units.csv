@@ -1,0 +1,3 @@
+name,bus,p_nom,model,max_hours,state_of_charge_initial,p_nom_extendable,build_year
+BUS_4 Battery,BUS_4,100,default_liion_battery,4,50,FALSE,2000
+BUS_4 OPT Battery,BUS_4,0,default_liion_battery,4,0,TRUE,2030

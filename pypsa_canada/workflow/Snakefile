@@ -13,8 +13,8 @@ from scripts._helpers import (
     get_scenarios,
     get_rdir,
     get_shadow,
-    merge_with_defaults,
 )
+from scripts.helpers import merge_with_defaults
 
 # Merge config with defaults to ensure all required keys are present
 config = merge_with_defaults(config)
@@ -56,9 +56,9 @@ RESULTS = "results/" + RDIR
 # Rules are in order of use
 include: "rules/load_network.smk"
 include: "rules/add_components.smk"
-include: "rules/add_representative_days.smk"
 include: "rules/add_loads.smk"
 include: "rules/add_snapshots.smk"
+include: "rules/add_representative_days.smk"
 include: "rules/add_extra_loads.smk"
 include: "rules/modify_components.smk"
 

@@ -19,6 +19,7 @@ from constraints.generic_constraints import (
     add_stop_prod_constraint,
     prevent_spill_if_not_fully_charged,
 )
+from helpers import setup_script_logging
 
 from pypsa_canada.workflow.scripts.common import drop_inactive_assets
 
@@ -26,18 +27,8 @@ from pypsa_canada.workflow.scripts.common import drop_inactive_assets
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
 LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/solve_dispatch.log"
 
-# Ensure log directory exists
-os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 
-# Configure logging to both file and stdout (handy for --show-failed-logs)
-logging.basicConfig(
-    level=logging.INFO,
-    handlers=[
-        logging.FileHandler(LOG_PATH, mode="w", encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
-    ],
-    format="%(asctime)s %(levelname)s %(message)s",
-)
+setup_script_logging(LOG_PATH)
 
 config = snakemake.config
 
@@ -64,7 +55,12 @@ def add_all_dispatch_constraints(network: pypsa.Network, snapshots: pd.DatetimeI
         The pypsa network snapshots for which the constraint will be applied
     """
     constraint_dict = config["dispatch"]["constraints"]
-
+    stop_production_cfg = constraint_dict["add_stop_production"]
+    # spilling_variable_cfg = constraint_dict["add_spilling_variable"]
+    bidirectional_link_constraint_cfg = constraint_dict["add_bidirection_link"]
+    prevent_spill_if_not_fully_charged_cfg = constraint_dict[
+        "add_prevent_spill_if_not_fully_charged"
+    ]
     # The snapshots must only contain one unique year
     period_list = snapshots.year.unique()
     if len(period_list) == 1:
@@ -75,35 +71,30 @@ def add_all_dispatch_constraints(network: pypsa.Network, snapshots: pd.DatetimeI
         )
 
     # Stop production constraint
-    if "add_stop_production_constraint" in constraint_dict:
-        stop_production_dict = constraint_dict["add_stop_production_constraint"]
-        logging.debug(f"Stop_production_dictionary = {stop_production_dict}")
-        if period in stop_production_dict:
-            add_stop_prod_constraint(network, snapshots, stop_production_dict[period])
+    if stop_production_cfg["enable"]:
+        logging.debug(f"Stop_production_dictionary = {stop_production_cfg}")
+        if period in stop_production_cfg:
+            add_stop_prod_constraint(network, snapshots, stop_production_cfg[period])
 
-    # # Add binary spilling variable (1: spilling, 0: not spilling) to Linopy model
-    # spilling_variable_ena = constraint_dict.get("add_spilling_variable")
-    # logging.info(f'Add Spilling Variable has been set to {spilling_variable_ena}')
-    # if spilling_variable_ena:
+    # Add binary spilling variable (1: spilling, 0: not spilling) to Linopy model
+    # if spilling_variable_cfg["enable"]:
     #     add_spilling_variable(network, snapshots)
 
     # Bidirectional link constraint
-    if "add_bidirection_link_constraint" in constraint_dict:
-        links_constraint_dict = constraint_dict["add_bidirection_link_constraint"]
-        add_bidirection_link_constraint(network, links_constraint_dict)
+    if bidirectional_link_constraint_cfg["enable"]:
+        add_bidirection_link_constraint(
+            network,
+            bidirectional_link_constraint_cfg,
+        )
 
     # Prevent spill if not fully charged constraint
-    if "add_prevent_spill_if_not_fully_charged_constraint" in constraint_dict:
-        if (
+    if prevent_spill_if_not_fully_charged_cfg["enable"]:
+        maximum_soc_storage_value = prevent_spill_if_not_fully_charged_cfg[
             "maximum_soc_storage_value"
-            in constraint_dict["add_prevent_spill_if_not_fully_charged_constraint"]
-        ):
-            maximum_soc_storage_value = constraint_dict[
-                "add_prevent_spill_if_not_fully_charged_constraint"
-            ]["maximum_soc_storage_value"]
-            prevent_spill_if_not_fully_charged(
-                network, snapshots, maximum_soc_storage_value
-            )
+        ]
+        prevent_spill_if_not_fully_charged(
+            network, snapshots, maximum_soc_storage_value
+        )
 
 
 def optimize_uc_period(
@@ -128,7 +119,7 @@ def optimize_uc_period(
 
     # --- CER constraint initialisation (state shared across UC periods) ---
     constraint_dict = config.get("dispatch", {}).get("constraints", {})
-    CER_constraint_cfg = constraint_dict.get("CER_constraint")
+    CER_constraint_cfg = constraint_dict["CER_constraint"]
     logging.info(f"CER constraint config: {CER_constraint_cfg}")
     CER_generators = pd.DataFrame()
     CER_group_list = []
@@ -140,7 +131,9 @@ def optimize_uc_period(
 
     logging.info(f"Solver options for {solver_name}: {solver_options}")
 
-    if CER_constraint_cfg and period_year >= CER_constraint_cfg.get("year", 9999):
+    if CER_constraint_cfg["enable"] and period_year >= CER_constraint_cfg.get(
+        "year", 9999
+    ):
         CER_generators, CER_group_budget, CER_group_list = CER_generator_grouping(
             network, CER_constraint_cfg, period_year, "dispatch"
         )
@@ -381,7 +374,7 @@ def main():
         logging.info(f"Loading Dispatch Network for period = {period}")
         period_snapshots = network.snapshots[network.snapshots.year == period]
 
-        # Test mode: limit to 24 snapshots for this period
+        # Test mode: limit to 6 snapshots for this period
         if os.environ.get("PYPSA_TEST_MODE") == "1":
             logging.info("Test mode enabled: limiting to 6 snapshots for dispatch")
             original_snapshot_count = len(period_snapshots)

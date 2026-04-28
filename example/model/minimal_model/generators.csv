@@ -1,4 +1,10 @@
-name,bus,model,group,p_nom,p_nom_extendable,p_nom_min,p_nom_max,marginal_cost,build_year,lifetime,capital_cost
-BUS_1 Generator,BUS_1,default_diesel,ungrouped,50,FALSE,0,0,80,2000,inf,0
-BUS_4 Generator,BUS_4,default_solar_PV,ungrouped,30,FALSE,0,0,3,2000,inf,0
-BUS_5 Generator,BUS_5,default_diesel,ungrouped,100,FALSE,0,0,400,2000,inf,0
+name,bus,model,group,p_nom,p_nom_extendable,p_nom_min,p_nom_max,build_year
+BUS_1 Diesel,BUS_1,default_diesel,ungrouped,50,FALSE,0,0,2000
+BUS_2 Wind,BUS_2,wind_2021,ungrouped,10,FALSE,0,0,2000
+BUS_3 Gas,BUS_3,gas_CC,ungrouped,50,FALSE,0,0,2000
+BUS_4 Solar,BUS_4,default_solar_PV,ungrouped,30,FALSE,0,0,2000
+BUS_5 Diesel,BUS_5,default_diesel,ungrouped,100,FALSE,0,0,2000
+BUS_1 OPT Diesel,BUS_1,default_diesel,ungrouped,0,TRUE,0,inf,2030
+BUS_2 OPT Wind,BUS_2,wind_new,ungrouped,0,TRUE,0,inf,2030
+BUS_3 OPT Gas,BUS_3,gas_CC,ungrouped,0,TRUE,0,inf,2030
+BUS_4 OPT Solar,BUS_4,default_solar_PV,ungrouped,0,TRUE,0,inf,2030

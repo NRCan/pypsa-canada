@@ -1,9 +1,8 @@
-
-# OUT_DIR = f"networks/{config["run"]["name"]}"
-# LOG_DIR = f"logs/{config["run"]["name"]}"
+# Previous rule: add_representative_days
+# Next rule: modify_components
 rule add_extra_loads:
     input:
-        input_data=f"{RUN_NET_DIR}/add_snapshots.nc"
+        input_data=f"{RUN_NET_DIR}/add_representative_days.nc"
     output:
         planning_unsolved_network=f"{RUN_NET_DIR}/add_extra_loads.nc"
     log:
