@@ -207,10 +207,14 @@ def optimize_uc_period(
             # Calculate up time and down time at given time step, and then use time step before, for generators with status (note: ignore initial values at first snapshot for simplicity, since length of UC periods is greater than the min_up_time and min_down_time anyway)
             network.generators.loc[
                 network.generators_t.status.columns, "up_time_before"
-            ] = (network.generators_t.status * cumcount).iloc[a - 1, :]
+            ] = (network.generators_t.status * cumcount).iloc[a - 1, :].astype(int)
             network.generators.loc[
                 network.generators_t.status.columns, "down_time_before"
-            ] = ((1 - network.generators_t.status) * cumcount).iloc[a - 1, :]
+            ] = (
+                ((1 - network.generators_t.status) * cumcount)
+                .iloc[a - 1, :]
+                .astype(int)
+            )
 
         # Build the extra_functionality callback for this UC period.
         # Base constraints are always applied via add_all_dispatch_constraints.

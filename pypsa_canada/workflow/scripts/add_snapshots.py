@@ -333,7 +333,9 @@ def main():
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     if config["run"]["export_csv"]:
-        network.export_to_csv_folder(f"{snakemake.output.planning_unsolved_network[:-3]}_csv")
+        network.export_to_csv_folder(
+            f"{snakemake.output.planning_unsolved_network[:-3]}_csv"
+        )
 
     return
 

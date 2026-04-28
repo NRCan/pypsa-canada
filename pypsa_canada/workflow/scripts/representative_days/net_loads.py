@@ -1,7 +1,9 @@
 import os
 
 
-def net_load_calculation(network, provinces=None, with_hydro=False, save_file=False, filepath="./"):
+def net_load_calculation(
+    network, provinces=None, with_hydro=False, save_file=False, filepath="./"
+):
     """
     The net_load_v1.py aggregates the loads in NB, NS and PEI, identifies the wind and solar
     generation from these provinces, and subtracts the aggregated load by the aggregated generation.
@@ -33,7 +35,7 @@ def net_load_calculation(network, provinces=None, with_hydro=False, save_file=Fa
     generators_df = network.df("Generator")
 
     # Map provinces from buses
-    generators_df['province'] = generators_df['bus'].map(network.buses['province'])
+    generators_df["province"] = generators_df["bus"].map(network.buses["province"])
 
     # print(generators_df)
     # Filter rows with "carrier" equal to "wind" or "solar PV" and pnom not equal to 0
@@ -83,17 +85,19 @@ def net_load_calculation(network, provinces=None, with_hydro=False, save_file=Fa
 
     # Map provinces from buses to loads
     load_prov_df = network.c["Load"].static
-    load_prov_df['province'] = load_prov_df['bus'].map(network.buses['province'])
+    load_prov_df["province"] = load_prov_df["bus"].map(network.buses["province"])
 
     # Filter loads by provinces
     if provinces is not None:
         # Get load columns for specified provinces
-        load_columns = load_prov_df[load_prov_df['province'].isin(provinces)].index
+        load_columns = load_prov_df[load_prov_df["province"].isin(provinces)].index
         summed_loads_rows = loads_p_set_df[load_columns].sum(axis=1)
     else:
         # Exclude the "QC" column from the sum (original behavior)
         # summed_loads_rows = loads_p_set_df.drop(columns=['QC_a']).sum(axis=1)
-        load_columns = load_prov_df[~load_prov_df['province'].str.contains("QC", na=False)].index
+        load_columns = load_prov_df[
+            ~load_prov_df["province"].str.contains("QC", na=False)
+        ].index
         summed_loads_rows = loads_p_set_df[load_columns].sum(axis=1)
 
     # To not exclude "QC"

@@ -247,12 +247,10 @@ def avg_peak_method(
                     # Timestamps for identified day
                     avg_hours = pd.date_range(start=avg_day, periods=24, freq="h")
                     # Assign weights
-                    snap_df.loc[pd.IndexSlice[year_key, avg_hours], ["objective"]] += (
-                        stats["w_peak"] + stats["w_avg"]
-                    )
                     snap_df.loc[
-                        pd.IndexSlice[year_key, avg_hours], ["stores", "generators"]
-                    ] = 1
+                        pd.IndexSlice[year_key, avg_hours], ["objective", "generators"]
+                    ] += stats["w_peak"] + stats["w_avg"]
+                    snap_df.loc[pd.IndexSlice[year_key, avg_hours], ["stores"]] = 1
                 else:
                     # Timestamps for the identified days
                     peak_hours = pd.date_range(start=peak_day, periods=24, freq="h")

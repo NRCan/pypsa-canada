@@ -442,12 +442,12 @@ def snap_df_period(
         snap_df.loc[
             (snap_df.index.get_level_values("period") == period)
             & (snap_df.index.get_level_values("timestep").date == rep_day_dates[i]),
-            "objective",
+            ["objective", "generators"],
         ] = occurrences[i]
         snap_df.loc[
             (snap_df.index.get_level_values("period") == period)
             & (snap_df.index.get_level_values("timestep").date == rep_day_dates[i]),
-            ["stores", "generators"],
+            "stores",
         ] = 1
     return snap_df
 

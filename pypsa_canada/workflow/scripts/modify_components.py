@@ -1,6 +1,5 @@
 # scripts/add_loads.py
 import logging
-import os
 import sys
 import traceback
 

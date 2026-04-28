@@ -145,8 +145,8 @@ def opt_quad_method(
         for day, w in non_zero:
             day_start = dates[day]
             hour_stamps = pd.date_range(start=day_start, periods=24, freq="h")
-            df.loc[pd.IndexSlice[:, hour_stamps], ["objective"]] = w
-            df.loc[pd.IndexSlice[:, hour_stamps], ["stores", "generators"]] = 1
+            df.loc[pd.IndexSlice[:, hour_stamps], ["objective", "generators"]] = w
+            df.loc[pd.IndexSlice[:, hour_stamps], ["stores"]] = 1
         return df
 
     # Load snapshots and obtain unique periods

@@ -38,7 +38,7 @@ steps:
     python -m pytest -v -rA --junitxml=junit.xml  --rootdir=tests --cov-report xml --cov-report html --cov=$(System.DefaultWorkingDirectory)
   displayName: Generate coverage report
 
-- script: pre-commit run --all-files --show-diff-on-failure
+- script: pre-commit run --all-files --hook-stage=manual --show-diff-on-failure
   displayName: 'Check Code Quality'
 
 - task: PublishCodeCoverageResults@2

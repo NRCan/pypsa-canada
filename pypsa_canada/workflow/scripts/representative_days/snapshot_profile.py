@@ -57,7 +57,11 @@ class GenerateSnapshotProfile:
         saving_folder_path: str = "./",
     ):
         self.net_load = net_load_calculation(
-            self.n, self.provinces, self.with_hydro, self.save_file, self.netload_filepath
+            self.n,
+            self.provinces,
+            self.with_hydro,
+            self.save_file,
+            self.netload_filepath,
         )
 
         return kmedoid_method(
@@ -81,7 +85,11 @@ class GenerateSnapshotProfile:
         saving_folder_path: str = "./",
     ):
         self.net_load = net_load_calculation(
-            self.n, self.provinces, self.with_hydro, self.save_file, self.netload_filepath
+            self.n,
+            self.provinces,
+            self.with_hydro,
+            self.save_file,
+            self.netload_filepath,
         )
 
         return opt_method(

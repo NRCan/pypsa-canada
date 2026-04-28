@@ -229,12 +229,12 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
             snap_df.loc[
                 (snap_df.index.get_level_values("period") == period)
                 & (snap_df.index.get_level_values("timestep").date == rep_day_dates[i]),
-                "objective",
+                ["objective", "generators"],
             ] = occurrences[i]
             snap_df.loc[
                 (snap_df.index.get_level_values("period") == period)
                 & (snap_df.index.get_level_values("timestep").date == rep_day_dates[i]),
-                ["stores", "generators"],
+                "stores",
             ] = 1
 
         # Now compute new values of generator_p_max_pu with rescalings applied such that weighted average over rep days matches average over the full year for each province

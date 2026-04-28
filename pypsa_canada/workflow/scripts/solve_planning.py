@@ -69,8 +69,12 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 
     # Add bidirectional link constraint (applies to all periods)
     if bidirectional_link_constraint_cfg["enable"]:
-        logging.info(f"Adding bidirectional link constraint: {bidirectional_link_constraint_cfg}")
-        add_bidirection_link_constraint(network, bidirectional_link_constraint_cfg.items())
+        logging.info(
+            f"Adding bidirectional link constraint: {bidirectional_link_constraint_cfg}"
+        )
+        add_bidirection_link_constraint(
+            network, bidirectional_link_constraint_cfg.items()
+        )
 
     # Per-period constraints
     for period in period_list:
@@ -124,9 +128,7 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 
         # Planning reserve margin constraint
         if planning_reserve_margin_cfg["enable"]:
-            prov_list = planning_reserve_margin_cfg.get(
-                "provinces_list", {}
-            )
+            prov_list = planning_reserve_margin_cfg.get("provinces_list", {})
             capacity_values_filepath = planning_reserve_margin_cfg.get(
                 "capacity_values_placeholder_filepath", None
             )

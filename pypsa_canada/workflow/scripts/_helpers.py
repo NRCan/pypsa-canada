@@ -42,8 +42,6 @@ def get_scenarios(run):
     return {}
 
 
-
-
 def get_rdir(run):
     scenario_config = run.get("scenarios", {})
     if run["name"] and scenario_config.get("enable"):
