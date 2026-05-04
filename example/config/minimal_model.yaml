@@ -64,7 +64,7 @@ snapshots:
   save_fig: false
   save_csv: false
   saving_folder_path: saves
-  provinces_selection: ["BC", "ON", "QC"]
+  provinces_selection: ["NB", "ON", "QC"]
   # year: None
   aggregate: false
   mip_gap: 0.01
