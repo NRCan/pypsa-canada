@@ -1,3 +1,10 @@
+## 0.0.16 (2026-05-04)
+
+### Bug Fixes
+
+- Add hydro storage, buses coordinates and load daily variability in min...
+- Add hydro storage with inflow in minimal_model
+
 ## 0.0.15 (2026-04-28)
 
 ### Bug Fixes
