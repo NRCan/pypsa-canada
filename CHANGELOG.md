@@ -1,3 +1,13 @@
+## 0.1.0 (2026-05-05)
+
+### Bug Fixes
+
+- Removed print causing dag graph generation issues
+
+### Features
+
+- Added postprocessing for provinces
+
 ## 0.0.16 (2026-05-04)
 
 ### Bug Fixes
