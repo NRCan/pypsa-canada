@@ -22,7 +22,7 @@ def load_default_config():
     # Try to find it relative to the workflow directory
     try:
         work_dir = Path.cwd()
-        print(f"Current work dir:{work_dir}")
+        logger.info(f"Current work dir:{work_dir}")
         default_config_path = work_dir / "config" / "default_config.yaml"
 
         if default_config_path.exists():

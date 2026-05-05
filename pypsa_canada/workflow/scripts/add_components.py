@@ -384,6 +384,9 @@ def create_marginal_costs(
         variable_cost_result = pd.concat([variable_cost_result, gen_variable_costs])
 
     network.generators_t.marginal_cost = marginal_costs_result
+    network.generators_t.carbon_cost = carbon_cost_result
+    network.generators_t.fuel_cost = fuel_cost_result
+    network.generators_t.variable_cost = variable_cost_result
 
     return (
         marginal_costs_result,
@@ -514,8 +517,13 @@ def preprocess_components(
     )
     print("Marginal Cost")
     print(marginal_costs)
+    print(f"Carbon Cost: {carbon_cost}")
+    print(f"Fuel Cost: {fuel_cost}")
+    print(f"Variable Cost: {variable_cost}")
     network.generators_t.marginal_cost = marginal_costs.copy()
-
+    network.generators_t.carbon_cost = carbon_cost.copy()
+    network.generators_t.fuel_cost = fuel_cost.copy()
+    network.generators_t.variable_cost = variable_cost.copy()
     print("-----CREATING STORAGE UNITS DATA-----")
     if not network.storage_units.empty:
         # Modify storage units dataframe to add generic data

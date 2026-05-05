@@ -67,10 +67,18 @@ include: "rules/solve_planning.smk"
 include: "rules/create_dispatch_network.smk"
 include: "rules/solve_dispatch.smk"
 
+# Post-processing rules
+include: "rules/post_process_planning.smk"
+include: "rules/post_process_dispatch.smk"
+# include: "rules/compare_results.smk"
+
 rule all:
     input:
         f"{RUN_RES_DIR}/planning_solved_network_{TIMESTAMP}",
-        f"{RUN_RES_DIR}/dispatch_solved_network_{TIMESTAMP}"
+        f"{RUN_RES_DIR}/dispatch_solved_network_{TIMESTAMP}",
+        f"{RUN_RES_DIR}/post_process_planning_{TIMESTAMP}",
+        f"{RUN_RES_DIR}/post_process_dispatch_{TIMESTAMP}",
+        # f"{RUN_RES_DIR}/compare_results_{TIMESTAMP}"
 
 rule clean_all:
     message:

@@ -101,6 +101,9 @@ def save_ref_year_data(
         (network_ref.generators_t, network.generators_t, "p_max_pu"),
         (network_ref.generators_t, network.generators_t, "p_min_pu"),
         (network_ref.generators_t, network.generators_t, "marginal_cost"),
+        (network_ref.generators_t, network.generators_t, "carbon_cost"),
+        (network_ref.generators_t, network.generators_t, "fuel_cost"),
+        (network_ref.generators_t, network.generators_t, "variable_cost"),
         (network_ref.storage_units_t, network.storage_units_t, "inflow"),
         (network_ref.links_t, network.links_t, "p_max_pu"),
         # not needed? TODO verify
@@ -151,10 +154,29 @@ def create_yearly_weightings(
     load_mode = LoadProfile[snapshot_config["load_mode"].upper()]
     snapshot_new_df = network.snapshots
 
+    # Save custom dynamic attributes before re-indexing snapshots,
+    # because the MultiIndex conversion will NaN-out any attributes
+    # that PyPSA doesn't know how to re-index.
+    custom_dynamic_attrs = {}
+    for attr in ["carbon_cost", "fuel_cost", "variable_cost"]:
+        df = getattr(network.generators_t, attr, None)
+        if df is not None and not df.empty:
+            custom_dynamic_attrs[attr] = df.values.copy()
+
     # Convert to multi-index with period (year) and timestep
     network.snapshots = pd.MultiIndex.from_arrays(
         [snapshot_new_df.year, snapshot_new_df], names=["period", "timestep"]
     )
+
+    # Restore custom dynamic attributes with the new index
+    for attr, values in custom_dynamic_attrs.items():
+        old_df = getattr(network.generators_t, attr)
+        setattr(
+            network.generators_t,
+            attr,
+            pd.DataFrame(values, index=network.snapshots, columns=old_df.columns),
+        )
+
     print(f"Investment periods: {years}")
     network.periods = years
 
