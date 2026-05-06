@@ -1,16 +1,16 @@
-# Previous rule: solve_planning
+# Previous rules: solve_planning, solve dispatch, post_process_planning, post_process_dispatch
 # Next rule: None
 
-_cm_cfg = config.get("corridor_map", {})
-_cm_timestamp = _cm_cfg.get("timestamp", {TIMESTAMP}) 
+_cm_timestamp = config.get("postprocess", {}).get("corridor_map", {}).get("timestamp") or TIMESTAMP
 
 rule plot_corridor_map:
     input:
-        planning_solved_network=f"{RUN_RES_DIR}/planning_solved_network_{_cm_timestamp}",
-        # dispatch_solved_network=f"{RUN_RES_DIR}/dispatch_solved_network_{TIMESTAMP}",
-        post_process_planning=f"{RUN_RES_DIR}/post_process_planning_{_cm_timestamp}",
+        planning_solved_network=f"{RUN_OUTPUT_DIR}/planning_solved_network",
+        dispatch_solved_network=f"{RUN_OUTPUT_DIR}/dispatch_solved_network",
+        post_process_planning=f"{RUN_OUTPUT_DIR}/post_process_planning",
+        post_process_dispatch=f"{RUN_OUTPUT_DIR}/post_process_dispatch"
     output:
-        corridor_map=f"{RUN_RES_DIR}/corridor_utilization_map_{_cm_timestamp}.html"
+        corridor_map=f"{RUN_OUTPUT_DIR}/corridor_utilization_map.html"
     log:
         f"{RUN_LOG_DIR}/plot_corridor_map_{_cm_timestamp}.log"
     script:

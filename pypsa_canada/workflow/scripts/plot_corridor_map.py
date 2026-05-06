@@ -8,9 +8,9 @@ flow data show a Plotly utilization chart in the popup; corridors without flow
 data (e.g. intra-provincial lines in provincial post-processing mode) are drawn
 in grey with a lightweight metadata popup.
 
-Supports both nodal post-processing (hourly files keyed by bus name) and
-provincial post-processing (hourly files keyed by province code). The mode is
-detected automatically from the ``province`` column in ``buses.csv``.
+Post-processing CSVs are keyed by province code (or by bus name when no
+``province`` column is present).  Bus-to-province mapping from ``buses.csv``
+is applied uniformly; there is no separate nodal vs provincial code path.
 """
 
 import logging
@@ -55,7 +55,7 @@ SELF_LOOP_STEP_M = 900.0  # spacing for multiple self-loops at same bus
 BUS_JITTER_M = 900.0  # meters (tune 400-1500)
 BUS_JITTER_MODE = "suffix_voltage"  # "suffix_voltage" | "v_nom" | "name_only"
 
-NODAL_FILE_GLOB = "**/*_hourly*.csv"  # e.g., BUS_1_hourly.csv
+NODAL_FILE_GLOB = "**/*_hourly*.csv"  # e.g., AB_hourly.csv
 
 LINE_COLOR_WITH_DATA = "#3388ff"  # Folium default blue
 LINE_COLOR_NO_DATA = "#888888"  # Grey for corridors without flow data
@@ -265,100 +265,47 @@ def jitter_bus(lat, lon, position, group_size, jitter_m):
 # =============================================================================
 # FLOW: sum ALL matching columns for neighbor (handles parallel flows)
 # =============================================================================
-def find_flow_columns(
-    df: pd.DataFrame, neighbor_key: str, bus_to_province: dict | None = None
-) -> list[str]:
+def find_flow_columns(df: pd.DataFrame, neighbor_key: str) -> list[str]:
     """
     Return column names in *df* that carry flow towards *neighbor_key*.
 
-    Columns must contain ``transmission_flow``, start with the neighbor
-    identifier, and end with ``transmission_flow``.
-
-    In provincial mode, if no match is found for the bus name the lookup is
-    retried using the province code from *bus_to_province*.
+    Columns must start with *neighbor_key* and end with ``transmission_flow``.
 
     Parameters
     ----------
     df : pd.DataFrame
-        Hourly energy-balance DataFrame for the source bus/province.
+        Hourly energy-balance DataFrame for the source province.
     neighbor_key : str
-        Bus name (nodal) or bus name to resolve via *bus_to_province* (provincial).
-    bus_to_province : dict or None
-        ``{bus_name: province_code}`` mapping; ``None`` disables the fallback.
+        Province code of the neighboring province.
 
     Returns
     -------
     list[str]
     """
     neighbor_key = str(neighbor_key).strip()
-    cols = [
+    return [
         c
         for c in df.columns
-        if "transmission_flow" in c
-        and c.startswith(neighbor_key)
-        and c.endswith("transmission_flow")
+        if c.startswith(neighbor_key) and c.endswith("transmission_flow")
     ]
-    # Provincial mode: columns use province codes instead of bus names
-    if not cols and bus_to_province:
-        province_key = bus_to_province.get(neighbor_key)
-        if province_key:
-            cols = [
-                c
-                for c in df.columns
-                if "transmission_flow" in c
-                and c.startswith(province_key)
-                and c.endswith("transmission_flow")
-            ]
-    return cols
-
-
-def _resolve_nodal_key(
-    bus: str, nodal_index: dict, bus_to_province: dict | None
-) -> str:
-    """
-    Return the key to use for *nodal_index* lookup.
-
-    Tries the bus name first (nodal mode).  If absent, falls back to the
-    province code via *bus_to_province* (provincial mode).
-
-    Parameters
-    ----------
-    bus : str
-    nodal_index : dict
-    bus_to_province : dict or None
-
-    Returns
-    -------
-    str
-        The resolved key (may not be in *nodal_index* if both lookups fail).
-    """
-    if bus in nodal_index:
-        return bus
-    if bus_to_province:
-        province = bus_to_province.get(bus)
-        if province and province in nodal_index:
-            return province
-    return bus
 
 
 def _load_flow_from_side(
-    source_bus: str,
-    target_bus: str,
+    source_key: str,
+    target_key: str,
     nodal_index: dict,
-    bus_to_province: dict | None,
     negate: bool = False,
 ):
     """
-    Load the hourly flow from *source_bus* towards *target_bus*.
+    Load the hourly flow from *source_key* towards *target_key*.
 
     Parameters
     ----------
-    source_bus : str
-        Bus whose hourly file is opened.
-    target_bus : str
-        Neighbor bus whose transmission-flow columns are selected.
+    source_key : str
+        Province code whose hourly file is opened.
+    target_key : str
+        Province code of the neighbor, used to select transmission-flow columns.
     nodal_index : dict
-    bus_to_province : dict or None
     negate : bool
         When ``True`` the returned flow array is sign-flipped.
 
@@ -366,11 +313,10 @@ def _load_flow_from_side(
     -------
     tuple[pd.DatetimeIndex, np.ndarray] or tuple[None, None]
     """
-    key = _resolve_nodal_key(source_bus, nodal_index, bus_to_province)
-    df = _get_cached_hourly_df(key, nodal_index)
+    df = _get_cached_hourly_df(source_key, nodal_index)
     if df is None:
         return None, None
-    cols = find_flow_columns(df, target_bus, bus_to_province)
+    cols = find_flow_columns(df, target_key)
     if not cols:
         return None, None
     timestamps = detect_time_index(df)
@@ -384,35 +330,31 @@ def _load_flow_from_side(
     return timestamps, (-flow_mw if negate else flow_mw)
 
 
-def get_corridor_flow(
-    bus0: str, bus1: str, nodal_index: dict, bus_to_province: dict | None = None
-):
+def get_corridor_flow(key0: str, key1: str, nodal_index: dict):
     """
-    Retrieve the signed hourly flow time-series from *bus0* to *bus1*.
+    Retrieve the signed hourly flow time-series from *key0* to *key1*.
 
-    First tries to read the flow from *bus0*'s hourly file (columns starting
-    with *bus1*).  If that fails, reads from *bus1*'s file and negates the
-    sign.  Both nodal (bus-name keyed) and provincial (province-code keyed)
-    file layouts are supported.
+    Tries *key0*'s hourly file first (columns starting with *key1*), then
+    *key1*'s file with negated sign.
 
     Parameters
     ----------
-    bus0 : str
-    bus1 : str
+    key0 : str
+        Province code of the source side.
+    key1 : str
+        Province code of the destination side.
     nodal_index : dict
         ``{key: filepath}`` mapping from :func:`index_nodal_files`.
-    bus_to_province : dict or None
-        Used for provincial-mode fallback.
 
     Returns
     -------
     tuple[pd.DatetimeIndex, np.ndarray] or tuple[None, None]
         ``(timestamps, flow_mw)`` or ``(None, None)`` if no data found.
     """
-    timestamps, flow_mw = _load_flow_from_side(bus0, bus1, nodal_index, bus_to_province)
+    timestamps, flow_mw = _load_flow_from_side(key0, key1, nodal_index)
     if timestamps is not None:
         return timestamps, flow_mw
-    return _load_flow_from_side(bus1, bus0, nodal_index, bus_to_province, negate=True)
+    return _load_flow_from_side(key1, key0, nodal_index, negate=True)
 
 
 # =============================================================================
@@ -717,13 +659,75 @@ def load_lines(res_folder: str) -> tuple[pd.DataFrame, str]:
     return lines, cap_col
 
 
-def resolve_corridor_flow(rows, nodal_index, bus_to_province=None):
+def load_link_flows(res_folder: str) -> tuple:
+    """
+    Load per-component hourly flows directly from the solved network folder.
+
+    Tries ``links-p0.csv`` first (DC links), then falls back to
+    ``lines-p0.csv`` (AC lines).  Aligns rows against the ``timestep`` column
+    in ``snapshots.csv``.
+
+    Parameters
+    ----------
+    res_folder : str
+        Path to the planning solved network directory.
+
+    Returns
+    -------
+    tuple[pd.DatetimeIndex, pd.DataFrame] or tuple[None, None]
+        ``(timestamps, flows_df)`` where *flows_df* columns are component names,
+        or ``(None, None)`` if neither file is present.
+    """
+    snap_path = os.path.join(res_folder, "snapshots.csv")
+    links_p0 = os.path.join(res_folder, "links-p0.csv")
+    lines_p0 = os.path.join(res_folder, "lines-p0.csv")
+    if os.path.exists(links_p0):
+        p0_path = links_p0
+    elif os.path.exists(lines_p0):
+        p0_path = lines_p0
+    else:
+        logging.info(
+            "Neither links-p0.csv nor lines-p0.csv found; direct flow fallback unavailable."
+        )
+        return None, None
+
+    flows = pd.read_csv(p0_path, index_col=0, encoding="utf-8-sig")
+    flows.columns = [c.strip() for c in flows.columns]
+
+    timestamps = None
+    if os.path.exists(snap_path):
+        snaps = read_csv_flex(snap_path)
+        if "timestep" in snaps.columns:
+            timestamps = pd.DatetimeIndex(
+                pd.to_datetime(snaps["timestep"], errors="coerce")
+            )
+    if timestamps is None or len(timestamps) != len(flows):
+        timestamps = pd.date_range("2021-01-01 00:00:00", periods=len(flows), freq="h")
+
+    flows.index = timestamps
+    return timestamps, flows
+
+
+def _bus_index_key(bus: str, bus_to_province: dict, nodal_index: dict) -> str:
+    """
+    Return the lookup key for *bus* in *nodal_index*.
+
+    In Nodal mode the index is keyed by bus names, so the bus name is used
+    directly.  In Provincial mode the index is keyed by province codes, so the
+    province code is returned as a fallback.
+    """
+    if bus in nodal_index:
+        return bus
+    return bus_to_province.get(bus, bus)
+
+
+def resolve_corridor_flow(rows, nodal_index, bus_to_province):
     """
     Find a valid flow orientation for a corridor across all its physical lines.
 
-    Iterates over the lines in the corridor and returns the first successful
-    ``(bus0, bus1, timestamps, flow_mw)`` tuple.  Tries the natural bus0->bus1
-    direction first, then the reversed direction.
+    Bus names are mapped to province codes via *bus_to_province* so that the
+    same province-keyed hourly files are used regardless of whether multiple
+    buses belong to the same province.  Duplicate province-pairs are skipped.
 
     Parameters
     ----------
@@ -731,26 +735,25 @@ def resolve_corridor_flow(rows, nodal_index, bus_to_province=None):
         Line rows for the corridor (each must have ``bus0`` and ``bus1``).
     nodal_index : dict
         ``{key: filepath}`` mapping from :func:`index_nodal_files`.
-    bus_to_province : dict or None
-        Used for provincial-mode fallback.
+    bus_to_province : dict
+        ``{bus_name: province_code}`` mapping.
 
     Returns
     -------
     tuple[str, str, pd.DatetimeIndex, np.ndarray] or tuple[None, None, None, None]
         ``(bus0, bus1, timestamps, flow_mw)`` or four ``None``s if no data found.
     """
+    seen = set()
     for line in rows:
-        timestamps, flow_mw = get_corridor_flow(
-            line["bus0"], line["bus1"], nodal_index, bus_to_province
-        )
+        key0 = _bus_index_key(line["bus0"], bus_to_province, nodal_index)
+        key1 = _bus_index_key(line["bus1"], bus_to_province, nodal_index)
+        pair = canonical_pair(key0, key1)
+        if pair in seen:
+            continue
+        seen.add(pair)
+        timestamps, flow_mw = get_corridor_flow(key0, key1, nodal_index)
         if timestamps is not None:
             return line["bus0"], line["bus1"], timestamps, flow_mw
-    for line in rows:
-        timestamps, flow_mw = get_corridor_flow(
-            line["bus1"], line["bus0"], nodal_index, bus_to_province
-        )
-        if timestamps is not None:
-            return line["bus1"], line["bus0"], timestamps, flow_mw
     return None, None, None, None
 
 
@@ -765,6 +768,7 @@ def main():
     bus_ll, _, bus_to_province = load_buses(os.path.join(res_folder, "buses.csv"))
     lines, _ = load_lines(res_folder)
     nodal_index = index_nodal_files(post_process_folder, NODAL_FILE_GLOB)
+    link_flows_ts, link_flows_df = load_link_flows(res_folder)
 
     corridors: dict = defaultdict(list)
     for _, row in lines.iterrows():
@@ -802,6 +806,21 @@ def main():
         bus0, bus1, timestamps, flow_mw = resolve_corridor_flow(
             rows, nodal_index, bus_to_province
         )
+        # Fallback: read flows directly from links-p0.csv in the solved network.
+        # This covers intra-provincial corridors that have no post-processing file.
+        if timestamps is None and link_flows_df is not None:
+            link_names = [str(r["name"]) for r in sorted_lines]
+            avail = [n for n in link_names if n in link_flows_df.columns]
+            if avail:
+                flow_mw = (
+                    link_flows_df[avail]
+                    .apply(pd.to_numeric, errors="coerce")
+                    .fillna(0.0)
+                    .sum(axis=1)
+                    .to_numpy()
+                )
+                timestamps = link_flows_ts
+                bus0, bus1 = bus_a, bus_b
         missing_flow = timestamps is None
         if missing_flow:
             skipped_flow += 1
@@ -899,6 +918,9 @@ def main():
     logging.info(f"[Diag] Skipped (missing coords): {skipped_coords}")
     logging.info(f"[Diag] Skipped (missing flow column): {skipped_flow}")
     logging.info(f"[Diag] Nodal files indexed: {len(nodal_index)}")
+    logging.info(
+        f"[Diag] Direct link-flow fallback: {'available' if link_flows_df is not None else 'unavailable'} ({0 if link_flows_df is None else len(link_flows_df.columns)} links)"
+    )
 
 
 if __name__ == "__main__":

@@ -734,6 +734,30 @@ def calc_energy_balance(n, year, planning=False):
             bus0_trans = bus0_trans.reset_index().set_index("carrier")
             bus1_trans = bus1_trans.set_index("carrier")
             transmission = pd.concat([bus0_trans, bus1_trans])
+            # Map bus names to the same grouping keys used by generators/loads,
+            # which format_network sets to province codes (Provincial) or bus
+            # names (Nodal).  This normalises transmission column names so they
+            # match the file keys used by save_prov_energy_balance and drops
+            # intra-group flows (e.g. intra-provincial in Provincial mode).
+            bus_to_key: dict = {}
+            for comp in (n.generators, n.storage_units, n.loads):
+                if (
+                    not comp.empty
+                    and "province" in comp.columns
+                    and "bus" in comp.columns
+                ):
+                    bus_to_key.update(zip(comp["bus"], comp["province"]))
+            if bus_to_key:
+                transmission["province"] = transmission["province"].map(
+                    lambda b: bus_to_key.get(b, b)
+                )
+                transmission.index = pd.Index(
+                    [bus_to_key.get(c, c) for c in transmission.index],
+                    name=transmission.index.name,
+                )
+                transmission = transmission[
+                    transmission.index != transmission["province"]
+                ]
             transmission.index += "_transmission_flow"
             result = pd.concat([result, transmission])
 
