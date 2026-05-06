@@ -1,4 +1,18 @@
-# scripts/Lines_Flow_On_Map_With_Transformers.py
+"""
+Plot corridor utilization on an interactive Folium map.
+
+Snakemake script: reads the planning solved network (buses, lines/links) and the
+post-processing output (hourly energy-balance CSVs) to draw every transmission
+corridor as a curved PolyLine coloured by flow availability. Corridors that have
+flow data show a Plotly utilization chart in the popup; corridors without flow
+data (e.g. intra-provincial lines in provincial post-processing mode) are drawn
+in grey with a lightweight metadata popup.
+
+Supports both nodal post-processing (hourly files keyed by bus name) and
+provincial post-processing (hourly files keyed by province code). The mode is
+detected automatically from the ``province`` column in ``buses.csv``.
+"""
+
 import logging
 import math
 import os
@@ -43,17 +57,48 @@ BUS_JITTER_MODE = "suffix_voltage"  # "suffix_voltage" | "v_nom" | "name_only"
 
 NODAL_FILE_GLOB = "**/*_hourly*.csv"  # e.g., BUS_1_hourly.csv
 
+LINE_COLOR_WITH_DATA = "#3388ff"  # Folium default blue
+LINE_COLOR_NO_DATA = "#888888"  # Grey for corridors without flow data
+
 
 # =============================================================================
 # HELPERS
 # =============================================================================
 def read_csv_flex(path: str) -> pd.DataFrame:
+    """
+    Read a CSV file with UTF-8-BOM tolerance and strip column-name whitespace.
+
+    Parameters
+    ----------
+    path : str
+        Path to the CSV file.
+
+    Returns
+    -------
+    pd.DataFrame
+    """
     df = pd.read_csv(path, encoding="utf-8-sig")
     df.columns = [c.strip() for c in df.columns]
     return df
 
 
 def detect_time_index(df: pd.DataFrame) -> pd.DatetimeIndex:
+    """
+    Infer a DatetimeIndex from a DataFrame.
+
+    Looks for a time column by name (``snapshot``, ``time``, ``timestamp``,
+    ``datetime``, ``date``, or the value of ``FORCE_TIME_COL``), then falls
+    back to the first column, and finally synthesises a 1-hour index starting
+    at 2021-01-01 if nothing parseable is found.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+
+    Returns
+    -------
+    pd.DatetimeIndex
+    """
     if FORCE_TIME_COL and FORCE_TIME_COL in df.columns:
         t = pd.to_datetime(df[FORCE_TIME_COL], errors="coerce", utc=False)
         if t.notna().any():
@@ -74,48 +119,101 @@ def detect_time_index(df: pd.DataFrame) -> pd.DatetimeIndex:
 
 
 def index_nodal_files(nodal_dir: str, pattern: str) -> dict:
-    files = glob(os.path.join(nodal_dir, pattern), recursive=True)
-    if not files:
+    """
+    Build a ``{key: filepath}`` index of hourly CSV files.
+
+    The key is derived from the filename stem before ``_hourly``, which is
+    either a bus name (nodal mode) or a province code (provincial mode).
+
+    Parameters
+    ----------
+    nodal_dir : str
+        Root directory to search recursively.
+    pattern : str
+        Glob pattern relative to *nodal_dir*, e.g. ``**/*_hourly*.csv``.
+
+    Returns
+    -------
+    dict
+        ``{stem: absolute_path}`` mapping.  Empty dict if no files are found.
+    """
+    filepaths = glob(os.path.join(nodal_dir, pattern), recursive=True)
+    if not filepaths:
         logging.warning(
             f"No nodal files found in {nodal_dir} with pattern {pattern}. Flow data will be unavailable."
         )
         return {}
 
-    idx = {}
-    for fp in files:
-        base = os.path.basename(fp)
-        if "_hourly" in base:
-            bus = base.split("_hourly")[0].strip()
-            idx[bus] = fp
-    return idx
+    file_index = {}
+    for filepath in filepaths:
+        filename = os.path.basename(filepath)
+        if "_hourly" in filename:
+            stem = filename.split("_hourly")[0].strip()
+            file_index[stem] = filepath
+    return file_index
 
 
-_bus_df_cache: dict = {}
+_hourly_cache: dict = {}
 
 
-def load_bus_df(bus: str, nodal_index: dict) -> pd.DataFrame | None:
-    if bus in _bus_df_cache:
-        return _bus_df_cache[bus]
-    fp = nodal_index.get(bus)
-    if not fp or not os.path.exists(fp):
-        _bus_df_cache[bus] = None
+def _get_cached_hourly_df(bus: str, nodal_index: dict) -> pd.DataFrame | None:
+    """
+    Load and cache the hourly DataFrame for *bus* from *nodal_index*.
+
+    Parameters
+    ----------
+    bus : str
+        Key into *nodal_index* (bus name or province code).
+    nodal_index : dict
+        ``{key: filepath}`` mapping produced by :func:`index_nodal_files`.
+
+    Returns
+    -------
+    pd.DataFrame or None
+        ``None`` if the key is absent or the file does not exist.
+    """
+    if bus in _hourly_cache:
+        return _hourly_cache[bus]
+    filepath = nodal_index.get(bus)
+    if not filepath or not os.path.exists(filepath):
+        _hourly_cache[bus] = None
         return None
-    df = read_csv_flex(fp)
-    _bus_df_cache[bus] = df
+    df = read_csv_flex(filepath)
+    _hourly_cache[bus] = df
     return df
 
 
 def canonical_pair(a: str, b: str):
+    """
+    Return a sorted 2-tuple of bus names for use as a corridor dict key.
+    """
     return tuple(sorted([str(a).strip(), str(b).strip()]))
 
 
-def parse_kv_from_line_name(name: str):
-    # grab trailing _315 or _735 etc
+def line_voltage_kv(name: str):
+    """
+    Extract a trailing kV integer from a line name (e.g. ``line_1_2_315`` -> 315).
+
+    Returns ``None`` if no 2-to-4 digit suffix is found.
+    """
     m = re.search(r"_(\d{2,4})\s*$", str(name).strip())
     return int(m.group(1)) if m else None
 
 
 def voltage_mix_label(kvs):
+    """
+    Format a human-readable voltage label from a collection of kV values.
+
+    Parameters
+    ----------
+    kvs : iterable
+        Integer kV values; ``None`` entries are ignored.
+
+    Returns
+    -------
+    str
+        E.g. ``"315 kV"``, ``"315+735 kV"``, or ``"mixed kV"``.
+    """
     kvs = sorted({k for k in kvs if k is not None})
     if not kvs:
         return "mixed kV"
@@ -124,25 +222,39 @@ def voltage_mix_label(kvs):
     return f"{'+'.join(map(str, kvs))} kV"
 
 
-def parse_voltage_suffix(bus_name: str):
+def bus_voltage_kv(bus_name: str):
     """
-    If bus is like 'A315' or 'A_315' return 315.
-    If none found, return None.
+    Extract a trailing voltage integer from a bus name (e.g. ``A315`` -> 315).
+
+    Returns ``None`` if no 2-to-4 digit suffix is found.
     """
-    s = str(bus_name).strip()
-    m = re.search(r"(\d{2,4})\s*$", s)
-    if not m:
-        m = re.search(r"_(\d{2,4})\s*$", s)
+    m = re.search(r"(\d{2,4})\s*$", str(bus_name).strip())
     return int(m.group(1)) if m else None
 
 
-def jitter_bus(lat, lon, idx, total, jitter_m):
+def jitter_bus(lat, lon, position, group_size, jitter_m):
     """
-    Spread buses around a circle deterministically so they don't overlap.
+    Spread buses around a circle deterministically so co-located buses do not overlap.
+
+    Parameters
+    ----------
+    lat : float
+    lon : float
+    position : int
+        Index of this bus in the co-located group.
+    group_size : int
+        Total number of buses sharing this coordinate.
+    jitter_m : float
+        Radius of the jitter circle in metres.
+
+    Returns
+    -------
+    tuple[float, float]
+        Jittered ``(lat, lon)``.
     """
-    if total <= 1:
+    if group_size <= 1:
         return lat, lon
-    angle = 2 * math.pi * (idx / total)
+    angle = 2 * math.pi * (position / group_size)
     dlat = (jitter_m / 111320.0) * math.cos(angle)
     dlon = (jitter_m / (111320.0 * max(0.1, math.cos(math.radians(lat))))) * math.sin(
         angle
@@ -153,81 +265,154 @@ def jitter_bus(lat, lon, idx, total, jitter_m):
 # =============================================================================
 # FLOW: sum ALL matching columns for neighbor (handles parallel flows)
 # =============================================================================
-def find_neighbor_flow_cols(
-    df: pd.DataFrame, neighbor: str, bus_to_province: dict | None = None
+def find_flow_columns(
+    df: pd.DataFrame, neighbor_key: str, bus_to_province: dict | None = None
 ) -> list[str]:
-    n = str(neighbor).strip()
+    """
+    Return column names in *df* that carry flow towards *neighbor_key*.
+
+    Columns must contain ``transmission_flow``, start with the neighbor
+    identifier, and end with ``transmission_flow``.
+
+    In provincial mode, if no match is found for the bus name the lookup is
+    retried using the province code from *bus_to_province*.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Hourly energy-balance DataFrame for the source bus/province.
+    neighbor_key : str
+        Bus name (nodal) or bus name to resolve via *bus_to_province* (provincial).
+    bus_to_province : dict or None
+        ``{bus_name: province_code}`` mapping; ``None`` disables the fallback.
+
+    Returns
+    -------
+    list[str]
+    """
+    neighbor_key = str(neighbor_key).strip()
     cols = [
         c
         for c in df.columns
         if "transmission_flow" in c
-        and c.startswith(n)
+        and c.startswith(neighbor_key)
         and c.endswith("transmission_flow")
     ]
     # Provincial mode: columns use province codes instead of bus names
     if not cols and bus_to_province:
-        prov = bus_to_province.get(n)
-        if prov:
+        province_key = bus_to_province.get(neighbor_key)
+        if province_key:
             cols = [
                 c
                 for c in df.columns
                 if "transmission_flow" in c
-                and c.startswith(prov)
+                and c.startswith(province_key)
                 and c.endswith("transmission_flow")
             ]
     return cols
 
 
-def _resolve_nodal_key(bus: str, nodal_index: dict, bus_to_province: dict | None) -> str:
-    """Return the key to use for nodal_index lookup: bus name (nodal) or province code (provincial)."""
+def _resolve_nodal_key(
+    bus: str, nodal_index: dict, bus_to_province: dict | None
+) -> str:
+    """
+    Return the key to use for *nodal_index* lookup.
+
+    Tries the bus name first (nodal mode).  If absent, falls back to the
+    province code via *bus_to_province* (provincial mode).
+
+    Parameters
+    ----------
+    bus : str
+    nodal_index : dict
+    bus_to_province : dict or None
+
+    Returns
+    -------
+    str
+        The resolved key (may not be in *nodal_index* if both lookups fail).
+    """
     if bus in nodal_index:
         return bus
     if bus_to_province:
-        prov = bus_to_province.get(bus)
-        if prov and prov in nodal_index:
-            return prov
+        province = bus_to_province.get(bus)
+        if province and province in nodal_index:
+            return province
     return bus
 
 
-def get_flow_bus0_to_bus1(
+def _load_flow_from_side(
+    source_bus: str,
+    target_bus: str,
+    nodal_index: dict,
+    bus_to_province: dict | None,
+    negate: bool = False,
+):
+    """
+    Load the hourly flow from *source_bus* towards *target_bus*.
+
+    Parameters
+    ----------
+    source_bus : str
+        Bus whose hourly file is opened.
+    target_bus : str
+        Neighbor bus whose transmission-flow columns are selected.
+    nodal_index : dict
+    bus_to_province : dict or None
+    negate : bool
+        When ``True`` the returned flow array is sign-flipped.
+
+    Returns
+    -------
+    tuple[pd.DatetimeIndex, np.ndarray] or tuple[None, None]
+    """
+    key = _resolve_nodal_key(source_bus, nodal_index, bus_to_province)
+    df = _get_cached_hourly_df(key, nodal_index)
+    if df is None:
+        return None, None
+    cols = find_flow_columns(df, target_bus, bus_to_province)
+    if not cols:
+        return None, None
+    timestamps = detect_time_index(df)
+    flow_mw = (
+        df[cols]
+        .apply(pd.to_numeric, errors="coerce")
+        .fillna(0.0)
+        .sum(axis=1)
+        .to_numpy()
+    )
+    return timestamps, (-flow_mw if negate else flow_mw)
+
+
+def get_corridor_flow(
     bus0: str, bus1: str, nodal_index: dict, bus_to_province: dict | None = None
 ):
     """
-    Prefer: bus0 file columns that start with bus1 and end with transmission_flow -> SUM them.
-    Fallback: bus1 file columns that start with bus0 and end with transmission_flow -> SUM and flip sign.
-    Supports both nodal mode (files keyed by bus name) and provincial mode (files keyed by province code).
+    Retrieve the signed hourly flow time-series from *bus0* to *bus1*.
+
+    First tries to read the flow from *bus0*'s hourly file (columns starting
+    with *bus1*).  If that fails, reads from *bus1*'s file and negates the
+    sign.  Both nodal (bus-name keyed) and provincial (province-code keyed)
+    file layouts are supported.
+
+    Parameters
+    ----------
+    bus0 : str
+    bus1 : str
+    nodal_index : dict
+        ``{key: filepath}`` mapping from :func:`index_nodal_files`.
+    bus_to_province : dict or None
+        Used for provincial-mode fallback.
+
+    Returns
+    -------
+    tuple[pd.DatetimeIndex, np.ndarray] or tuple[None, None]
+        ``(timestamps, flow_mw)`` or ``(None, None)`` if no data found.
     """
-    key0 = _resolve_nodal_key(bus0, nodal_index, bus_to_province)
-    df0 = load_bus_df(key0, nodal_index)
-    if df0 is not None:
-        cols0 = find_neighbor_flow_cols(df0, bus1, bus_to_province)
-        if cols0:
-            t = detect_time_index(df0)
-            flow = (
-                df0[cols0]
-                .apply(pd.to_numeric, errors="coerce")
-                .fillna(0.0)
-                .sum(axis=1)
-                .to_numpy()
-            )
-            return t, flow
-
-    key1 = _resolve_nodal_key(bus1, nodal_index, bus_to_province)
-    df1 = load_bus_df(key1, nodal_index)
-    if df1 is not None:
-        cols1 = find_neighbor_flow_cols(df1, bus0, bus_to_province)
-        if cols1:
-            t = detect_time_index(df1)
-            flow = (
-                df1[cols1]
-                .apply(pd.to_numeric, errors="coerce")
-                .fillna(0.0)
-                .sum(axis=1)
-                .to_numpy()
-            )
-            return t, -flow
-
-    return None, None
+    timestamps, flow_mw = _load_flow_from_side(bus0, bus1, nodal_index, bus_to_province)
+    if timestamps is not None:
+        return timestamps, flow_mw
+    return _load_flow_from_side(bus1, bus0, nodal_index, bus_to_province, negate=True)
 
 
 # =============================================================================
@@ -279,26 +464,57 @@ def make_curve(
 
 def parallel_offsets(n: int, base_offset_m: float, step_m: float):
     """
-    Offsets: +base, -(base+step), +(base+step), -(base+2step), +(base+2step)...
-    No one sits on top of another inside ONE corridor.
+    Generate alternating signed offsets for drawing parallel lines in one corridor.
+
+    Offsets follow the sequence: +base, -(base+step), +(base+step), -(base+2*step), ...
+    so no two lines share the same lateral position.
+
+    Parameters
+    ----------
+    n : int
+        Number of parallel lines.
+    base_offset_m : float
+        Offset magnitude for the first line (metres).
+    step_m : float
+        Additional separation between successive pairs (metres).
+
+    Returns
+    -------
+    list[tuple[int, float]]
+        List of ``(sign, offset_m)`` pairs, length *n*.
     """
-    offs = []
-    k = 0
-    while len(offs) < n:
-        if k == 0:
-            offs.append((+1, base_offset_m))
-        else:
-            offs.append((-1, base_offset_m + k * step_m))
-            if len(offs) < n:
-                offs.append((+1, base_offset_m + k * step_m))
-        k += 1
-    return offs[:n]
+    offsets = [(+1, base_offset_m)]
+    for k in range(1, n):
+        sign = -1 if k % 2 == 1 else +1
+        extra = ((k + 1) // 2) * step_m
+        offsets.append((sign, base_offset_m + extra))
+    return offsets
 
 
 # =============================================================================
 # PLOT: utilization-only + clean layout
 # =============================================================================
 def build_util_plot_html(time_index, flow_signed, cap_sum, title, subtitle):
+    """
+    Build a self-contained Plotly utilization chart as an HTML fragment.
+
+    Parameters
+    ----------
+    time_index : pd.DatetimeIndex
+    flow_signed : array-like
+        Signed flow in MW.
+    cap_sum : float
+        Sum of ``s_nom`` for the corridor (MW).  Used as denominator.
+    title : str
+        Chart title (corridor label).
+    subtitle : str
+        Secondary title line (flow orientation, sum(s_nom)).
+
+    Returns
+    -------
+    str
+        HTML string (``full_html=False``, Plotly loaded via CDN).
+    """
     flow_signed = np.asarray(flow_signed, dtype=float)
 
     if cap_sum and cap_sum > 0:
@@ -340,6 +556,20 @@ def build_util_plot_html(time_index, flow_signed, cap_sum, title, subtitle):
 
 
 def build_popup_html(info_html: str, plot_html: str):
+    """
+    Wrap corridor metadata and a Plotly chart into a single popup HTML block.
+
+    Parameters
+    ----------
+    info_html : str
+        Pre-formatted HTML snippet with corridor metadata.
+    plot_html : str
+        HTML fragment from :func:`build_util_plot_html`.
+
+    Returns
+    -------
+    str
+    """
     return f"""
     <div style="font-family: Arial, sans-serif; font-size: 13px; line-height: 1.25;">
       <div style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; margin-bottom:10px;">
@@ -354,6 +584,27 @@ def build_popup_html(info_html: str, plot_html: str):
 # LOAD / PROCESS
 # =============================================================================
 def load_buses(buses_csv: str) -> tuple[dict, dict, dict]:
+    """
+    Load bus coordinates and metadata from ``buses.csv``.
+
+    Applies a circular jitter to buses that share identical coordinates so
+    they do not overlap on the map.
+
+    Parameters
+    ----------
+    buses_csv : str
+        Path to ``buses.csv``.  Must contain ``name``, ``x``, ``y`` columns.
+
+    Returns
+    -------
+    bus_ll : dict
+        ``{bus_name: (lat, lon)}`` with jitter applied.
+    bus_v_nom : dict
+        ``{bus_name: v_nom_kV}``; empty if ``v_nom`` column absent.
+    bus_to_province : dict
+        ``{bus_name: province_code}``; empty if ``province`` column absent.
+        Used for provincial post-processing mode.
+    """
     buses = read_csv_flex(buses_csv)
     need = {"name", "x", "y"}
     if not need.issubset(buses.columns):
@@ -366,7 +617,7 @@ def load_buses(buses_csv: str) -> tuple[dict, dict, dict]:
     buses["y"] = pd.to_numeric(buses["y"], errors="coerce")
     buses = buses.dropna(subset=["x", "y"]).copy()
 
-    bus_ll_raw = {
+    raw_coords = {
         r["name"]: (float(r["y"]), float(r["x"])) for _, r in buses.iterrows()
     }
 
@@ -391,32 +642,53 @@ def load_buses(buses_csv: str) -> tuple[dict, dict, dict]:
         }
 
     # Apply jitter so co-located buses (e.g. A315/A735) don't overlap on the map
-    coord_groups: dict = defaultdict(list)
-    for b, (lat, lon) in bus_ll_raw.items():
-        coord_groups[(round(lat, 6), round(lon, 6))].append(b)
+    buses_by_coord: dict = defaultdict(list)
+    for b, (lat, lon) in raw_coords.items():
+        buses_by_coord[(round(lat, 6), round(lon, 6))].append(b)
 
     bus_ll: dict = {}
-    for (lat, lon), bus_list in coord_groups.items():
+    for (lat, lon), bus_list in buses_by_coord.items():
         if BUS_JITTER_MODE == "v_nom":
-            bus_list_sorted = sorted(
-                bus_list, key=lambda b: (bus_v_nom.get(b) or 1e9, b)
-            )
+            sorted_group = sorted(bus_list, key=lambda b: (bus_v_nom.get(b) or 1e9, b))
         elif BUS_JITTER_MODE == "suffix_voltage":
-            bus_list_sorted = sorted(
-                bus_list, key=lambda b: (parse_voltage_suffix(b) or 1e9, b)
-            )
+            sorted_group = sorted(bus_list, key=lambda b: (bus_voltage_kv(b) or 1e9, b))
         else:
-            bus_list_sorted = sorted(bus_list)
+            sorted_group = sorted(bus_list)
 
-        for i, b in enumerate(bus_list_sorted):
+        for i, b in enumerate(sorted_group):
             bus_ll[b] = jitter_bus(
-                lat, lon, i, len(bus_list_sorted), jitter_m=BUS_JITTER_M
+                lat, lon, i, len(sorted_group), jitter_m=BUS_JITTER_M
             )
 
     return bus_ll, bus_v_nom, bus_to_province
 
 
 def load_lines(res_folder: str) -> tuple[pd.DataFrame, str]:
+    """
+    Load transmission lines from the planning solved network folder.
+
+    Tries ``lines.csv`` first (``s_nom`` capacity column), then falls back
+    to ``links.csv`` (``p_nom``).  Rows with zero capacity are dropped.
+
+    Parameters
+    ----------
+    res_folder : str
+        Path to the planning solved network directory.
+
+    Returns
+    -------
+    lines : pd.DataFrame
+        Filtered lines with a normalised ``s_nom`` column.
+    cap_col : str
+        Name of the original capacity column (``"s_nom"`` or ``"p_nom"``).
+
+    Raises
+    ------
+    FileNotFoundError
+        If neither ``lines.csv`` nor ``links.csv`` exists.
+    ValueError
+        If a required column is missing from the found file.
+    """
     lines_csv = os.path.join(res_folder, "lines.csv")
     links_csv = os.path.join(res_folder, "links.csv")
     if os.path.exists(lines_csv):
@@ -445,42 +717,40 @@ def load_lines(res_folder: str) -> tuple[pd.DataFrame, str]:
     return lines, cap_col
 
 
-# def build_nodal_index_synthetic(lines: pd.DataFrame, cap_col: str) -> dict:
-#     """Generate a synthetic nodal_index for testing when no hourly CSV files are present."""
-#     logging.info("Building synthetic nodal index for testing")
-#     raw = lines.copy()
-#     all_buses = pd.unique(raw[["bus0", "bus1"]].values.ravel("K"))
-#     snapshots = pd.date_range("2021-01-01", periods=8760, freq="h")
-#     cap = pd.to_numeric(raw[cap_col], errors="coerce").median()
-#     cap = float(cap) if pd.notna(cap) else 1000.0
-#     rng = np.random.default_rng(42)
-#     for bus in all_buses:
-#         neighbors = pd.unique(
-#             np.concatenate(
-#                 [
-#                     raw.loc[raw["bus0"] == bus, "bus1"].values,
-#                     raw.loc[raw["bus1"] == bus, "bus0"].values,
-#                 ]
-#             )
-#         )
-#         df = pd.DataFrame({"snapshot": snapshots})
-#         for nb in neighbors:
-#             df[f"{nb}_transmission_flow"] = rng.uniform(
-#                 -cap * 0.8, cap * 0.8, size=len(snapshots)
-#             )
-#         _bus_df_cache[bus] = df
-#     return {b: "TEST_SYNTHETIC" for b in all_buses}
+def resolve_corridor_flow(rows, nodal_index, bus_to_province=None):
+    """
+    Find a valid flow orientation for a corridor across all its physical lines.
 
+    Iterates over the lines in the corridor and returns the first successful
+    ``(bus0, bus1, timestamps, flow_mw)`` tuple.  Tries the natural bus0->bus1
+    direction first, then the reversed direction.
 
-def pick_orientation_and_flow(rows, nodal_index, bus_to_province=None):
-    for r in rows:
-        t, flow = get_flow_bus0_to_bus1(r["bus0"], r["bus1"], nodal_index, bus_to_province)
-        if t is not None:
-            return r["bus0"], r["bus1"], t, flow
-    for r in rows:
-        t, flow = get_flow_bus0_to_bus1(r["bus1"], r["bus0"], nodal_index, bus_to_province)
-        if t is not None:
-            return r["bus1"], r["bus0"], t, flow
+    Parameters
+    ----------
+    rows : list[dict-like]
+        Line rows for the corridor (each must have ``bus0`` and ``bus1``).
+    nodal_index : dict
+        ``{key: filepath}`` mapping from :func:`index_nodal_files`.
+    bus_to_province : dict or None
+        Used for provincial-mode fallback.
+
+    Returns
+    -------
+    tuple[str, str, pd.DatetimeIndex, np.ndarray] or tuple[None, None, None, None]
+        ``(bus0, bus1, timestamps, flow_mw)`` or four ``None``s if no data found.
+    """
+    for line in rows:
+        timestamps, flow_mw = get_corridor_flow(
+            line["bus0"], line["bus1"], nodal_index, bus_to_province
+        )
+        if timestamps is not None:
+            return line["bus0"], line["bus1"], timestamps, flow_mw
+    for line in rows:
+        timestamps, flow_mw = get_corridor_flow(
+            line["bus1"], line["bus0"], nodal_index, bus_to_province
+        )
+        if timestamps is not None:
+            return line["bus1"], line["bus0"], timestamps, flow_mw
     return None, None, None, None
 
 
@@ -492,104 +762,140 @@ def main():
     post_process_folder = str(snakemake.input.post_process_planning)
     out_html = str(snakemake.output.corridor_map)
 
-    buses_csv = os.path.join(res_folder, "buses.csv")
-    bus_ll, _, bus_to_province = load_buses(buses_csv)
-    lines, cap_col = load_lines(res_folder)
+    bus_ll, _, bus_to_province = load_buses(os.path.join(res_folder, "buses.csv"))
+    lines, _ = load_lines(res_folder)
     nodal_index = index_nodal_files(post_process_folder, NODAL_FILE_GLOB)
 
     corridors: dict = defaultdict(list)
-    for _, r in lines.iterrows():
-        corridors[canonical_pair(r["bus0"], r["bus1"])].append(r)
+    for _, row in lines.iterrows():
+        corridors[canonical_pair(row["bus0"], row["bus1"])].append(row)
 
-    lat_mean = np.mean([ll[0] for ll in bus_ll.values()])
-    lon_mean = np.mean([ll[1] for ll in bus_ll.values()])
-    m = folium.Map(
-        location=[lat_mean, lon_mean], zoom_start=6, tiles="CartoDB positron"
+    map_center = (
+        np.mean([ll[0] for ll in bus_ll.values()]),
+        np.mean([ll[1] for ll in bus_ll.values()]),
     )
-    layer = folium.FeatureGroup(name="Corridor utilization (click lines)", show=True)
-    layer.add_to(m)
+    fmap = folium.Map(location=map_center, zoom_start=6, tiles="CartoDB positron")
+    flow_layer = folium.FeatureGroup(
+        name="Corridor utilization (click lines)", show=True
+    )
+    flow_layer.add_to(fmap)
+    no_data_layer = folium.FeatureGroup(name="No flow data (grey)", show=True)
+    no_data_layer.add_to(fmap)
 
-    skipped_coords = skipped_flow = drawn_lines = 0
+    skipped_coords = skipped_flow = drawn_lines = drawn_no_data = 0
 
-    for (busA, busB), rows in corridors.items():
-        if busA not in bus_ll or busB not in bus_ll:
+    for (bus_a, bus_b), rows in corridors.items():
+        if bus_a not in bus_ll or bus_b not in bus_ll:
             skipped_coords += 1
             continue
 
-        cap_sum = float(np.sum([float(r["s_nom"]) for r in rows]))
-        kv_label = voltage_mix_label([parse_kv_from_line_name(r["name"]) for r in rows])
-        rows_sorted = sorted(rows, key=lambda r: str(r["name"]))
-        lines_list_html = "<br>".join(
-            [f"&bull; {r['name']} : s_nom={float(r['s_nom']):.1f}" for r in rows_sorted]
+        capacity_mw = float(np.sum([float(r["s_nom"]) for r in rows]))
+        kv_label = voltage_mix_label([line_voltage_kv(r["name"]) for r in rows])
+        sorted_lines = sorted(rows, key=lambda line: str(line["name"]))
+        lines_html = "<br>".join(
+            [
+                f"&bull; {line['name']} : s_nom={float(line['s_nom']):.1f}"
+                for line in sorted_lines
+            ]
         )
 
-        bus0, bus1, t, flow = pick_orientation_and_flow(rows, nodal_index, bus_to_province)
-        if t is None:
+        bus0, bus1, timestamps, flow_mw = resolve_corridor_flow(
+            rows, nodal_index, bus_to_province
+        )
+        missing_flow = timestamps is None
+        if missing_flow:
             skipped_flow += 1
-            continue
 
-        lat1, lon1 = bus_ll[busA]
-        lat2, lon2 = bus_ll[busB]
+        lat1, lon1 = bus_ll[bus_a]
+        lat2, lon2 = bus_ll[bus_b]
 
-        d_m = approx_distance_m(lat1, lon1, lat2, lon2)
-        close_factor = (
-            min(3.0, max(1.3, 15000 / max(2000, d_m))) if d_m < 15000 else 1.0
+        distance_m = approx_distance_m(lat1, lon1, lat2, lon2)
+        density_factor = (
+            min(3.0, max(1.3, 15000 / max(2000, distance_m)))
+            if distance_m < 15000
+            else 1.0
         )
-        step_m = PARALLEL_STEP_M * close_factor
+        adj_step_m = PARALLEL_STEP_M * density_factor
 
-        offs = parallel_offsets(
-            len(rows_sorted), base_offset_m=CURVE_OFFSET_M, step_m=step_m
-        )
-
-        corridor_title = f"{busA} <-> {busB} ({kv_label})"
-        subtitle = f"sum(s_nom)={cap_sum:.1f} | flow orientation used: {bus0} -> {bus1}"
-        plot_html = build_util_plot_html(t, flow, cap_sum, corridor_title, subtitle)
-
-        info_html = f"""
-        <div><b>Corridor:</b> {busA} &hArr; {busB}</div>
-        <div><b>Voltage mix:</b> {kv_label}</div>
-        <div><b>sum(s_nom):</b> {cap_sum:.1f}</div>
-        <div style="margin-top:6px;"><b>Included lines (drawn separately):</b><br>{lines_list_html}</div>
-        """
-        popup = folium.Popup(
-            folium.IFrame(
-                html=build_popup_html(info_html, plot_html),
-                width=POPUP_WIDTH,
-                height=POPUP_HEIGHT,
-            ),
-            max_width=POPUP_WIDTH + 80,
+        line_offsets = parallel_offsets(
+            len(sorted_lines), base_offset_m=CURVE_OFFSET_M, step_m=adj_step_m
         )
 
-        for i, (r, (sgn, offmag)) in enumerate(zip(rows_sorted, offs), start=1):
-            if abs(lat1 - lat2) < 1e-9 and abs(lon1 - lon2) < 1e-9:
-                loop_r = SELF_LOOP_RADIUS_M + (i - 1) * SELF_LOOP_STEP_M
+        if missing_flow:
+            info_html = f"""
+            <div><b>Corridor:</b> {bus_a} &hArr; {bus_b}</div>
+            <div><b>Voltage mix:</b> {kv_label}</div>
+            <div><b>sum(s_nom):</b> {capacity_mw:.1f}</div>
+            <div style="margin-top:6px; color:#888;"><i>No flow data available for this corridor.</i></div>
+            <div style="margin-top:6px;"><b>Included lines:</b><br>{lines_html}</div>
+            """
+            popup = folium.Popup(
+                folium.IFrame(html=info_html, width=420, height=200),
+                max_width=500,
+            )
+            target_layer = no_data_layer
+            line_color = LINE_COLOR_NO_DATA
+        else:
+            corridor_title = f"{bus_a} <-> {bus_b} ({kv_label})"
+            subtitle = f"sum(s_nom)={capacity_mw:.1f} | flow orientation used: {bus0} -> {bus1}"
+            plot_html = build_util_plot_html(
+                timestamps, flow_mw, capacity_mw, corridor_title, subtitle
+            )
+            info_html = f"""
+            <div><b>Corridor:</b> {bus_a} &hArr; {bus_b}</div>
+            <div><b>Voltage mix:</b> {kv_label}</div>
+            <div><b>sum(s_nom):</b> {capacity_mw:.1f}</div>
+            <div style="margin-top:6px;"><b>Included lines (drawn separately):</b><br>{lines_html}</div>
+            """
+            popup = folium.Popup(
+                folium.IFrame(
+                    html=build_popup_html(info_html, plot_html),
+                    width=POPUP_WIDTH,
+                    height=POPUP_HEIGHT,
+                ),
+                max_width=POPUP_WIDTH + 80,
+            )
+            target_layer = flow_layer
+            line_color = LINE_COLOR_WITH_DATA
+
+        is_self_loop = abs(lat1 - lat2) < 1e-9 and abs(lon1 - lon2) < 1e-9
+        for i, (line, (sign, offset_m)) in enumerate(
+            zip(sorted_lines, line_offsets), start=1
+        ):
+            if is_self_loop:
+                loop_radius = SELF_LOOP_RADIUS_M + (i - 1) * SELF_LOOP_STEP_M
                 curve = make_curve(
                     lat1,
                     lon1,
                     lat2,
                     lon2,
-                    offset_m=offmag,
-                    sign=sgn,
-                    self_loop_radius_m=loop_r,
+                    offset_m=offset_m,
+                    sign=sign,
+                    self_loop_radius_m=loop_radius,
                 )
             else:
-                curve = make_curve(lat1, lon1, lat2, lon2, offset_m=offmag, sign=sgn)
+                curve = make_curve(lat1, lon1, lat2, lon2, offset_m=offset_m, sign=sign)
 
             folium.PolyLine(
                 locations=curve,
+                color=line_color,
                 weight=3,
                 opacity=0.9,
-                tooltip=f"{busA} <-> {busB} ({kv_label}) | {r['name']} | s_nom={float(r['s_nom']):.1f}",
+                tooltip=f"{bus_a} <-> {bus_b} ({kv_label}) | {line['name']} | s_nom={float(line['s_nom']):.1f}",
                 popup=popup,
-            ).add_to(layer)
-            drawn_lines += 1
+            ).add_to(target_layer)
+            if missing_flow:
+                drawn_no_data += 1
+            else:
+                drawn_lines += 1
 
-    folium.LayerControl(collapsed=False).add_to(m)
-    m.save(out_html)
+    folium.LayerControl(collapsed=False).add_to(fmap)
+    fmap.save(out_html)
 
     logging.info(f"Saved: {out_html}")
     logging.info(f"[Diag] Corridors total: {len(corridors)}")
     logging.info(f"[Diag] Drawn physical lines: {drawn_lines}")
+    logging.info(f"[Diag] Drawn (no flow data, grey): {drawn_no_data}")
     logging.info(f"[Diag] Skipped (missing coords): {skipped_coords}")
     logging.info(f"[Diag] Skipped (missing flow column): {skipped_flow}")
     logging.info(f"[Diag] Nodal files indexed: {len(nodal_index)}")

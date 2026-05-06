@@ -233,4 +233,13 @@ dispatch:
 postprocess:
   result_type: "Provincial"  # "Provincial" or "Nodal"
   reference_scenario: 0  # 0 = auto-select (scenario with most representative days)
+<<<<<<< HEAD
   export_format: "idea"  # null = no export, "idea" = export to IDEA template format
+||||||| parent of cfa761b ([feat]: added direct running for plot from config + added greyed line with no info in provincial)
+=======
+
+corridor_map:
+  # Timestamp of previously generated corridor map to use 
+  # Used with -t plot_corridor_map to skip model solving
+  timestamp: ""
+>>>>>>> cfa761b ([feat]: added direct running for plot from config + added greyed line with no info in provincial)
