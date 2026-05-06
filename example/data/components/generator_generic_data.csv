@@ -8,7 +8,7 @@ gas_CC,gas,0.55,TRUE,2,1,0,0,1,1,1,1,25,0.55
 gas_CT,gas,0.45,TRUE,0,0,0,0,1,1,1,1,25,0.35
 hydro_ror,hydro,0,TRUE,0,0,0,0,1,1,1,1,100,1
 import,import,0,FALSE,0,0,0,0,1,1,1,1,inf,1
-default_nuclear,nuclear,1,TRUE,96,72,0,72,0.1,0.4,0.6,0.6,30,0.33
+default_nuclear,nuclear,1.0,TRUE,96,72,0,72,0.1,0.4,0.6,0.6,30,0.33
 default_SMR,nuclear,0.4,TRUE,96,72,0,72,0.1,0.2,0.4,0.4,30,0.37
 default_oil,oil,0.3,TRUE,0,0,0,0,1,1,1,1,40,0.3
 default_solar_PV,solar,0,FALSE,0,0,0,0,1,,1,,30,1
