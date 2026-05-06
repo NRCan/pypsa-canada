@@ -41,7 +41,7 @@ SELF_LOOP_STEP_M = 900.0  # spacing for multiple self-loops at same bus
 BUS_JITTER_M = 900.0  # meters (tune 400-1500)
 BUS_JITTER_MODE = "suffix_voltage"  # "suffix_voltage" | "v_nom" | "name_only"
 
-NODAL_FILE_GLOB = "*_hourly*.csv"  # e.g., BUS_1_hourly.csv
+NODAL_FILE_GLOB = "**/*_hourly*.csv"  # e.g., BUS_1_hourly.csv
 
 
 # =============================================================================
@@ -74,7 +74,7 @@ def detect_time_index(df: pd.DataFrame) -> pd.DatetimeIndex:
 
 
 def index_nodal_files(nodal_dir: str, pattern: str) -> dict:
-    files = glob(os.path.join(nodal_dir, pattern))
+    files = glob(os.path.join(nodal_dir, pattern), recursive=True)
     if not files:
         logging.warning(
             f"No nodal files found in {nodal_dir} with pattern {pattern}. Flow data will be unavailable."
@@ -406,31 +406,31 @@ def load_lines(res_folder: str) -> tuple[pd.DataFrame, str]:
     return lines, cap_col
 
 
-def build_nodal_index_synthetic(lines: pd.DataFrame, cap_col: str) -> dict:
-    """Generate a synthetic nodal_index for testing when no hourly CSV files are present."""
-    logging.info("Building synthetic nodal index for testing")
-    raw = lines.copy()
-    all_buses = pd.unique(raw[["bus0", "bus1"]].values.ravel("K"))
-    snapshots = pd.date_range("2021-01-01", periods=8760, freq="h")
-    cap = pd.to_numeric(raw[cap_col], errors="coerce").median()
-    cap = float(cap) if pd.notna(cap) else 1000.0
-    rng = np.random.default_rng(42)
-    for bus in all_buses:
-        neighbors = pd.unique(
-            np.concatenate(
-                [
-                    raw.loc[raw["bus0"] == bus, "bus1"].values,
-                    raw.loc[raw["bus1"] == bus, "bus0"].values,
-                ]
-            )
-        )
-        df = pd.DataFrame({"snapshot": snapshots})
-        for nb in neighbors:
-            df[f"{nb}_transmission_flow"] = rng.uniform(
-                -cap * 0.8, cap * 0.8, size=len(snapshots)
-            )
-        _bus_df_cache[bus] = df
-    return {b: "TEST_SYNTHETIC" for b in all_buses}
+# def build_nodal_index_synthetic(lines: pd.DataFrame, cap_col: str) -> dict:
+#     """Generate a synthetic nodal_index for testing when no hourly CSV files are present."""
+#     logging.info("Building synthetic nodal index for testing")
+#     raw = lines.copy()
+#     all_buses = pd.unique(raw[["bus0", "bus1"]].values.ravel("K"))
+#     snapshots = pd.date_range("2021-01-01", periods=8760, freq="h")
+#     cap = pd.to_numeric(raw[cap_col], errors="coerce").median()
+#     cap = float(cap) if pd.notna(cap) else 1000.0
+#     rng = np.random.default_rng(42)
+#     for bus in all_buses:
+#         neighbors = pd.unique(
+#             np.concatenate(
+#                 [
+#                     raw.loc[raw["bus0"] == bus, "bus1"].values,
+#                     raw.loc[raw["bus1"] == bus, "bus0"].values,
+#                 ]
+#             )
+#         )
+#         df = pd.DataFrame({"snapshot": snapshots})
+#         for nb in neighbors:
+#             df[f"{nb}_transmission_flow"] = rng.uniform(
+#                 -cap * 0.8, cap * 0.8, size=len(snapshots)
+#             )
+#         _bus_df_cache[bus] = df
+#     return {b: "TEST_SYNTHETIC" for b in all_buses}
 
 
 def pick_orientation_and_flow(rows, nodal_index):
@@ -450,15 +450,13 @@ def pick_orientation_and_flow(rows, nodal_index):
 # =============================================================================
 def main():
     res_folder = str(snakemake.input.planning_solved_network)
+    post_process_folder = str(snakemake.input.post_process_planning)
     out_html = str(snakemake.output.corridor_map)
 
     buses_csv = os.path.join(res_folder, "buses.csv")
     bus_ll, _ = load_buses(buses_csv)
     lines, cap_col = load_lines(res_folder)
-
-    nodal_index = index_nodal_files(res_folder, NODAL_FILE_GLOB)
-    if not nodal_index:
-        nodal_index = build_nodal_index_synthetic(lines, cap_col)
+    nodal_index = index_nodal_files(post_process_folder, NODAL_FILE_GLOB)
 
     corridors: dict = defaultdict(list)
     for _, r in lines.iterrows():
