@@ -153,25 +153,54 @@ def jitter_bus(lat, lon, idx, total, jitter_m):
 # =============================================================================
 # FLOW: sum ALL matching columns for neighbor (handles parallel flows)
 # =============================================================================
-def find_neighbor_flow_cols(df: pd.DataFrame, neighbor: str) -> list[str]:
+def find_neighbor_flow_cols(
+    df: pd.DataFrame, neighbor: str, bus_to_province: dict | None = None
+) -> list[str]:
     n = str(neighbor).strip()
-    return [
+    cols = [
         c
         for c in df.columns
         if "transmission_flow" in c
         and c.startswith(n)
         and c.endswith("transmission_flow")
     ]
+    # Provincial mode: columns use province codes instead of bus names
+    if not cols and bus_to_province:
+        prov = bus_to_province.get(n)
+        if prov:
+            cols = [
+                c
+                for c in df.columns
+                if "transmission_flow" in c
+                and c.startswith(prov)
+                and c.endswith("transmission_flow")
+            ]
+    return cols
 
 
-def get_flow_bus0_to_bus1(bus0: str, bus1: str, nodal_index: dict):
+def _resolve_nodal_key(bus: str, nodal_index: dict, bus_to_province: dict | None) -> str:
+    """Return the key to use for nodal_index lookup: bus name (nodal) or province code (provincial)."""
+    if bus in nodal_index:
+        return bus
+    if bus_to_province:
+        prov = bus_to_province.get(bus)
+        if prov and prov in nodal_index:
+            return prov
+    return bus
+
+
+def get_flow_bus0_to_bus1(
+    bus0: str, bus1: str, nodal_index: dict, bus_to_province: dict | None = None
+):
     """
     Prefer: bus0 file columns that start with bus1 and end with transmission_flow -> SUM them.
     Fallback: bus1 file columns that start with bus0 and end with transmission_flow -> SUM and flip sign.
+    Supports both nodal mode (files keyed by bus name) and provincial mode (files keyed by province code).
     """
-    df0 = load_bus_df(bus0, nodal_index)
+    key0 = _resolve_nodal_key(bus0, nodal_index, bus_to_province)
+    df0 = load_bus_df(key0, nodal_index)
     if df0 is not None:
-        cols0 = find_neighbor_flow_cols(df0, bus1)
+        cols0 = find_neighbor_flow_cols(df0, bus1, bus_to_province)
         if cols0:
             t = detect_time_index(df0)
             flow = (
@@ -183,9 +212,10 @@ def get_flow_bus0_to_bus1(bus0: str, bus1: str, nodal_index: dict):
             )
             return t, flow
 
-    df1 = load_bus_df(bus1, nodal_index)
+    key1 = _resolve_nodal_key(bus1, nodal_index, bus_to_province)
+    df1 = load_bus_df(key1, nodal_index)
     if df1 is not None:
-        cols1 = find_neighbor_flow_cols(df1, bus0)
+        cols1 = find_neighbor_flow_cols(df1, bus0, bus_to_province)
         if cols1:
             t = detect_time_index(df1)
             flow = (
@@ -323,7 +353,7 @@ def build_popup_html(info_html: str, plot_html: str):
 # =============================================================================
 # LOAD / PROCESS
 # =============================================================================
-def load_buses(buses_csv: str) -> tuple[dict, dict]:
+def load_buses(buses_csv: str) -> tuple[dict, dict, dict]:
     buses = read_csv_flex(buses_csv)
     need = {"name", "x", "y"}
     if not need.issubset(buses.columns):
@@ -351,6 +381,15 @@ def load_buses(buses_csv: str) -> tuple[dict, dict]:
             for _, r in tmp.iterrows()
         }
 
+    # Build bus -> province mapping for provincial post-processing mode
+    bus_to_province: dict = {}
+    if "province" in buses.columns:
+        bus_to_province = {
+            str(r["name"]).strip(): str(r["province"]).strip()
+            for _, r in buses.iterrows()
+            if pd.notna(r["province"])
+        }
+
     # Apply jitter so co-located buses (e.g. A315/A735) don't overlap on the map
     coord_groups: dict = defaultdict(list)
     for b, (lat, lon) in bus_ll_raw.items():
@@ -374,7 +413,7 @@ def load_buses(buses_csv: str) -> tuple[dict, dict]:
                 lat, lon, i, len(bus_list_sorted), jitter_m=BUS_JITTER_M
             )
 
-    return bus_ll, bus_v_nom
+    return bus_ll, bus_v_nom, bus_to_province
 
 
 def load_lines(res_folder: str) -> tuple[pd.DataFrame, str]:
@@ -433,13 +472,13 @@ def load_lines(res_folder: str) -> tuple[pd.DataFrame, str]:
 #     return {b: "TEST_SYNTHETIC" for b in all_buses}
 
 
-def pick_orientation_and_flow(rows, nodal_index):
+def pick_orientation_and_flow(rows, nodal_index, bus_to_province=None):
     for r in rows:
-        t, flow = get_flow_bus0_to_bus1(r["bus0"], r["bus1"], nodal_index)
+        t, flow = get_flow_bus0_to_bus1(r["bus0"], r["bus1"], nodal_index, bus_to_province)
         if t is not None:
             return r["bus0"], r["bus1"], t, flow
     for r in rows:
-        t, flow = get_flow_bus0_to_bus1(r["bus1"], r["bus0"], nodal_index)
+        t, flow = get_flow_bus0_to_bus1(r["bus1"], r["bus0"], nodal_index, bus_to_province)
         if t is not None:
             return r["bus1"], r["bus0"], t, flow
     return None, None, None, None
@@ -454,7 +493,7 @@ def main():
     out_html = str(snakemake.output.corridor_map)
 
     buses_csv = os.path.join(res_folder, "buses.csv")
-    bus_ll, _ = load_buses(buses_csv)
+    bus_ll, _, bus_to_province = load_buses(buses_csv)
     lines, cap_col = load_lines(res_folder)
     nodal_index = index_nodal_files(post_process_folder, NODAL_FILE_GLOB)
 
@@ -484,7 +523,7 @@ def main():
             [f"&bull; {r['name']} : s_nom={float(r['s_nom']):.1f}" for r in rows_sorted]
         )
 
-        bus0, bus1, t, flow = pick_orientation_and_flow(rows, nodal_index)
+        bus0, bus1, t, flow = pick_orientation_and_flow(rows, nodal_index, bus_to_province)
         if t is None:
             skipped_flow += 1
             continue
