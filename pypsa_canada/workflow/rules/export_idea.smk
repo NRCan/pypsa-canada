@@ -1,13 +1,13 @@
 
-rule compare_results:
+rule export_idea:
     input:
         planning_dir=f"{RUN_OUTPUT_DIR}/post_process_planning",
         dispatch_dir=f"{RUN_OUTPUT_DIR}/post_process_dispatch"
     output:
-        compare_output=directory(f"{RUN_OUTPUT_DIR}/compare_results")
+        idea_output=directory(f"{RUN_OUTPUT_DIR}/idea_output")
     params:
         result_type=config.get('postprocess', {}).get('result_type', 'Provincial')
     log:
-        f"{RUN_LOG_DIR}/compare_results_{TIMESTAMP}.log"
+        f"{RUN_LOG_DIR}/export_idea_{TIMESTAMP}.log"
     script:
-        "../scripts/compare_results.py"
+        "../scripts/export_idea.py"

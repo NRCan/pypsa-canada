@@ -38,6 +38,7 @@ LOG_DIR = "logs"
 
 RUN_NET_DIR = f"{RCS_DIR}/{RUN_NAME}/{NET_DIR}"
 RUN_RES_DIR = f"{RES_DIR}/{RUN_NAME}"
+RUN_OUTPUT_DIR = f"{RUN_RES_DIR}/run_{TIMESTAMP}"
 RUN_LOG_DIR = f"{LOG_DIR}/{RUN_NAME}"
 
 # shadow_config = get_shadow(run)
@@ -70,15 +71,27 @@ include: "rules/solve_dispatch.smk"
 # Post-processing rules
 include: "rules/post_process_planning.smk"
 include: "rules/post_process_dispatch.smk"
-# include: "rules/compare_results.smk"
+include: "rules/compare_results.smk"
+include: "rules/export_idea.smk"
+
+# Check if IDEA export is requested
+EXPORT_FORMAT = config.get("postprocess", {}).get("export_format", None)
+
+def get_all_targets():
+    targets = [
+        f"{RUN_OUTPUT_DIR}/planning_solved_network",
+        f"{RUN_OUTPUT_DIR}/dispatch_solved_network",
+        f"{RUN_OUTPUT_DIR}/post_process_planning",
+        f"{RUN_OUTPUT_DIR}/post_process_dispatch",
+        f"{RUN_OUTPUT_DIR}/compare_results",
+    ]
+    if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
+        targets.append(f"{RUN_OUTPUT_DIR}/idea_output")
+    return targets
 
 rule all:
     input:
-        f"{RUN_RES_DIR}/planning_solved_network_{TIMESTAMP}",
-        f"{RUN_RES_DIR}/dispatch_solved_network_{TIMESTAMP}",
-        f"{RUN_RES_DIR}/post_process_planning_{TIMESTAMP}",
-        f"{RUN_RES_DIR}/post_process_dispatch_{TIMESTAMP}",
-        # f"{RUN_RES_DIR}/compare_results_{TIMESTAMP}"
+        get_all_targets()
 
 rule clean_all:
     message:

@@ -3,6 +3,7 @@ import logging
 import click
 
 from pypsa_canada.cli.dag import dag
+from pypsa_canada.cli.postprocess_summary import generate_postprocess_summary
 from pypsa_canada.cli.workflow import run
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,7 @@ def cli():
 
 cli.add_command(run)
 cli.add_command(dag)
+cli.add_command(generate_postprocess_summary)
 
 
 if __name__ == "__main__":
