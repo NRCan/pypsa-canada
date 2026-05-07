@@ -1,3 +1,10 @@
+## 0.1.1 (2026-05-07)
+
+### Bug Fixes
+
+- Merged summaries together and added idea export
+- Completed postprocess summary + put all outputs together
+
 ## 0.1.0 (2026-05-05)
 
 ### Bug Fixes
