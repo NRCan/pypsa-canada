@@ -72,14 +72,26 @@ include: "rules/solve_dispatch.smk"
 include: "rules/post_process_planning.smk"
 include: "rules/post_process_dispatch.smk"
 include: "rules/compare_results.smk"
+include: "rules/export_idea.smk"
 
-rule all:
-    input:
+# Check if IDEA export is requested
+EXPORT_FORMAT = config.get("postprocess", {}).get("export_format", None)
+
+def get_all_targets():
+    targets = [
         f"{RUN_OUTPUT_DIR}/planning_solved_network",
         f"{RUN_OUTPUT_DIR}/dispatch_solved_network",
         f"{RUN_OUTPUT_DIR}/post_process_planning",
         f"{RUN_OUTPUT_DIR}/post_process_dispatch",
-        f"{RUN_OUTPUT_DIR}/compare_results"
+        f"{RUN_OUTPUT_DIR}/compare_results",
+    ]
+    if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
+        targets.append(f"{RUN_OUTPUT_DIR}/idea_output")
+    return targets
+
+rule all:
+    input:
+        get_all_targets()
 
 rule clean_all:
     message:
