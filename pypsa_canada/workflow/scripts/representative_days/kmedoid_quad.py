@@ -107,7 +107,10 @@ def load_generators(n: pypsa.Network) -> pd.DataFrame:
     pd.DataFrame
         Returns the dataframe representing the file generators.csv.
     """
-    return n.df("Generator")
+    gen_df = n.c["Generator"].static
+    bus_df = n.c["Bus"].static
+    gen_df['province'] = gen_df['bus'].map(bus_df['province'])
+    return gen_df
 
 
 def load_generators_p_max_pu(n: pypsa.Network, period=None, year=None) -> pd.DataFrame:
@@ -159,22 +162,35 @@ def get_average_each_renewable(
     pd.DataFrame
         Returns a dataframe of dimension (8760 x 2) for RES
     """
+    # gen_df['province'] = gen_df['bus'].map(buses_df['province'])
+
     if province is not None:
+        print(f'Generator_df = {gen_df}')
         filter_gen_df = gen_df[
             gen_df["carrier"].isin(RES)
-            & (gen_df["bus"].str.split("_").str[0] == province)
+            & (gen_df["province"] == province)
+            #& (gen_df["bus"].str.split("_").str[0] == province)
         ]
+        print(f'After filter = {filter_gen_df}')
     else:
         filter_gen_df = gen_df[gen_df["carrier"].isin(RES)]
     RES_cf = pd.DataFrame(columns=RES)
+    #RES_cf = pd.DataFrame(index=gen_max_df.index, columns=RES, dtype=float)
     for res in RES:
+        print(f'filter_gen_df = {filter_gen_df}')
         current_res = filter_gen_df[
             filter_gen_df["carrier"].str.contains(res, case=False, na=False)
         ]
         current_res = current_res.reset_index()
-        names = current_res["Generator"].tolist()
+        print(f'Current_res = {current_res}')
+
+        names = current_res["name"].tolist()
+
         RES_col = gen_max_df.loc[:, names]
-        RES_cf[res] = RES_col.mean(axis=1)
+        if RES_col.empty or len(names) == 0:
+            RES_cf[res] = 0.0
+        else:
+            RES_cf[res] = RES_col.mean(axis=1)
 
     return RES_cf
 
@@ -291,7 +307,10 @@ def get_norma_load(net_load: pd.DataFrame, hd: int) -> pd.DataFrame:
     net_load = daily_prof(net_load, hd)
     load_min = np.min(net_load)
     load_max = np.max(net_load)
-    return (net_load - load_min) / (load_max - load_min)
+    denom = load_max - load_min
+    if denom == 0:
+        return np.zeros_like(net_load)
+    return (net_load - load_min) / denom
 
 
 def get_solar_wind(RES_cf: pd.DataFrame, hd: int, year: int = None) -> np.ndarray:
@@ -320,8 +339,10 @@ def get_solar_wind(RES_cf: pd.DataFrame, hd: int, year: int = None) -> np.ndarra
         solar_max = np.max(solar)
         wind_min = np.min(wind)
         wind_max = np.max(wind)
-        solar = (solar - solar_min) / (solar_max - solar_min)
-        wind = (wind - wind_min) / (wind_max - wind_min)
+        solar_denom = solar_max - solar_min
+        wind_denom = wind_max - wind_min
+        solar = (solar - solar_min) / solar_denom if solar_denom != 0 else np.zeros_like(solar)
+        wind = (wind - wind_min) / wind_denom if wind_denom != 0 else np.zeros_like(wind)
     return solar, wind
 
 
@@ -553,6 +574,9 @@ def create_snapshots(
         gen_max_df = load_generators_p_max_pu(n=n, period=period, year=year)
         k_input = np.empty((365, 0))
         for prov in provinces:
+
+            print(f'Province = {prov}')
+            # if prov == "QC":
             RES_cf = get_average_each_renewable(
                 gen_df=gen_df, gen_max_df=gen_max_df, province=prov
             )
@@ -575,6 +599,7 @@ def create_snapshots(
                 k_input=k_input,
                 year=year,
             )
+
         kmedoids = KMedoids(n_clusters=cluster).fit(k_input)
         if year is None:
             snap_df = snap_df_period(snap_df=snap_df, period=period, kmedoids=kmedoids)

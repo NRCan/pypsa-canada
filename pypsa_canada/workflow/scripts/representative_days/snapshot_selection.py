@@ -13,7 +13,7 @@ from representative_days.avg_peak import avg_peak_method
 from representative_days.carpe_diem import carpe_diem_method
 from representative_days.kmedoid_quad import kmedoid_quad_method
 from representative_days.opt_quad import opt_quad_method
-from representative_days.opt_triple import opt3_method
+# from representative_days.opt_triple import opt3_method
 from representative_days.vre_vector import vre_method
 
 

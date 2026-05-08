@@ -20,7 +20,7 @@ def main():
     network = Network(snakemake.input.input_data)
     snapshots_conf = config["snapshots"]
 
-    network.copy().export_to_netcdf(
+    network.export_to_netcdf(
         snakemake.output.planning_unsolved_network_unfiltered
     )
 
