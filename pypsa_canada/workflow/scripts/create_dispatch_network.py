@@ -479,8 +479,52 @@ def main():
         index_col="name",
     )
     optimal_gen_values = optimal_gen_values[optimal_gen_values["model"].notna()]
-
     network.generators.p_nom_opt = optimal_gen_values["p_nom_opt"].values
+
+    # Applying Optimal Storage-units Values to Unfiltered Network
+    if os.path.exists(os.path.join(snakemake.input.planning_solved_network, "storage-units.csv")):
+        optimal_storage_values = pd.read_csv(
+            os.path.join(snakemake.input.planning_solved_network, "storage-units.csv"),
+            index_col="name",
+        )
+        optimal_storage_values = optimal_storage_values[optimal_storage_values["model"].notna()]
+        network.storage_units.p_nom_opt = optimal_storage_values["p_nom_opt"].values
+
+    # Applying Optimal Stores Values to Unfiltered Network
+    if os.path.exists(os.path.join(snakemake.input.planning_solved_network, "stores.csv")):
+        optimal_store_values = pd.read_csv(
+            os.path.join(snakemake.input.planning_solved_network, "stores.csv"),
+            index_col="name",
+        )
+        optimal_store_values = optimal_store_values[optimal_store_values["model"].notna()]
+        network.stores.e_nom_opt = optimal_store_values["e_nom_opt"].values
+
+    # Applying Optimal Lines Values to Unfiltered Network
+    if os.path.exists(os.path.join(snakemake.input.planning_solved_network, "lines.csv")): 
+        optimal_line_values = pd.read_csv(
+            os.path.join(snakemake.input.planning_solved_network, "lines.csv"),
+            index_col="name",
+        )
+        optimal_line_values = optimal_line_values[optimal_line_values["model"].notna()]
+        network.lines.s_nom_opt = optimal_line_values["s_nom_opt"].values
+
+    # Applying Optimal Links Values to Unfiltered Network
+    if os.path.exists(os.path.join(snakemake.input.planning_solved_network, "links.csv")):
+        optimal_link_values = pd.read_csv(
+            os.path.join(snakemake.input.planning_solved_network, "links.csv"),
+            index_col="name",
+        )
+        optimal_link_values = optimal_link_values[optimal_link_values["model"].notna()]
+        network.links.p_nom_opt = optimal_link_values["p_nom_opt"].values
+
+    # Applying Optimal Transformers Values to Unfiltered Network
+    if os.path.exists(os.path.join(snakemake.input.planning_solved_network, "transformers.csv")):
+        optimal_transfo_values = pd.read_csv(
+            os.path.join(snakemake.input.planning_solved_network, "transformers.csv"),
+            index_col="name",
+        )
+        optimal_transfo_values = optimal_transfo_values[optimal_transfo_values["model"].notna()]
+        network.transformers.s_nom_opt = optimal_transfo_values["s_nom_opt"].values
 
     # Re-establish correct weighting
     # TODO Verify if we put 1,1,1 or something
