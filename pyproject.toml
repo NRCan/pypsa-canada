@@ -42,6 +42,7 @@ dependencies = [
     "pytz",
     "scikit-learn",
     "scikit-learn-extra@git+https://github.com/TimotheeMathieu/scikit-learn-extra", #Fork of scikit learn extra with numpy v2 fix
+    "folium",
 ]
 
 [project.optional-dependencies]

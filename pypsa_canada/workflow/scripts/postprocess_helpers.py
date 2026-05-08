@@ -167,7 +167,7 @@ def format_annual_data(
     pd.DataFrame
     """
     df = template.copy()
-    df["Value"] = data.round(2)
+    df["Value"] = data.astype(float).round(2)
     if agg:
         if "Average" in parameter:
             df = (
