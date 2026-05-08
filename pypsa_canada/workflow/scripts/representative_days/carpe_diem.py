@@ -22,6 +22,24 @@ RES_DICT = {
     "load": "load",
 }
 
+def load_generators(n: pypsa.Network) -> pd.DataFrame:
+    """
+    Load generators.csv from the network in parameter.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The network to load generators.csv from.
+
+    Returns
+    -------
+    pd.DataFrame
+        Returns the dataframe representing the file generators.csv.
+    """
+    gen_df = n.c["Generator"].static
+    bus_df = n.c["Bus"].static
+    gen_df['province'] = gen_df['bus'].map(bus_df['province'])
+    return gen_df
 
 def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
     """
@@ -61,7 +79,8 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
     periods = np.unique(snap_df.index.get_level_values("period"))
 
     # Load generators.csv
-    gen_df = n.df("Generator")
+
+    gen_df = load_generators(n)
 
     # # File name to save
     # if save_fig:
@@ -88,7 +107,7 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
             # Filter generators
             filter_gen_df = gen_df[
                 gen_df["carrier"].isin(RES)
-                & (gen_df["bus"].str.split("_").str[0] == prov)
+                & (gen_df["province"] == prov)
             ]
             # Now to get the average of each renewable
             RES_cf = pd.DataFrame(columns=RES)
@@ -103,7 +122,7 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
                     current_res.reset_index()
                 )  # To avoid Generator being an index
                 # Generators names
-                names = current_res["Generator"].tolist()
+                names = current_res["name"].tolist()
                 if len(names) > 0:
                     # Columns of the respective RES
                     RES_col = gen_max_df_period.loc[:, names]
@@ -124,7 +143,7 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
             # Calculate load subtracted by run of river
             filter_hydro = gen_df[
                 (gen_df["model"] == "hydro_ror")
-                & (gen_df["bus"].str.split("_").str[0] == prov)
+                & (gen_df["province"] == prov)
                 & (
                     (n.get_active_assets(c="Generator", investment_period=period))
                     == True
@@ -154,7 +173,11 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
             # norma_load = stats.zscore(load_agg, axis=1)
             load_min = np.min(net_load)
             load_max = np.max(net_load)
-            norma_load = (net_load - load_min) / (load_max - load_min)
+            load_denom = load_max - load_min
+            if load_denom == 0:
+                norma_load = np.zeros_like(net_load, dtype=float)
+            else:
+                norma_load = (net_load - load_min) / load_denom
             # Now the load is all in the range [0,1] just like the RES
 
             if "solar" in used_res:
@@ -162,14 +185,22 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
                 solar = daily_prof(RES_cf["solar"], hd)
                 solar_min = np.min(solar)
                 solar_max = np.max(solar)
-                solar = (solar - solar_min) / (solar_max - solar_min)
+                solar_denom = solar_max - solar_min
+                if solar_denom == 0:
+                    solar = np.zeros_like(solar, dtype=float)
+                else:
+                    solar = (solar - solar_min) / solar_denom
 
             if "wind" in used_res:
                 wind = daily_prof(RES_cf["wind"], hd)
                 # Normalize in the same way that the load was normalized (not crucial)
                 wind_min = np.min(wind)
                 wind_max = np.max(wind)
-                wind = (wind - wind_min) / (wind_max - wind_min)
+                wind_denom = wind_max - wind_min
+                if wind_denom == 0:
+                    wind = np.zeros_like(wind, dtype=float)
+                else:
+                    wind = (wind - wind_min) / wind_denom
 
             k_input_res = [norma_load]
             if "wind" in used_res:
@@ -264,7 +295,7 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
             # Filter generators to solar and wind
             filter_gen_df = gen_df[
                 gen_df["carrier"].isin(RES)
-                & (gen_df["bus"].str.split("_").str[0] == prov)
+                & (gen_df["province"] == prov)
             ]
 
             for res in RES:  # Start by doing wind and solar cases
@@ -277,7 +308,7 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
                     current_res.reset_index()
                 )  # To avoid Generator being an index
                 # Generators names
-                names = current_res["Generator"].tolist()
+                names = current_res["name"].tolist()
 
                 if len(names):
                     # Columns of the respective RES for the given period
@@ -364,7 +395,7 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
             # Calculate load subtracted by run of river
             filter_hydro = gen_df[
                 (gen_df["model"] == "hydro_ror")
-                & (gen_df["bus"].str.split("_").str[0] == prov)
+                & (gen_df["province"] == prov)
                 & (
                     (n.get_active_assets(c="Generator", investment_period=period))
                     == True
