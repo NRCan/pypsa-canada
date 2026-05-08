@@ -1,6 +1,5 @@
 # scripts/solve_planning.py
 import logging
-import os
 import sys
 import traceback
 
@@ -261,12 +260,16 @@ def copy_optimal_capacity_values(
             "load shedding", case=False, na=False
         )
         if "carrier" in aligned_source.columns:
-            load_shedding_mask |= aligned_source["carrier"].astype(str).str.contains(
-                "load_shedding", case=False, na=False
+            load_shedding_mask |= (
+                aligned_source["carrier"]
+                .astype(str)
+                .str.contains("load_shedding", case=False, na=False)
             )
         if "model" in aligned_source.columns:
-            load_shedding_mask |= aligned_source["model"].astype(str).str.contains(
-                "load_shedding", case=False, na=False
+            load_shedding_mask |= (
+                aligned_source["model"]
+                .astype(str)
+                .str.contains("load_shedding", case=False, na=False)
             )
         aligned_source = aligned_source.loc[~load_shedding_mask]
 
@@ -319,9 +322,15 @@ def main():
         solved_planning_network.storage_units,
         "p_nom_opt",
     )
-    copy_optimal_capacity_values(network.stores, solved_planning_network.stores, "e_nom_opt")
-    copy_optimal_capacity_values(network.lines, solved_planning_network.lines, "s_nom_opt")
-    copy_optimal_capacity_values(network.links, solved_planning_network.links, "p_nom_opt")
+    copy_optimal_capacity_values(
+        network.stores, solved_planning_network.stores, "e_nom_opt"
+    )
+    copy_optimal_capacity_values(
+        network.lines, solved_planning_network.lines, "s_nom_opt"
+    )
+    copy_optimal_capacity_values(
+        network.links, solved_planning_network.links, "p_nom_opt"
+    )
     copy_optimal_capacity_values(
         network.transformers,
         solved_planning_network.transformers,
