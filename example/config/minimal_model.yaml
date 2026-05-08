@@ -53,7 +53,6 @@ snapshots:
   method: "KMEDOID_VRE_HYDRO"
   load_mode: *load_mode
   folder_name: "model/minimal_model"
-  # investment_periods: 5
 
   # Rep days config
   # rep_length: None

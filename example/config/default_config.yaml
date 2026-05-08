@@ -132,7 +132,6 @@ snapshots:
   method: "DEFAULT"
   load_mode: *load_mode
   # folder_name: "model/Canada-National"
-  investment_periods: 5
 
   # Rep days config
   # rep_length: None
