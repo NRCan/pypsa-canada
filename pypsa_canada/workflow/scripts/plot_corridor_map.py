@@ -57,8 +57,10 @@ BUS_JITTER_MODE = "suffix_voltage"  # "suffix_voltage" | "v_nom" | "name_only"
 
 NODAL_FILE_GLOB = "**/*_hourly*.csv"  # e.g., AB_hourly.csv
 
-LINE_COLOR_WITH_DATA = "#3388ff"  # Folium default blue
-LINE_COLOR_NO_DATA = "#888888"  # Grey for corridors without flow data
+LINE_COLOR_WITH_DATA = "#3388ff"  # Blue for existing lines with flow data
+LINE_COLOR_NO_DATA = "#888888"  # Grey for existing lines without flow data
+LINE_COLOR_NEW = "#22bb44"  # Green for newly built lines with flow data
+LINE_COLOR_NEW_NO_DATA = "#99bb88"  # Muted green-grey for new lines without flow data
 
 
 # =============================================================================
@@ -655,22 +657,33 @@ def load_lines(res_folder: str) -> tuple[pd.DataFrame, str]:
     lines["bus0"] = lines["bus0"].astype(str).str.strip()
     lines["bus1"] = lines["bus1"].astype(str).str.strip()
     lines["s_nom"] = pd.to_numeric(lines[cap_col], errors="coerce").fillna(0.0)
+    s_nom_base = lines["s_nom"].copy()
+
+    # Prefer the optimised capacity (set by the solver for newly built assets).
+    # For lines the optimised column is s_nom_opt; for links it is p_nom_opt.
+    opt_col = cap_col.replace("s_nom", "s_nom_opt").replace("p_nom", "p_nom_opt")
+    if opt_col in lines.columns:
+        s_nom_opt = pd.to_numeric(lines[opt_col], errors="coerce").fillna(0.0)
+        lines["s_nom"] = lines["s_nom"].where(lines["s_nom"] > 0, s_nom_opt)
+
+    # True for lines where the original capacity was 0 but the optimiser built capacity.
+    lines["is_new"] = (s_nom_base == 0) & (lines["s_nom"] > 0)
     lines = lines[lines["s_nom"] > 0].copy()
     return lines, cap_col
 
 
 def load_link_flows(res_folder: str) -> tuple:
     """
-    Load per-component hourly flows directly from the solved network folder.
+    Load per-component hourly flows directly from a solved network folder.
 
     Tries ``links-p0.csv`` first (DC links), then falls back to
-    ``lines-p0.csv`` (AC lines).  Aligns rows against the ``timestep`` column
-    in ``snapshots.csv``.
+    ``lines-p0.csv`` (AC lines).  Aligns rows against a ``timestep`` or
+    ``snapshot`` column in ``snapshots.csv``.
 
     Parameters
     ----------
     res_folder : str
-        Path to the planning solved network directory.
+        Path to a solved network directory (planning or single dispatch year).
 
     Returns
     -------
@@ -697,15 +710,62 @@ def load_link_flows(res_folder: str) -> tuple:
     timestamps = None
     if os.path.exists(snap_path):
         snaps = read_csv_flex(snap_path)
-        if "timestep" in snaps.columns:
-            timestamps = pd.DatetimeIndex(
-                pd.to_datetime(snaps["timestep"], errors="coerce")
-            )
+        for col in ("timestep", "snapshot"):
+            if col in snaps.columns:
+                parsed = pd.to_datetime(snaps[col], errors="coerce")
+                if parsed.notna().any():
+                    timestamps = pd.DatetimeIndex(parsed)
+                    break
     if timestamps is None or len(timestamps) != len(flows):
         timestamps = pd.date_range("2021-01-01 00:00:00", periods=len(flows), freq="h")
 
     flows.index = timestamps
     return timestamps, flows
+
+
+def load_dispatch_link_flows(dispatch_folder: str) -> tuple:
+    """
+    Load per-component hourly flows from the dispatch solved network.
+
+    The dispatch solved network stores each investment-period year in a
+    separate subfolder.  This function iterates over those year subfolders
+    in sorted order, reads ``links-p0.csv`` (or ``lines-p0.csv``) and
+    ``snapshots.csv`` from each, and concatenates them into a single
+    time-indexed DataFrame.
+
+    Parameters
+    ----------
+    dispatch_folder : str
+        Path to the dispatch solved network directory (contains year subfolders).
+
+    Returns
+    -------
+    tuple[pd.DatetimeIndex, pd.DataFrame] or tuple[None, None]
+        ``(timestamps, flows_df)`` or ``(None, None)`` if no data found.
+    """
+    year_dirs = sorted(
+        d
+        for d in (
+            os.path.join(dispatch_folder, e)
+            for e in os.listdir(dispatch_folder)
+            if os.path.isdir(os.path.join(dispatch_folder, e)) and e.isdigit()
+        )
+    )
+    if not year_dirs:
+        # No year subfolders — try reading directly (flat dispatch layout)
+        return load_link_flows(dispatch_folder)
+
+    frames = []
+    for ydir in year_dirs:
+        _, yflows = load_link_flows(ydir)
+        if yflows is not None:
+            frames.append(yflows)
+
+    if not frames:
+        return None, None
+
+    combined = pd.concat(frames)
+    return pd.DatetimeIndex(combined.index), combined
 
 
 def _bus_index_key(bus: str, bus_to_province: dict, nodal_index: dict) -> str:
@@ -758,33 +818,60 @@ def resolve_corridor_flow(rows, nodal_index, bus_to_province):
 
 
 # =============================================================================
-# MAIN
+# MAP BUILDER
 # =============================================================================
-def main():
-    res_folder = str(snakemake.input.planning_solved_network)
-    post_process_folder = str(snakemake.input.post_process_planning)
-    out_html = str(snakemake.output.corridor_map)
+def build_corridor_map(
+    corridors,
+    bus_ll,
+    bus_to_province,
+    nodal_index,
+    link_flows_ts,
+    link_flows_df,
+    out_html,
+    map_label,
+):
+    """
+    Build and save a corridor utilization Folium map.
 
-    bus_ll, _, bus_to_province = load_buses(os.path.join(res_folder, "buses.csv"))
-    lines, _ = load_lines(res_folder)
-    nodal_index = index_nodal_files(post_process_folder, NODAL_FILE_GLOB)
-    link_flows_ts, link_flows_df = load_link_flows(res_folder)
-
-    corridors: dict = defaultdict(list)
-    for _, row in lines.iterrows():
-        corridors[canonical_pair(row["bus0"], row["bus1"])].append(row)
-
+    Parameters
+    ----------
+    corridors : dict
+        ``{(bus_a, bus_b): [row, ...]}`` from ``lines``/``links``.
+    bus_ll : dict
+        ``{bus_name: (lat, lon)}``.
+    bus_to_province : dict
+        ``{bus_name: province_code}``.
+    nodal_index : dict
+        ``{key: filepath}`` for hourly energy-balance CSVs.
+    link_flows_ts : pd.DatetimeIndex or None
+        Time index for the direct link/line flow fallback.
+    link_flows_df : pd.DataFrame or None
+        Hourly flow DataFrame keyed by component name.
+    out_html : str
+        Output HTML path.
+    map_label : str
+        Label shown in the chart trace name (e.g. ``"Planning"`` or
+        ``"Dispatch"``).
+    """
     map_center = (
         np.mean([ll[0] for ll in bus_ll.values()]),
         np.mean([ll[1] for ll in bus_ll.values()]),
     )
     fmap = folium.Map(location=map_center, zoom_start=6, tiles="CartoDB positron")
     flow_layer = folium.FeatureGroup(
-        name="Corridor utilization (click lines)", show=True
+        name="Existing lines (click for utilization)", show=True
     )
     flow_layer.add_to(fmap)
-    no_data_layer = folium.FeatureGroup(name="No flow data (grey)", show=True)
+    new_flow_layer = folium.FeatureGroup(
+        name="Newly built lines (click for utilization)", show=True
+    )
+    new_flow_layer.add_to(fmap)
+    no_data_layer = folium.FeatureGroup(name="Existing lines — no flow data", show=True)
     no_data_layer.add_to(fmap)
+    new_no_data_layer = folium.FeatureGroup(
+        name="Newly built lines — no flow data", show=True
+    )
+    new_no_data_layer.add_to(fmap)
 
     skipped_coords = skipped_flow = drawn_lines = drawn_no_data = 0
 
@@ -797,17 +884,15 @@ def main():
         kv_label = voltage_mix_label([line_voltage_kv(r["name"]) for r in rows])
         sorted_lines = sorted(rows, key=lambda line: str(line["name"]))
         lines_html = "<br>".join(
-            [
-                f"&bull; {line['name']} : s_nom={float(line['s_nom']):.1f}"
-                for line in sorted_lines
-            ]
+            f"&bull; {'<span style="color:#22bb44"><b>[NEW]</b></span> ' if bool(line.get('is_new', False)) else ''}"
+            f"{line['name']} : s_nom={float(line['s_nom']):.1f}"
+            for line in sorted_lines
         )
 
         bus0, bus1, timestamps, flow_mw = resolve_corridor_flow(
             rows, nodal_index, bus_to_province
         )
-        # Fallback: read flows directly from links-p0.csv in the solved network.
-        # This covers intra-provincial corridors that have no post-processing file.
+        # Fallback to direct link/line flow (covers intra-provincial corridors).
         if timestamps is None and link_flows_df is not None:
             link_names = [str(r["name"]) for r in sorted_lines]
             avail = [n for n in link_names if n in link_flows_df.columns]
@@ -821,6 +906,7 @@ def main():
                 )
                 timestamps = link_flows_ts
                 bus0, bus1 = bus_a, bus_b
+
         missing_flow = timestamps is None
         if missing_flow:
             skipped_flow += 1
@@ -852,11 +938,11 @@ def main():
                 folium.IFrame(html=info_html, width=420, height=200),
                 max_width=500,
             )
-            target_layer = no_data_layer
-            line_color = LINE_COLOR_NO_DATA
         else:
             corridor_title = f"{bus_a} <-> {bus_b} ({kv_label})"
-            subtitle = f"sum(s_nom)={capacity_mw:.1f} | flow orientation used: {bus0} -> {bus1}"
+            subtitle = (
+                f"{map_label} | sum(s_nom)={capacity_mw:.1f} | flow: {bus0} -> {bus1}"
+            )
             plot_html = build_util_plot_html(
                 timestamps, flow_mw, capacity_mw, corridor_title, subtitle
             )
@@ -874,8 +960,6 @@ def main():
                 ),
                 max_width=POPUP_WIDTH + 80,
             )
-            target_layer = flow_layer
-            line_color = LINE_COLOR_WITH_DATA
 
         is_self_loop = abs(lat1 - lat2) < 1e-9 and abs(lon1 - lon2) < 1e-9
         for i, (line, (sign, offset_m)) in enumerate(
@@ -895,12 +979,22 @@ def main():
             else:
                 curve = make_curve(lat1, lon1, lat2, lon2, offset_m=offset_m, sign=sign)
 
+            is_line_new = bool(line.get("is_new", False))
+            if missing_flow:
+                line_color = (
+                    LINE_COLOR_NEW_NO_DATA if is_line_new else LINE_COLOR_NO_DATA
+                )
+                target_layer = new_no_data_layer if is_line_new else no_data_layer
+            else:
+                line_color = LINE_COLOR_NEW if is_line_new else LINE_COLOR_WITH_DATA
+                target_layer = new_flow_layer if is_line_new else flow_layer
+            new_tag = "[NEW] " if is_line_new else ""
             folium.PolyLine(
                 locations=curve,
                 color=line_color,
                 weight=3,
                 opacity=0.9,
-                tooltip=f"{bus_a} <-> {bus_b} ({kv_label}) | {line['name']} | s_nom={float(line['s_nom']):.1f}",
+                tooltip=f"{new_tag}{bus_a} <-> {bus_b} ({kv_label}) | {line['name']} | s_nom={float(line['s_nom']):.1f}",
                 popup=popup,
             ).add_to(target_layer)
             if missing_flow:
@@ -911,15 +1005,65 @@ def main():
     folium.LayerControl(collapsed=False).add_to(fmap)
     fmap.save(out_html)
 
-    logging.info(f"Saved: {out_html}")
-    logging.info(f"[Diag] Corridors total: {len(corridors)}")
-    logging.info(f"[Diag] Drawn physical lines: {drawn_lines}")
-    logging.info(f"[Diag] Drawn (no flow data, grey): {drawn_no_data}")
-    logging.info(f"[Diag] Skipped (missing coords): {skipped_coords}")
-    logging.info(f"[Diag] Skipped (missing flow column): {skipped_flow}")
-    logging.info(f"[Diag] Nodal files indexed: {len(nodal_index)}")
+    logging.info(f"[{map_label}] Saved: {out_html}")
+    logging.info(f"[{map_label}] Corridors total: {len(corridors)}")
+    logging.info(f"[{map_label}] Drawn physical lines: {drawn_lines}")
+    logging.info(f"[{map_label}] Drawn (no flow data, grey): {drawn_no_data}")
+    logging.info(f"[{map_label}] Skipped (missing coords): {skipped_coords}")
+    logging.info(f"[{map_label}] Skipped (missing flow column): {skipped_flow}")
+    logging.info(f"[{map_label}] Nodal files indexed: {len(nodal_index)}")
     logging.info(
-        f"[Diag] Direct link-flow fallback: {'available' if link_flows_df is not None else 'unavailable'} ({0 if link_flows_df is None else len(link_flows_df.columns)} links)"
+        f"[{map_label}] Direct flow fallback: "
+        f"{'available' if link_flows_df is not None else 'unavailable'} "
+        f"({0 if link_flows_df is None else len(link_flows_df.columns)} components)"
+    )
+
+
+# =============================================================================
+# MAIN
+# =============================================================================
+def main():
+    res_folder = str(snakemake.input.planning_solved_network)
+    dispatch_folder = str(snakemake.input.dispatch_solved_network)
+    post_process_folder = str(snakemake.input.post_process_planning)
+    post_process_dispatch_folder = str(snakemake.input.post_process_dispatch)
+    planning_out_html = str(snakemake.output.planning_corridor_map)
+    dispatch_out_html = str(snakemake.output.dispatch_corridor_map)
+
+    bus_ll, _, bus_to_province = load_buses(os.path.join(res_folder, "buses.csv"))
+    lines, _ = load_lines(res_folder)
+    nodal_index = index_nodal_files(post_process_folder, NODAL_FILE_GLOB)
+    dispatch_nodal_index = index_nodal_files(
+        post_process_dispatch_folder, NODAL_FILE_GLOB
+    )
+    link_flows_ts, link_flows_df = load_link_flows(res_folder)
+    dispatch_link_flows_ts, dispatch_link_flows_df = load_dispatch_link_flows(
+        dispatch_folder
+    )
+
+    corridors: dict = defaultdict(list)
+    for _, row in lines.iterrows():
+        corridors[canonical_pair(row["bus0"], row["bus1"])].append(row)
+
+    build_corridor_map(
+        corridors,
+        bus_ll,
+        bus_to_province,
+        nodal_index,
+        link_flows_ts,
+        link_flows_df,
+        planning_out_html,
+        "Planning",
+    )
+    build_corridor_map(
+        corridors,
+        bus_ll,
+        bus_to_province,
+        dispatch_nodal_index,
+        dispatch_link_flows_ts,
+        dispatch_link_flows_df,
+        dispatch_out_html,
+        "Dispatch",
     )
 
 

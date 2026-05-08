@@ -10,7 +10,8 @@ rule plot_corridor_map:
         post_process_planning=f"{RUN_OUTPUT_DIR}/post_process_planning",
         post_process_dispatch=f"{RUN_OUTPUT_DIR}/post_process_dispatch"
     output:
-        corridor_map=f"{RUN_OUTPUT_DIR}/corridor_utilization_map.html"
+        planning_corridor_map=f"{RUN_OUTPUT_DIR}/planning_corridor_utilization_map.html",
+        dispatch_corridor_map=f"{RUN_OUTPUT_DIR}/dispatch_corridor_utilization_map.html"
     log:
         f"{RUN_LOG_DIR}/plot_corridor_map_{_cm_timestamp}.log"
     script:
