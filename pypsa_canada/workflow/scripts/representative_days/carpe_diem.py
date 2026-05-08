@@ -174,7 +174,8 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
             load_min = np.min(net_load)
             load_max = np.max(net_load)
             load_denom = load_max - load_min
-            if load_denom == 0:
+            #if load_denom == 0:
+            if math.isclose(load_denom, 0.0, abs_tol=1e-12):
                 norma_load = np.zeros_like(net_load, dtype=float)
             else:
                 norma_load = (net_load - load_min) / load_denom
@@ -186,7 +187,7 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
                 solar_min = np.min(solar)
                 solar_max = np.max(solar)
                 solar_denom = solar_max - solar_min
-                if solar_denom == 0:
+                if math.isclose(solar_denom, 0.0, abs_tol=1e-12):
                     solar = np.zeros_like(solar, dtype=float)
                 else:
                     solar = (solar - solar_min) / solar_denom
@@ -197,7 +198,7 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
                 wind_min = np.min(wind)
                 wind_max = np.max(wind)
                 wind_denom = wind_max - wind_min
-                if wind_denom == 0:
+                if math.isclose(wind_denom, 0.0, abs_tol=1e-12):
                     wind = np.zeros_like(wind, dtype=float)
                 else:
                     wind = (wind - wind_min) / wind_denom
@@ -463,7 +464,10 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
             )
 
             net_load_mean_rep_days = net_load_rep_days_times_weights.sum().sum() / 8760
-            scaling = net_load_mean_target / net_load_mean_rep_days
+            if math.isclose(net_load_mean_rep_days, 0.0, abs_tol=1e-12):
+                scaling = 1.0
+            else:
+                scaling = net_load_mean_target / net_load_mean_rep_days
 
             while not math.isclose(scaling, 1, rel_tol=0.0001):
                 hydro_cols_rep_days = hydro_cols_rep_days * scaling
@@ -504,6 +508,9 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
                 net_load_mean_rep_days = (
                     net_load_rep_days_times_weights.sum().sum() / 8760
                 )
+                if math.isclose(net_load_mean_rep_days, 0.0, abs_tol=1e-12):
+                    scaling = 1.0
+                    break
                 scaling = net_load_mean_target / net_load_mean_rep_days
 
             # When complete, replace the relevant rows and columns in the p_max_pu dataframe and the loads_p_set dataframe by the rescaled values for the rep days for the given province and period
