@@ -104,6 +104,7 @@ def optimize_uc_period(
     solver_name: str,
     solver_options: dict = {},
     linearized_unit_commitment: bool = False,
+    include_objective_constant: bool = False,
     period_year: int = 0,
 ):
     solvetime_df = pd.DataFrame(
@@ -281,6 +282,7 @@ def optimize_uc_period(
         status, condition = network.optimize(
             snapshots=snapshots,
             linearized_unit_commitment=linearized_unit_commitment,
+            include_objective_constant=include_objective_constant,
             solver_name=solver_name,
             solver_options=solver_options,
             extra_functionality=_extra_func,
@@ -362,6 +364,7 @@ def main():
     options_settings = solving_settings["options"]["dispatch"]
     load_shedding = options_settings["load_shedding"]
     linearized_unit_commitment = options_settings["linearized_unit_commitment"]
+    include_objective_constant = options_settings["include_objective_constant"]
 
     solver_settings = solving_settings["solver"]
     solver_name = solver_settings["name"]
@@ -412,6 +415,7 @@ def main():
             solver_name=solver_name,
             solver_options=solver_options,
             linearized_unit_commitment=linearized_uc_ena,
+            include_objective_constant=include_objective_constant,
             period_year=period,
         )
 
