@@ -231,26 +231,26 @@ def snapshots_selection(
             print("Using current snapshot file already in input")
             snapshot_status = SnapshotStatus.Completed
 
-        case SnapshotProfile.KMEDOID:
-            network.snapshot_weightings = snapshot_profile.use_kmedoid_method(
-                rep_length=snapshot_config.get("rep_length", None),
-                cluster=snapshot_config["cluster"],
-                extreme_select=snapshot_config["extreme_days_select"],
-                save_fig=snapshot_config["save_fig"],
-                save_csv=snapshot_config["save_csv"],
-                saving_folder_path=snapshot_config["saving_folder_path"],
-            )
-            snapshot_status = SnapshotStatus.Completed
+        # case SnapshotProfile.KMEDOID:
+        #     network.snapshot_weightings = snapshot_profile.use_kmedoid_method(
+        #         rep_length=snapshot_config.get("rep_length", None),
+        #         cluster=snapshot_config["cluster"],
+        #         extreme_select=snapshot_config["extreme_days_select"],
+        #         save_fig=snapshot_config["save_fig"],
+        #         save_csv=snapshot_config["save_csv"],
+        #         saving_folder_path=snapshot_config["saving_folder_path"],
+        #     )
+        #     snapshot_status = SnapshotStatus.Completed
 
-        case SnapshotProfile.OPT:
-            network.snapshot_weightings = snapshot_profile.use_opt(
-                bin=snapshot_config["cluster"],
-                solver=snapshot_config["solver"],
-                save_fig=snapshot_config["save_fig"],
-                save_csv=snapshot_config["save_csv"],
-                saving_folder_path=snapshot_config["saving_folder_path"],
-            )
-            snapshot_status = SnapshotStatus.Completed
+        # case SnapshotProfile.OPT:
+        #     network.snapshot_weightings = snapshot_profile.use_opt(
+        #         bin=snapshot_config["cluster"],
+        #         solver=snapshot_config["solver"],
+        #         save_fig=snapshot_config["save_fig"],
+        #         save_csv=snapshot_config["save_csv"],
+        #         saving_folder_path=snapshot_config["saving_folder_path"],
+        #     )
+        #     snapshot_status = SnapshotStatus.Completed
 
         case SnapshotProfile.KMEDOID_VRE:
             network.snapshot_weightings = snapshot_profile.use_vre(
@@ -290,15 +290,15 @@ def snapshots_selection(
                     )
                     snapshot_status = SnapshotStatus.Completed
 
-        case SnapshotProfile.OPT_VRE:
-            network.snapshot_weightings = snapshot_profile.use_opt_triple(
-                bin=snapshot_config["cluster"],
-                solver=snapshot_config["solver"],
-                save_fig=snapshot_config["save_fig"],
-                save_csv=snapshot_config["save_csv"],
-                saving_folder_path=snapshot_config["saving_folder_path"],
-            )
-            snapshot_status = SnapshotStatus.Completed
+        # case SnapshotProfile.OPT_VRE:
+        #     network.snapshot_weightings = snapshot_profile.use_opt_triple(
+        #         bin=snapshot_config["cluster"],
+        #         solver=snapshot_config["solver"],
+        #         save_fig=snapshot_config["save_fig"],
+        #         save_csv=snapshot_config["save_csv"],
+        #         saving_folder_path=snapshot_config["saving_folder_path"],
+        #     )
+        #     snapshot_status = SnapshotStatus.Completed
 
         case SnapshotProfile.OPT_VRE_HYDRO:
             print("Test_snapshot")
