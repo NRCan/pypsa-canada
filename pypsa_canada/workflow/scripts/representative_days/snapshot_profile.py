@@ -7,8 +7,8 @@ from representative_days.carpe_diem import carpe_diem_method
 
 # from representative_days.kmedoid import kmedoid_method
 from representative_days.kmedoid_quad import kmedoid_quad_method
-from representative_days.net_loads import net_load_calculation
 
+# from representative_days.net_loads import net_load_calculation
 # from representative_days.opt import opt_method
 from representative_days.opt_quad import opt_quad_method
 
@@ -50,61 +50,61 @@ class GenerateSnapshotProfile:
         self.netload_filepath = netload_filepath
         # self.snapshot_status = SnapshotStatus.Initialize
 
-    def use_kmedoid_method(
-        self,
-        rep_length: int = 14,
-        cluster: int = 6,
-        extreme_select: bool = False,
-        save_fig: bool = True,
-        save_csv: bool = False,
-        saving_folder_path: str = "./",
-    ):
-        self.net_load = net_load_calculation(
-            self.n,
-            self.provinces,
-            self.with_hydro,
-            self.save_file,
-            self.netload_filepath,
-        )
+    # def use_kmedoid_method(
+    #     self,
+    #     rep_length: int = 14,
+    #     cluster: int = 6,
+    #     extreme_select: bool = False,
+    #     save_fig: bool = True,
+    #     save_csv: bool = False,
+    #     saving_folder_path: str = "./",
+    # ):
+    #     self.net_load = net_load_calculation(
+    #         self.n,
+    #         self.provinces,
+    #         self.with_hydro,
+    #         self.save_file,
+    #         self.netload_filepath,
+    #     )
 
-        return kmedoid_method(
-            self.n,
-            self.net_load,
-            rep_length,
-            cluster,
-            extreme_select,
-            save_fig,
-            save_csv,
-            saving_folder_path,
-        )
+    #     return kmedoid_method(
+    #         self.n,
+    #         self.net_load,
+    #         rep_length,
+    #         cluster,
+    #         extreme_select,
+    #         save_fig,
+    #         save_csv,
+    #         saving_folder_path,
+    #     )
 
-    def use_opt(
-        self,
-        bin: int = 12,
-        solver: str = "cbc",
-        mip_gap: float = 0.001,
-        save_fig: bool = True,
-        save_csv: bool = False,
-        saving_folder_path: str = "./",
-    ):
-        self.net_load = net_load_calculation(
-            self.n,
-            self.provinces,
-            self.with_hydro,
-            self.save_file,
-            self.netload_filepath,
-        )
+    # def use_opt(
+    #     self,
+    #     bin: int = 12,
+    #     solver: str = "cbc",
+    #     mip_gap: float = 0.001,
+    #     save_fig: bool = True,
+    #     save_csv: bool = False,
+    #     saving_folder_path: str = "./",
+    # ):
+    #     self.net_load = net_load_calculation(
+    #         self.n,
+    #         self.provinces,
+    #         self.with_hydro,
+    #         self.save_file,
+    #         self.netload_filepath,
+    #     )
 
-        return opt_method(
-            n=self.n,
-            nload_data=self.net_load,
-            bin=bin,
-            solver=solver,
-            mip_gap=mip_gap,
-            save_fig=save_fig,
-            save_csv=save_csv,
-            saving_folder_path=saving_folder_path,
-        )
+    #     return opt_method(
+    #         n=self.n,
+    #         nload_data=self.net_load,
+    #         bin=bin,
+    #         solver=solver,
+    #         mip_gap=mip_gap,
+    #         save_fig=save_fig,
+    #         save_csv=save_csv,
+    #         saving_folder_path=saving_folder_path,
+    #     )
 
     def use_vre(
         self,
@@ -134,24 +134,24 @@ class GenerateSnapshotProfile:
             saving_folder_path=saving_folder_path,
         )
 
-    def use_opt_triple(
-        self,
-        bin: int = 12,
-        solver: str = "highs",
-        mip_gap: float = 0.01,
-        save_fig: bool = True,
-        save_csv: bool = False,
-        saving_folder_path="./",
-    ):
-        return opt3_method(
-            n=self.n,
-            bin=bin,
-            solver=solver,
-            mip_gap=mip_gap,
-            save_fig=save_fig,
-            save_csv=save_csv,
-            saving_folder_path=saving_folder_path,
-        )
+    # def use_opt_triple(
+    #     self,
+    #     bin: int = 12,
+    #     solver: str = "highs",
+    #     mip_gap: float = 0.01,
+    #     save_fig: bool = True,
+    #     save_csv: bool = False,
+    #     saving_folder_path="./",
+    # ):
+    #     return opt3_method(
+    #         n=self.n,
+    #         bin=bin,
+    #         solver=solver,
+    #         mip_gap=mip_gap,
+    #         save_fig=save_fig,
+    #         save_csv=save_csv,
+    #         saving_folder_path=saving_folder_path,
+    #     )
 
     def use_opt_quad(
         self,

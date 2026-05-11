@@ -22,12 +22,14 @@ class SnapshotProfile(Enum):
     """Available snapshot selection methods."""
 
     # TODO: verify snapshot selections
-    DEFAULT = 0
-    KMEDOID_VRE = 1  # To be tested
+    DEFAULT = (
+        0  # Use the snapshot file already in the input network (no selection applied)
+    )
+    KMEDOID_VRE = 1  # Functional
     KMEDOID_VRE_HYDRO = 2  # Does not complete
-    OPT_VRE = 3  # To be tested
+    # OPT_VRE = 3  # To be tested
     OPT_VRE_HYDRO = 4  # Functional
-    CARPE_DIEM = 5  # Does not complete
+    CARPE_DIEM = 5  # Functional
     AVG_PEAK = 6  # Completes but results need to be verified
 
 
@@ -92,13 +94,13 @@ def snapshots_selection(
                 **output_params,
             )
 
-        case SnapshotProfile.OPT_VRE:
-            network.snapshot_weightings = opt3_method(
-                n=network,
-                bin=cluster,
-                solver=solver,
-                **output_params,
-            )
+        # case SnapshotProfile.OPT_VRE:
+        #     network.snapshot_weightings = opt3_method(
+        #         n=network,
+        #         bin=cluster,
+        #         solver=solver,
+        #         **output_params,
+        #     )
 
         case SnapshotProfile.OPT_VRE_HYDRO:
             network.snapshot_weightings = opt_quad_method(
