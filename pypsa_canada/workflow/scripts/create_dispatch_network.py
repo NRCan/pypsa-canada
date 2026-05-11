@@ -291,18 +291,21 @@ def remove_zero_capacity_components(network: pypsa.Network) -> None:
     }
 
     for component_name, capacity_column in component_capacity_columns.items():
-        if component_name not in network.components.keys():
-            continue
+        # print(f'Component: {component_name}, Capacity Column: {capacity_column}')
+        # if component_name not in network.components.keys():
+        #     print(f'Not in component keys')
+        #     continue
 
-        component_df = getattr(network, network.components[component_name]["list_name"])
+        component_df = network.c[component_name].static
         if component_df.empty or capacity_column not in component_df.columns:
             continue
 
         zero_capacity_names = component_df.index[
             component_df[capacity_column].fillna(0) == 0
         ]
+
         if len(zero_capacity_names) > 0:
-            network.mremove(component_name, list(zero_capacity_names))
+            network.remove(component_name, list(zero_capacity_names))
 
 
 def main():
