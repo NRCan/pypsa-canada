@@ -1,3 +1,10 @@
+## 0.1.2 (2026-05-11)
+
+### Bug Fixes
+
+- Applying Optimal values to Dispatch Network for Storage-units, Stores, Links, Lines and Transformers
+- Applying Optimal values to Dispatch Network for Storage-units, Stores, Links, Lines and Transformers
+
 ## 0.1.1 (2026-05-07)
 
 ### Bug Fixes
