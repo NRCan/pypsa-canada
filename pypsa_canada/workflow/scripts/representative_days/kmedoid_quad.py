@@ -109,7 +109,7 @@ def load_generators(n: pypsa.Network) -> pd.DataFrame:
     """
     gen_df = n.c["Generator"].static
     bus_df = n.c["Bus"].static
-    gen_df['province'] = gen_df['bus'].map(bus_df['province'])
+    gen_df["province"] = gen_df["bus"].map(bus_df["province"])
     return gen_df
 
 
@@ -165,24 +165,23 @@ def get_average_each_renewable(
     # gen_df['province'] = gen_df['bus'].map(buses_df['province'])
 
     if province is not None:
-        print(f'Generator_df = {gen_df}')
+        print(f"Generator_df = {gen_df}")
         filter_gen_df = gen_df[
-            gen_df["carrier"].isin(RES)
-            & (gen_df["province"] == province)
-            #& (gen_df["bus"].str.split("_").str[0] == province)
+            gen_df["carrier"].isin(RES) & (gen_df["province"] == province)
+            # & (gen_df["bus"].str.split("_").str[0] == province)
         ]
-        print(f'After filter = {filter_gen_df}')
+        print(f"After filter = {filter_gen_df}")
     else:
         filter_gen_df = gen_df[gen_df["carrier"].isin(RES)]
     RES_cf = pd.DataFrame(columns=RES)
-    #RES_cf = pd.DataFrame(index=gen_max_df.index, columns=RES, dtype=float)
+    # RES_cf = pd.DataFrame(index=gen_max_df.index, columns=RES, dtype=float)
     for res in RES:
-        print(f'filter_gen_df = {filter_gen_df}')
+        print(f"filter_gen_df = {filter_gen_df}")
         current_res = filter_gen_df[
             filter_gen_df["carrier"].str.contains(res, case=False, na=False)
         ]
         current_res = current_res.reset_index()
-        print(f'Current_res = {current_res}')
+        print(f"Current_res = {current_res}")
 
         names = current_res["name"].tolist()
 
@@ -341,8 +340,14 @@ def get_solar_wind(RES_cf: pd.DataFrame, hd: int, year: int = None) -> np.ndarra
         wind_max = np.max(wind)
         solar_denom = solar_max - solar_min
         wind_denom = wind_max - wind_min
-        solar = (solar - solar_min) / solar_denom if solar_denom != 0 else np.zeros_like(solar)
-        wind = (wind - wind_min) / wind_denom if wind_denom != 0 else np.zeros_like(wind)
+        solar = (
+            (solar - solar_min) / solar_denom
+            if solar_denom != 0
+            else np.zeros_like(solar)
+        )
+        wind = (
+            (wind - wind_min) / wind_denom if wind_denom != 0 else np.zeros_like(wind)
+        )
     return solar, wind
 
 
@@ -574,8 +579,7 @@ def create_snapshots(
         gen_max_df = load_generators_p_max_pu(n=n, period=period, year=year)
         k_input = np.empty((365, 0))
         for prov in provinces:
-
-            print(f'Province = {prov}')
+            print(f"Province = {prov}")
             # if prov == "QC":
             RES_cf = get_average_each_renewable(
                 gen_df=gen_df, gen_max_df=gen_max_df, province=prov

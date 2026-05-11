@@ -22,6 +22,7 @@ RES_DICT = {
     "load": "load",
 }
 
+
 def load_generators(n: pypsa.Network) -> pd.DataFrame:
     """
     Load generators.csv from the network in parameter.
@@ -38,8 +39,9 @@ def load_generators(n: pypsa.Network) -> pd.DataFrame:
     """
     gen_df = n.c["Generator"].static
     bus_df = n.c["Bus"].static
-    gen_df['province'] = gen_df['bus'].map(bus_df['province'])
+    gen_df["province"] = gen_df["bus"].map(bus_df["province"])
     return gen_df
+
 
 def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
     """
@@ -106,8 +108,7 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
         for prov in provinces:
             # Filter generators
             filter_gen_df = gen_df[
-                gen_df["carrier"].isin(RES)
-                & (gen_df["province"] == prov)
+                gen_df["carrier"].isin(RES) & (gen_df["province"] == prov)
             ]
             # Now to get the average of each renewable
             RES_cf = pd.DataFrame(columns=RES)
@@ -174,7 +175,7 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
             load_min = np.min(net_load)
             load_max = np.max(net_load)
             load_denom = load_max - load_min
-            #if load_denom == 0:
+            # if load_denom == 0:
             if math.isclose(load_denom, 0.0, abs_tol=1e-12):
                 norma_load = np.zeros_like(net_load, dtype=float)
             else:
@@ -295,8 +296,7 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
 
             # Filter generators to solar and wind
             filter_gen_df = gen_df[
-                gen_df["carrier"].isin(RES)
-                & (gen_df["province"] == prov)
+                gen_df["carrier"].isin(RES) & (gen_df["province"] == prov)
             ]
 
             for res in RES:  # Start by doing wind and solar cases

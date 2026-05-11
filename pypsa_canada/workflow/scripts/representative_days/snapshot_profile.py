@@ -4,11 +4,14 @@ from pypsa import Network
 
 from representative_days.avg_peak import avg_peak_method
 from representative_days.carpe_diem import carpe_diem_method
+
 # from representative_days.kmedoid import kmedoid_method
 from representative_days.kmedoid_quad import kmedoid_quad_method
 from representative_days.net_loads import net_load_calculation
+
 # from representative_days.opt import opt_method
 from representative_days.opt_quad import opt_quad_method
+
 # from representative_days.opt_triple import opt3_method
 from representative_days.vre_vector import vre_method
 
@@ -214,7 +217,7 @@ def snapshots_selection(
     snapshot_method: SnapshotProfile = SnapshotProfile[
         snapshot_config.get("method", "Default").upper()
     ]
-    print(f'Network Generators= {network.c["Generator"].static}')
+    print(f"Network Generators= {network.c['Generator'].static}")
     snapshot_profile = GenerateSnapshotProfile(
         network,
         provinces=snapshot_config.get("provinces_selection", None),
@@ -222,7 +225,7 @@ def snapshots_selection(
         save_file=True,
         netload_filepath=snapshot_config["saving_folder_path"],
     )
-    print(f'snapshot_method = {snapshot_method}')
+    print(f"snapshot_method = {snapshot_method}")
     match snapshot_method:
         case SnapshotProfile.DEFAULT:
             print("Using current snapshot file already in input")
@@ -259,9 +262,9 @@ def snapshots_selection(
             snapshot_status = SnapshotStatus.Completed
 
         case SnapshotProfile.KMEDOID_VRE_HYDRO:
-            print(f'Snapshot status = {snapshot_status}')
+            print(f"Snapshot status = {snapshot_status}")
             if snapshot_config["year"] is not None:
-                print(f'First if')
+                print("First if")
                 network.snapshot_weightings = snapshot_profile.use_kmedoid_quad(
                     cluster=snapshot_config["cluster"],
                     save_fig=snapshot_config["save_fig"],
@@ -271,7 +274,7 @@ def snapshots_selection(
                     year=snapshot_config["year"],
                 )
             else:
-                print(f'ELSE')
+                print("ELSE")
                 if snapshot_status == SnapshotStatus.Initialize:
                     print("Delaying Snapshot generation method")
                     snapshot_status = SnapshotStatus.Delayed
