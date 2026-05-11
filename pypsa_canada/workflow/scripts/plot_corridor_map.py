@@ -184,6 +184,7 @@ def _get_cached_hourly_df(bus: str, nodal_index: dict) -> pd.DataFrame | None:
     _hourly_cache[bus] = df
     return df
 
+
 def _dispatch_topology_folder(dispatch_folder: str) -> str:
     """
     Return the subfolder containing the dispatch network topology files.
@@ -208,8 +209,6 @@ def _dispatch_topology_folder(dispatch_folder: str) -> str:
         if os.path.isdir(os.path.join(dispatch_folder, e)) and e.isdigit()
     )
     return year_dirs[-1] if year_dirs else dispatch_folder
-
-
 
 
 def canonical_pair(a: str, b: str):
@@ -1049,6 +1048,7 @@ def build_corridor_map(
 # =============================================================================
 # MAIN
 # =============================================================================
+
 
 def main():
     planning_res_folder = str(snakemake.input.planning_solved_network)
