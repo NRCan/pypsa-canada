@@ -55,7 +55,7 @@ SELF_LOOP_STEP_M = 900.0  # spacing for multiple self-loops at same bus
 BUS_JITTER_M = 900.0  # meters (tune 400-1500)
 BUS_JITTER_MODE = "suffix_voltage"  # "suffix_voltage" | "v_nom" | "name_only"
 
-NODAL_FILE_GLOB = "**/*_hourly*.csv"  # e.g., AB_hourly.csv
+POST_PROCESS_FILE_GLOB = "**/*_hourly*.csv"  # e.g., AB_hourly.csv
 
 LINE_COLOR_WITH_DATA = "#3388ff"  # Blue for existing lines with flow data
 LINE_COLOR_NO_DATA = "#888888"  # Grey for existing lines without flow data
@@ -183,6 +183,33 @@ def _get_cached_hourly_df(bus: str, nodal_index: dict) -> pd.DataFrame | None:
     df = read_csv_flex(filepath)
     _hourly_cache[bus] = df
     return df
+
+def _dispatch_topology_folder(dispatch_folder: str) -> str:
+    """
+    Return the subfolder containing the dispatch network topology files.
+
+    The dispatch solved network stores each investment-period year in a
+    separate subfolder (``2021/``, ``2025/``, …).  The last (chronologically
+    latest) year contains the most complete set of built lines and is used as
+    the topology reference.  If no year subfolders exist the dispatch folder
+    itself is returned.
+
+    Parameters
+    ----------
+    dispatch_folder : str
+
+    Returns
+    -------
+    str
+    """
+    year_dirs = sorted(
+        os.path.join(dispatch_folder, e)
+        for e in os.listdir(dispatch_folder)
+        if os.path.isdir(os.path.join(dispatch_folder, e)) and e.isdigit()
+    )
+    return year_dirs[-1] if year_dirs else dispatch_folder
+
+
 
 
 def canonical_pair(a: str, b: str):
@@ -1022,24 +1049,24 @@ def build_corridor_map(
 # =============================================================================
 # MAIN
 # =============================================================================
+
 def main():
-    res_folder = str(snakemake.input.planning_solved_network)
-    dispatch_folder = str(snakemake.input.dispatch_solved_network)
-    post_process_folder = str(snakemake.input.post_process_planning)
-    post_process_dispatch_folder = str(snakemake.input.post_process_dispatch)
+    planning_res_folder = str(snakemake.input.planning_solved_network)
+    dispatch_res_folder = str(snakemake.input.dispatch_solved_network)
+    planning_post_process_folder = str(snakemake.input.post_process_planning)
+    dispatch_post_process_folder = str(snakemake.input.post_process_dispatch)
     planning_out_html = str(snakemake.output.planning_corridor_map)
     dispatch_out_html = str(snakemake.output.dispatch_corridor_map)
 
-    bus_ll, _, bus_to_province = load_buses(os.path.join(res_folder, "buses.csv"))
-    lines, _ = load_lines(res_folder)
-    nodal_index = index_nodal_files(post_process_folder, NODAL_FILE_GLOB)
-    dispatch_nodal_index = index_nodal_files(
-        post_process_dispatch_folder, NODAL_FILE_GLOB
+    # Do planning map
+    bus_ll, _, bus_to_province = load_buses(
+        os.path.join(planning_res_folder, "buses.csv")
     )
-    link_flows_ts, link_flows_df = load_link_flows(res_folder)
-    dispatch_link_flows_ts, dispatch_link_flows_df = load_dispatch_link_flows(
-        dispatch_folder
+    lines, _ = load_lines(planning_res_folder)
+    planning_nodal_index = index_nodal_files(
+        planning_post_process_folder, POST_PROCESS_FILE_GLOB
     )
+    link_flows_ts, link_flows_df = load_link_flows(planning_res_folder)
 
     corridors: dict = defaultdict(list)
     for _, row in lines.iterrows():
@@ -1049,12 +1076,32 @@ def main():
         corridors,
         bus_ll,
         bus_to_province,
-        nodal_index,
+        planning_nodal_index,
         link_flows_ts,
         link_flows_df,
         planning_out_html,
         "Planning",
     )
+
+    # Resolve the dispatch topology folder (last investment-period year subfolder).
+    dispatch_topo_folder = _dispatch_topology_folder(dispatch_res_folder)
+
+    # Do dispatch map — topology from last year subfolder.
+    bus_ll, _, bus_to_province = load_buses(
+        os.path.join(dispatch_topo_folder, "buses.csv")
+    )
+    lines, _ = load_lines(dispatch_topo_folder)
+    dispatch_nodal_index = index_nodal_files(
+        dispatch_post_process_folder, POST_PROCESS_FILE_GLOB
+    )
+    dispatch_link_flows_ts, dispatch_link_flows_df = load_dispatch_link_flows(
+        dispatch_res_folder
+    )
+
+    corridors: dict = defaultdict(list)
+    for _, row in lines.iterrows():
+        corridors[canonical_pair(row["bus0"], row["bus1"])].append(row)
+
     build_corridor_map(
         corridors,
         bus_ll,
