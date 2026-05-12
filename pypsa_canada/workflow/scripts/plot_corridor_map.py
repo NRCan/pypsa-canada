@@ -59,6 +59,7 @@ POST_PROCESS_FILE_GLOB = "**/*_hourly*.csv"  # e.g., AB_hourly.csv
 
 LINE_COLOR_WITH_DATA = "#3388ff"  # Blue for existing lines with flow data
 LINE_COLOR_NO_DATA = "#888888"  # Grey for existing lines without flow data
+_NEW_LINE_BADGE = '<span style="color:#22bb44"><b>[NEW]</b></span> '
 
 
 # =============================================================================
@@ -99,22 +100,26 @@ def detect_time_index(df: pd.DataFrame) -> pd.DatetimeIndex:
     -------
     pd.DatetimeIndex
     """
+    # Level 1: honour an explicit override column name if set.
     if FORCE_TIME_COL and FORCE_TIME_COL in df.columns:
         t = pd.to_datetime(df[FORCE_TIME_COL], errors="coerce", utc=False)
         if t.notna().any():
             return pd.DatetimeIndex(t)
 
+    # Level 2: scan all columns for a recognised time-column name.
     for c in df.columns:
         if c.lower() in {"snapshot", "time", "timestamp", "datetime", "date"}:
             t = pd.to_datetime(df[c], errors="coerce", utc=False)
             if t.notna().any():
                 return pd.DatetimeIndex(t)
 
+    # Level 3: try the first column regardless of its name.
     first_col = df.columns[0]
     t = pd.to_datetime(df[first_col], errors="coerce", utc=False)
     if t.notna().any():
         return pd.DatetimeIndex(t)
 
+    # Last resort: synthesise an hourly index so downstream code never crashes.
     return pd.date_range("2021-01-01 00:00:00", periods=len(df), freq="h")
 
 
@@ -361,6 +366,24 @@ def get_corridor_flow(key0: str, key1: str, nodal_index: dict):
 # CURVE GEOMETRY (no-overlap for parallels)
 # =============================================================================
 def bearing(lat1, lon1, lat2, lon2):
+    """
+    Compute the initial forward bearing (radians) from point 1 to point 2.
+
+    Uses the standard haversine/atan2 formula.  The result is the angle
+    measured clockwise from north, expressed in radians.
+
+    Parameters
+    ----------
+    lat1, lon1 : float
+        Origin coordinates in decimal degrees.
+    lat2, lon2 : float
+        Destination coordinates in decimal degrees.
+
+    Returns
+    -------
+    float
+        Bearing in radians.
+    """
     dlon = math.radians(lon2 - lon1)
     lat1r, lat2r = math.radians(lat1), math.radians(lat2)
     y = math.sin(dlon) * math.cos(lat2r)
@@ -371,12 +394,57 @@ def bearing(lat1, lon1, lat2, lon2):
 
 
 def offset_point(lat, lon, theta, offset_m, sign=1):
+    """
+    Displace a point by *offset_m* metres in the direction *theta* (radians).
+
+    Converts metres to approximate degree offsets using the equirectangular
+    approximation (1 degree latitude ≈ 111 320 m; longitude scaled by cos(lat)).
+
+    Parameters
+    ----------
+    lat, lon : float
+        Origin in decimal degrees.
+    theta : float
+        Direction of displacement in radians (0 = north).
+    offset_m : float
+        Displacement magnitude in metres.
+    sign : int
+        Multiplier (+1 or -1) applied to the displacement before projecting.
+
+    Returns
+    -------
+    tuple[float, float]
+        Displaced ``(lat, lon)``.
+    """
     dlat = (offset_m / 111320.0) * sign
     dlon = (offset_m / (111320.0 * max(0.1, math.cos(math.radians(lat))))) * sign
     return lat + dlat * math.cos(theta), lon + dlon * math.sin(theta)
 
 
 def offset_midpoint(lat1, lon1, lat2, lon2, offset_m=3000.0, sign=1):
+    """
+    Return the midpoint between two coordinates, displaced perpendicular to the line.
+
+    The perpendicular direction is obtained by rotating the forward bearing 90°.
+    This displaced midpoint is used as the control point for the curved PolyLine
+    that represents a transmission corridor on the map.
+
+    Parameters
+    ----------
+    lat1, lon1 : float
+        Start point in decimal degrees.
+    lat2, lon2 : float
+        End point in decimal degrees.
+    offset_m : float
+        Perpendicular displacement in metres.
+    sign : int
+        +1 offsets to the left of the line direction; -1 to the right.
+
+    Returns
+    -------
+    tuple[float, float]
+        Displaced midpoint ``(lat, lon)``.
+    """
     latm = (lat1 + lat2) / 2.0
     lonm = (lon1 + lon2) / 2.0
     theta = bearing(lat1, lon1, lat2, lon2) + math.pi / 2.0
@@ -384,7 +452,24 @@ def offset_midpoint(lat1, lon1, lat2, lon2, offset_m=3000.0, sign=1):
 
 
 def approx_distance_m(lat1, lon1, lat2, lon2):
-    # quick equirectangular approximation
+    """
+    Estimate the great-circle distance in metres using the equirectangular approximation.
+
+    Accurate enough for the corridor-density scaling used here (~1 % error
+    within a few hundred kilometres).  Not suitable for antipodal points.
+
+    Parameters
+    ----------
+    lat1, lon1 : float
+        First point in decimal degrees.
+    lat2, lon2 : float
+        Second point in decimal degrees.
+
+    Returns
+    -------
+    float
+        Approximate distance in metres.
+    """
     R = 6371000.0
     x = math.radians(lon2 - lon1) * math.cos(math.radians((lat1 + lat2) / 2.0))
     y = math.radians(lat2 - lat1)
@@ -394,7 +479,33 @@ def approx_distance_m(lat1, lon1, lat2, lon2):
 def make_curve(
     lat1, lon1, lat2, lon2, offset_m, sign=1, self_loop_radius_m=SELF_LOOP_RADIUS_M
 ):
-    # self-loop: draw a little loop around the bus with adjustable radius
+    """
+    Build a 3-point curved path between two bus coordinates.
+
+    For normal corridors the path is ``[start, displaced_midpoint, end]``,
+    which Folium renders as a smooth arc.  For self-loops (both endpoints at
+    the same coordinate) a 5-point circle of radius *self_loop_radius_m* is
+    returned instead.
+
+    Parameters
+    ----------
+    lat1, lon1 : float
+        Start bus coordinates in decimal degrees.
+    lat2, lon2 : float
+        End bus coordinates in decimal degrees.
+    offset_m : float
+        Lateral displacement of the midpoint control point in metres.
+    sign : int
+        +1 or -1, controls which side of the line the arc bows towards.
+    self_loop_radius_m : float
+        Radius of the self-loop circle in metres.
+
+    Returns
+    -------
+    list[tuple[float, float]]
+        Sequence of ``(lat, lon)`` waypoints for a Folium PolyLine.
+    """
+    # Self-loop: draw a little circle around the bus with adjustable radius.
     if abs(lat1 - lat2) < 1e-9 and abs(lon1 - lon2) < 1e-9:
         return [
             offset_point(lat1, lon1, ang, self_loop_radius_m)
@@ -425,9 +536,12 @@ def parallel_offsets(n: int, base_offset_m: float, step_m: float):
     list[tuple[int, float]]
         List of ``(sign, offset_m)`` pairs, length *n*.
     """
+    # Seed with the first line offset to the left (+1 side).
     offsets = [(+1, base_offset_m)]
     for k in range(1, n):
+        # Alternate sides: odd k → right (−1), even k → left (+1).
         sign = -1 if k % 2 == 1 else +1
+        # Each new pair of lines moves one step_m further from the centreline.
         extra = ((k + 1) // 2) * step_m
         offsets.append((sign, base_offset_m + extra))
     return offsets
@@ -560,28 +674,25 @@ def load_buses(buses_csv: str) -> tuple[dict, dict, dict]:
     buses = buses.dropna(subset=["x", "y"]).copy()
 
     raw_coords = {
-        r["name"]: (float(r["y"]), float(r["x"])) for _, r in buses.iterrows()
+        name: (float(y), float(x))
+        for name, x, y in zip(buses["name"], buses["x"], buses["y"])
     }
 
     bus_v_nom = {}
     if "v_nom" in buses.columns:
-        tmp = buses[["name", "v_nom"]].copy()
-        tmp["v_nom"] = pd.to_numeric(tmp["v_nom"], errors="coerce")
+        v_nom_series = pd.to_numeric(buses["v_nom"], errors="coerce")
         bus_v_nom = {
-            str(r["name"]).strip(): (
-                float(r["v_nom"]) if pd.notna(r["v_nom"]) else None
-            )
-            for _, r in tmp.iterrows()
+            name: (float(v) if pd.notna(v) else None)
+            for name, v in zip(buses["name"], v_nom_series)
         }
 
     # Build bus -> province mapping for provincial post-processing mode
     bus_to_province: dict = {}
     if "province" in buses.columns:
-        bus_to_province = {
-            str(r["name"]).strip(): str(r["province"]).strip()
-            for _, r in buses.iterrows()
-            if pd.notna(r["province"])
-        }
+        mask = buses["province"].notna()
+        bus_to_province = dict(
+            zip(buses.loc[mask, "name"], buses.loc[mask, "province"].str.strip())
+        )
 
     # Apply jitter so co-located buses (e.g. A315/A735) don't overlap on the map
     buses_by_coord: dict = defaultdict(list)
@@ -590,6 +701,8 @@ def load_buses(buses_csv: str) -> tuple[dict, dict, dict]:
 
     bus_ll: dict = {}
     for (lat, lon), bus_list in buses_by_coord.items():
+        # Determine a stable sort order so that jitter positions are reproducible.
+        # The chosen mode controls which attribute is used as the primary key.
         if BUS_JITTER_MODE == "v_nom":
             sorted_group = sorted(bus_list, key=lambda b: (bus_v_nom.get(b) or 1e9, b))
         elif BUS_JITTER_MODE == "suffix_voltage":
@@ -597,6 +710,7 @@ def load_buses(buses_csv: str) -> tuple[dict, dict, dict]:
         else:
             sorted_group = sorted(bus_list)
 
+        # Assign each bus a unique position on the jitter circle.
         for i, b in enumerate(sorted_group):
             bus_ll[b] = jitter_bus(
                 lat, lon, i, len(sorted_group), jitter_m=BUS_JITTER_M
@@ -659,9 +773,12 @@ def load_lines(res_folder: str) -> tuple[pd.DataFrame, str]:
 
     # Prefer the optimised capacity (set by the solver for newly built assets).
     # For lines the optimised column is s_nom_opt; for links it is p_nom_opt.
+    # The string substitution maps the base column name to its _opt counterpart.
     opt_col = cap_col.replace("s_nom", "s_nom_opt").replace("p_nom", "p_nom_opt")
     if opt_col in lines.columns:
         s_nom_opt = pd.to_numeric(lines[opt_col], errors="coerce").fillna(0.0)
+        # Only fill in the optimised value where the base capacity is zero;
+        # existing lines keep their rated capacity.
         lines["s_nom"] = lines["s_nom"].where(lines["s_nom"] > 0, s_nom_opt)
 
     # True for lines where the original capacity was 0 but the optimiser built capacity.
@@ -742,12 +859,9 @@ def load_dispatch_link_flows(dispatch_folder: str) -> tuple:
         ``(timestamps, flows_df)`` or ``(None, None)`` if no data found.
     """
     year_dirs = sorted(
-        d
-        for d in (
-            os.path.join(dispatch_folder, e)
-            for e in os.listdir(dispatch_folder)
-            if os.path.isdir(os.path.join(dispatch_folder, e)) and e.isdigit()
-        )
+        os.path.join(dispatch_folder, e)
+        for e in os.listdir(dispatch_folder)
+        if e.isdigit() and os.path.isdir(os.path.join(dispatch_folder, e))
     )
     if not year_dirs:
         # No year subfolders — try reading directly (flat dispatch layout)
@@ -874,11 +988,11 @@ def build_corridor_map(
             skipped_coords += 1
             continue
 
-        capacity_mw = float(np.sum([float(r["s_nom"]) for r in rows]))
+        capacity_mw = sum(float(r["s_nom"]) for r in rows)
         kv_label = voltage_mix_label([line_voltage_kv(r["name"]) for r in rows])
         sorted_lines = sorted(rows, key=lambda line: str(line["name"]))
         lines_html = "<br>".join(
-            f"&bull; {'<span style="color:#22bb44"><b>[NEW]</b></span> ' if bool(line.get('is_new', False)) else ''}"
+            f"&bull; {_NEW_LINE_BADGE if line.get('is_new') else ''}"
             f"{line['name']} : s_nom={float(line['s_nom']):.1f}"
             for line in sorted_lines
         )
@@ -886,11 +1000,15 @@ def build_corridor_map(
         bus0, bus1, timestamps, flow_mw = resolve_corridor_flow(
             rows, nodal_index, bus_to_province
         )
-        # Fallback to direct link/line flow (covers intra-provincial corridors).
+        # Fallback to direct link/line flow (covers intra-provincial corridors
+        # whose buses share a province and so produce no inter-province column
+        # in the hourly energy-balance CSVs).
         if timestamps is None and link_flows_df is not None:
             link_names = [str(r["name"]) for r in sorted_lines]
+            # Keep only components that actually appear in the flow DataFrame.
             avail = [n for n in link_names if n in link_flows_df.columns]
             if avail:
+                # Sum flows across all parallel physical lines in the corridor.
                 flow_mw = (
                     link_flows_df[avail]
                     .apply(pd.to_numeric, errors="coerce")
@@ -909,6 +1027,9 @@ def build_corridor_map(
         lat2, lon2 = bus_ll[bus_b]
 
         distance_m = approx_distance_m(lat1, lon1, lat2, lon2)
+        # Short corridors look cluttered at the default step size; scale the
+        # inter-line spacing up so parallel lines don't visually merge.
+        # The factor is clamped to [1.3, 3.0] and only applied below 15 km.
         density_factor = (
             min(3.0, max(1.3, 15000 / max(2000, distance_m)))
             if distance_m < 15000
@@ -973,7 +1094,7 @@ def build_corridor_map(
             else:
                 curve = make_curve(lat1, lon1, lat2, lon2, offset_m=offset_m, sign=sign)
 
-            if bool(line.get("is_new", False)):
+            if line.get("is_new"):
                 continue  # skip visual representation of newly built lines
             line_color = LINE_COLOR_NO_DATA if missing_flow else LINE_COLOR_WITH_DATA
             target_layer = no_data_layer if missing_flow else flow_layer
@@ -1030,6 +1151,9 @@ def main():
     lines, _ = load_lines(planning_res_folder)
     link_flows_ts, link_flows_df = load_link_flows(planning_res_folder)
 
+    # Group individual physical lines by their (bus_a, bus_b) corridor key so
+    # that parallel lines between the same two buses share one popup and are
+    # drawn as offset arcs rather than overlapping polylines.
     corridors: dict = defaultdict(list)
     for _, row in lines.iterrows():
         corridors[canonical_pair(row["bus0"], row["bus1"])].append(row)
