@@ -1,3 +1,10 @@
+## 0.1.3 (2026-05-12)
+
+### Bug Fixes
+
+- Carpe_diem & kmedoid_vre functional
+- Removed investment periods from snapshot config
+
 ## 0.1.2 (2026-05-11)
 
 ### Bug Fixes
