@@ -173,7 +173,7 @@ def get_average_each_renewable(
         print(f"After filter = {filter_gen_df}")
     else:
         filter_gen_df = gen_df[gen_df["carrier"].isin(RES)]
-    RES_cf = pd.DataFrame(columns=RES)
+    RES_cf = pd.DataFrame(index=gen_max_df.index, columns=RES, dtype=float)
     # RES_cf = pd.DataFrame(index=gen_max_df.index, columns=RES, dtype=float)
     for res in RES:
         print(f"filter_gen_df = {filter_gen_df}")
@@ -333,6 +333,8 @@ def get_solar_wind(RES_cf: pd.DataFrame, hd: int, year: int = None) -> np.ndarra
     """
     solar = daily_prof(RES_cf["solar"], hd)
     wind = daily_prof(RES_cf["wind"], hd)
+    if solar.size == 0 or wind.size == 0:
+        return np.zeros((365, hd)), np.zeros((365, hd))
     if year is None:
         solar_min = np.min(solar)
         solar_max = np.max(solar)
