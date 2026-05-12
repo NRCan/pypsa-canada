@@ -15,7 +15,7 @@ from representative_days.kmedoid_quad import kmedoid_quad_method
 from representative_days.opt_quad import opt_quad_method
 
 # from representative_days.opt_triple import opt3_method
-from representative_days.vre_vector import vre_method
+# from representative_days.vre_vector import vre_method
 
 
 class SnapshotProfile(Enum):
@@ -25,9 +25,9 @@ class SnapshotProfile(Enum):
     DEFAULT = (
         0  # Use the snapshot file already in the input network (no selection applied)
     )
-    KMEDOID_VRE = 1  # Functional
-    KMEDOID_VRE_HYDRO = 2  # Does not complete
-    # OPT_VRE = 3  # To be tested
+    # KMEDOID_VRE = 1  # Does not complete
+    KMEDOID_VRE_HYDRO = 2  # Functional
+    # OPT_VRE = 3  # Does not complete
     OPT_VRE_HYDRO = 4  # Functional
     CARPE_DIEM = 5  # Functional
     AVG_PEAK = 6  # Completes but results need to be verified
@@ -78,12 +78,12 @@ def snapshots_selection(
         case SnapshotProfile.DEFAULT:
             print("Using current snapshot file already in input")
 
-        case SnapshotProfile.KMEDOID_VRE:
-            network.snapshot_weightings = vre_method(
-                network,
-                cluster=cluster,
-                **output_params,
-            )
+        # case SnapshotProfile.KMEDOID_VRE:
+        #     network.snapshot_weightings = vre_method(
+        #         network,
+        #         cluster=cluster,
+        #         **output_params,
+        #     )
 
         case SnapshotProfile.KMEDOID_VRE_HYDRO:
             network.snapshot_weightings = kmedoid_quad_method(
