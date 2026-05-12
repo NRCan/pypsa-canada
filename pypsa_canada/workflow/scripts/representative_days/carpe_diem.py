@@ -93,7 +93,11 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
     gen_max_df = n.generators_t.p_max_pu.copy()
 
     # Load loads-p_set.csv
-    load_df = n.loads_t.p_set.copy()
+    # load_df = n.loads_t.p_set.copy()
+    load_df = n.c["Load"].dynamic.p_set.copy()
+    load_static_df = n.c["Load"].static
+    bus_df = n.c["Bus"].static
+    load_static_df["province"] = load_static_df["bus"].map(bus_df["province"])
 
     for period in periods:
         # Select the period (year) of interest. Will want to iterate over periods to choose rep days for each.
@@ -133,7 +137,8 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
             # At this point I have a DataFrame of dimension (8760 x 2) for RES
 
             # Filter to relevant province
-            load_df_filtered = load_df.loc[:, load_df.columns.str.startswith(prov)]
+            index_list = load_static_df.loc[load_static_df["province"] == prov].index
+            load_df_filtered = load_df.loc[:, index_list]
             # Load sum
             load_agg = load_df_filtered.sum(axis=1)
             load_agg = load_agg.to_frame()
@@ -381,7 +386,8 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
             # Repeating code from above
 
             # Filter to relevant province
-            load_df_filtered = load_df.loc[:, load_df.columns.str.startswith(prov)]
+            index_list = load_static_df.loc[load_static_df["province"] == prov].index
+            load_df_filtered = load_df.loc[:, index_list]
             # Select the period of interest
             load_df_filtered = load_df_filtered.loc[pd.IndexSlice[period, :], :]
             # Find maxima of each column for future reference
@@ -522,12 +528,13 @@ def carpe_diem_method(n: pypsa.Network, provinces: list, clusters: int = 6):
                 hydro_names,
             ] = hydro_cols_rep_days
 
+            index_list = load_static_df.loc[load_static_df["province"] == prov].index
             load_df.loc[
                 (load_df.index.get_level_values("period") == period)
                 & np.isin(
                     load_df.index.get_level_values("timestep").date, rep_day_dates
                 ),
-                load_df.columns.str.startswith(prov),
+                index_list,
             ] = load_df_filtered_rep_days
 
     # TODO: Add other variables we need to return

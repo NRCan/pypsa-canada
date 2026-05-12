@@ -8,46 +8,58 @@ import pypsa
 
 
 def avg_peak_method(
-    n: pypsa.Network(),
+    n: pypsa.Network,
     provinces: list,
     year=None,
-    aggregate=False,
+    aggregate: bool = True,
     save_fig: bool = True,
     save_csv: bool = True,
     saving_folder_path="./",
 ):
     """
-    _summary_
+    Build representative-day snapshot weights from load data.
 
+    The method supports two modes:
+    - ``aggregate=False``: compute representative days separately for each province in
+      ``provinces``.
+    - ``aggregate=True``: compute representative days using the combined load from all
+      listed provinces.
+
+    Parameters
+    ----------
     n : pypsa.Network
-        Imported pypsa network
+        Network containing load time series, static load metadata, and snapshot weights.
     provinces : list
-        List of provinces whose data (load, in this method) are to be used to generate representative days
-    year: int, optional
-        Year to use to create representative days; if None (default), finds representative days for each year/period
-    aggregate: boolean, optional
-        If false, chooses peak and average day in each province in the list; if true, selects days for the entire region based on total load
+        Province codes to include in the calculation.
+    year : int, optional
+        If provided, compute representative days for a single investment period.
+        Otherwise, process every period in the network.
+    aggregate : bool, optional
+        If ``False``, process each province independently. If ``True``, combine the
+        province loads before computing representative days.
     save_fig : bool, optional
-        Save figure if needed, by default True
+        Save diagnostic plots for each processed period and province, by default True.
     save_csv : bool, optional
-        Save snapshot file, by default False
-    saving_folder_path: str, optional
-        Location of folder to be save into, by default current working directory
+        Save the resulting snapshot-weighting CSV, by default True.
+    saving_folder_path : str, optional
+        Output directory for diagnostics and CSV files, by default ``"./"``.
 
     Returns
     -------
     pd.DataFrame
-        Snapshot weighting dataframe
+        Updated snapshot weighting dataframe with representative-day weights.
     """
 
     # Function to reshape a vector to (Number of days x 24)
     def daily_prof(data, hd):
+        """Reshape an hourly series into a day-by-hour matrix."""
         output = np.reshape(data, (int(len(data) / hd), hd))
         output = pd.DataFrame(output)
         return output
 
     # Function get monthly peak and average
     def get_month_stat(df, provinces):
+        """Return the peak and average day for each month in the input matrix."""
         results = {}
 
         for month, group in df.groupby(df.index.month):
@@ -59,7 +71,6 @@ def avg_peak_method(
 
             # Get the vector of peak day
             peak_day_vector = group.loc[peak_day].values
-
             # Average
             month_avg = group.mean().values
 
@@ -83,7 +94,10 @@ def avg_peak_method(
         return results
 
     # Load loads-p_set.csv
-    load_df = n.loads_t.p_set.copy()
+    load_df = n.c["Load"].dynamic.p_set.copy()
+    load_static_df = n.c["Load"].static
+    bus_df = n.c["Bus"].static
+    load_static_df["province"] = load_static_df["bus"].map(bus_df["province"])
 
     # Load snapshots
     snap_df = n.snapshot_weightings.copy()
@@ -97,7 +111,6 @@ def avg_peak_method(
     else:
         regions_list = ["aggregated"]
 
-    ########################################################## STOPPED HERE
     # Loop to estimate rep days for each year
     if year is None:
         year_info = defaultdict(lambda: defaultdict(dict))
@@ -105,11 +118,15 @@ def avg_peak_method(
             for prov in regions_list:
                 if aggregate == False:
                     # Filter load to relevant province
-                    load_df_filtered = load_df.loc[
-                        :, load_df.columns.str.startswith(prov)
-                    ]
+                    index_list = load_static_df.loc[
+                        load_static_df["province"] == prov
+                    ].index
+                    load_df_filtered = load_df.loc[:, index_list]
                 else:
-                    load_df_filtered = load_df.filter(regex=f"^({'|'.join(provinces)})")
+                    index_list = load_static_df.loc[
+                        load_static_df["province"].isin(provinces)
+                    ].index
+                    load_df_filtered = load_df.loc[:, index_list]
                 # Load sum
                 load_agg = load_df_filtered.sum(axis=1)
                 load_agg = load_agg.to_frame()
@@ -172,9 +189,15 @@ def avg_peak_method(
             # Filter load to relevant province
             if aggregate == False:
                 # Filter load to relevant province
-                load_df_filtered = load_df.loc[:, load_df.columns.str.startswith(prov)]
+                index_list = load_static_df.loc[
+                    load_static_df["province"] == prov
+                ].index
+                load_df_filtered = load_df.loc[:, index_list]
             else:
-                load_df_filtered = load_df.filter(regex=f"^({'|'.join(provinces)})")
+                index_list = load_static_df.loc[
+                    load_static_df["province"].isin(provinces)
+                ].index
+                load_df_filtered = load_df.loc[:, index_list]
             # Load sum
             load_agg = load_df_filtered.sum(axis=1)
             load_agg = load_agg.to_frame()
@@ -235,13 +258,14 @@ def avg_peak_method(
     snap_df[["objective", "stores", "generators"]] = (
         0.0  # Use float to allow decimal weights
     )
-    # Set the weights
+    # Assign weights to the peak and average days selected for each period and province.
 
     for year_key, year_prov in year_info.items():
         for prov, prov_stats in year_prov.items():
             for month, stats in prov_stats.items():
                 peak_day = stats["peak_day"]
                 avg_day = stats["avg_day"]
+
                 # If peak demand and average day are the same
                 if peak_day == avg_day:
                     # Timestamps for identified day

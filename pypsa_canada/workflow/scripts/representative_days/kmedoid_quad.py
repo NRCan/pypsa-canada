@@ -168,12 +168,11 @@ def get_average_each_renewable(
         print(f"Generator_df = {gen_df}")
         filter_gen_df = gen_df[
             gen_df["carrier"].isin(RES) & (gen_df["province"] == province)
-            # & (gen_df["bus"].str.split("_").str[0] == province)
         ]
         print(f"After filter = {filter_gen_df}")
     else:
         filter_gen_df = gen_df[gen_df["carrier"].isin(RES)]
-    RES_cf = pd.DataFrame(columns=RES)
+    RES_cf = pd.DataFrame(index=gen_max_df.index, columns=RES, dtype=float)
     # RES_cf = pd.DataFrame(index=gen_max_df.index, columns=RES, dtype=float)
     for res in RES:
         print(f"filter_gen_df = {filter_gen_df}")
@@ -217,9 +216,16 @@ def load_p_set(
     pd.DataFrame
         returns a dataframe of the aggregated load.
     """
-    load_df = n.loads_t.p_set.copy()
+    # load_df = n.loads_t.p_set.copy()
+    load_df = n.c["Load"].dynamic.p_set.copy()
+    load_static_df = n.c["Load"].static
+    bus_df = n.c["Bus"].static
+    load_static_df["province"] = load_static_df["bus"].map(bus_df["province"])
+
     if province is not None:
-        load_df_filtered = load_df.loc[:, load_df.columns.str.startswith(province)]
+        index_list = load_static_df.loc[load_static_df["province"] == province].index
+        load_df_filtered = load_df.loc[:, index_list]
+        # load_df_filtered = load_df.loc[:, load_df.columns.str.startswith(province)]
         load_agg = load_df_filtered.sum(axis=1)
     else:
         load_agg = load_df.sum(axis=1)
@@ -272,7 +278,7 @@ def load_by_run_river(
     if province is not None and year is None:
         filter_hydro = gen_df[
             (gen_df["model"] == "hydro_ror")
-            & (gen_df["bus"].str.split("_").str[0] == province)
+            & (gen_df["province"] == province)
             & ((n.get_active_assets(c="Generator", investment_period=period)) == True)
         ]
     else:
@@ -333,6 +339,8 @@ def get_solar_wind(RES_cf: pd.DataFrame, hd: int, year: int = None) -> np.ndarra
     """
     solar = daily_prof(RES_cf["solar"], hd)
     wind = daily_prof(RES_cf["wind"], hd)
+    if solar.size == 0 or wind.size == 0:
+        return np.zeros((365, hd)), np.zeros((365, hd))
     if year is None:
         solar_min = np.min(solar)
         solar_max = np.max(solar)

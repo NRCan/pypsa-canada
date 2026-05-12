@@ -18,7 +18,7 @@ solving:
   options:
     planning:
       load_shedding: false
-      linearized_unit_commitment: true
+      linearized_unit_commitment: false
       keep_files: false
       store_model: false
     dispatch:
@@ -50,14 +50,14 @@ components:
     "2050": 170
 
 snapshots:
-  #method: "OPT_VRE_HYDRO"
-  method: "CARPE_DIEM"
+  #method: "OPT_VRE_HYDRO", "KMEDOID_VRE_HYDRO", "CARPE_DIEM" or "AVG_PEAK"
+  method: "OPT_VRE_HYDRO"
   load_mode: *load_mode
   folder_name: "model/minimal_model"
 
   # Rep days config
   # rep_length: None
-  cluster: 10
+  cluster: 20
   include_hydro: true
   solver: *solver_name
   extreme_days_select: false
@@ -66,7 +66,7 @@ snapshots:
   saving_folder_path: saves
   provinces_selection: ["NB", "ON", "QC"]
   # year: None
-  aggregate: false
+  # aggregate: false
   mip_gap: 0.01
 
 extra_loads:
@@ -85,20 +85,20 @@ planning:
         "BC": 1.2
         "ON": 1.2
         "QC": 1.2
-    # CER_constraint:
-    #   # aggregation levels: provincial, group, individual
-    #   aggregation: 'provincial'
-    #   # year that constraint becomes active
-    #   year: 2035
-    #   # carriers to include
-    #   carriers: ['oil', 'gas', 'diesel']
-    #   # values for emissions limit and offset is emission intensity (in tC02eq/GWh)
-    #   values: {
-    #     limit: {2035: 65, 2050: 0},
-    #     offset: {2035: 35, 2050: 42}
-    #     }
-    #   # minimum capacity
-    #   min_cap: 25
+    CER_constraint:
+      # aggregation levels: provincial, group, individual
+      aggregation: 'provincial'
+      # year that constraint becomes active
+      year: 2035
+      # carriers to include
+      carriers: ['oil', 'gas', 'diesel']
+      # values for emissions limit and offset is emission intensity (in tC02eq/GWh)
+      values: {
+        limit: {2035: 65, 2050: 0},
+        offset: {2035: 35, 2050: 42}
+        }
+      # minimum capacity
+      min_cap: 25
 
 dispatch:
   #Snapshots related
@@ -112,24 +112,24 @@ dispatch:
     # add_bidirection_link_constraint: {}
     # add_prevent_spill_if_not_fully_charged_constraint:
     #   maximum_soc_storage_value: 2000
-    # CER_constraint:
-    #   # modes = hourly, emissions
-    #   mode: 'emissions'
-    #   # aggregation levels: provincial, group, individual
-    #   aggregation: 'provincial'
-    #   # year that constraint becomes active
-    #   year: 2035
-    #   # carriers to include
-    #   carriers: ['oil', 'gas', 'diesel']
-    #   # values for hourly mode is number of hours, values for emissions mode is emission intensity (in tC02eq/GWh)
-    #   values: {
-    #     limit: {2035: 65, 2050: 0},
-    #     offset: {2035: 35, 2050: 42}
-    #     }
-    #   # minimum capacity
-    #   min_cap: 25
-    #   # forecast hours based on net load ('load'), uniformly ('uniform'), or assign max to first UC period and carry leftover ('carryover')
-    #   forecast_hours: 'carryover'
+    CER_constraint:
+      # modes = hourly, emissions
+      mode: 'emissions'
+      # aggregation levels: provincial, group, individual
+      aggregation: 'provincial'
+      # year that constraint becomes active
+      year: 2035
+      # carriers to include
+      carriers: ['oil', 'gas', 'diesel']
+      # values for hourly mode is number of hours, values for emissions mode is emission intensity (in tC02eq/GWh)
+      values: {
+        limit: {2035: 65, 2050: 0},
+        offset: {2035: 35, 2050: 42}
+        }
+      # minimum capacity
+      min_cap: 25
+      # forecast hours based on net load ('load'), uniformly ('uniform'), or assign max to first UC period and carry leftover ('carryover')
+      forecast_hours: 'carryover'
 
 # postprocess:
 #   result_type: "Provincial"  # "Provincial" or "Nodal"
