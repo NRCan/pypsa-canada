@@ -217,9 +217,17 @@ def load_p_set(
     pd.DataFrame
         returns a dataframe of the aggregated load.
     """
-    load_df = n.loads_t.p_set.copy()
+    # load_df = n.loads_t.p_set.copy()
+    load_df = n.c["Load"].dynamic.p_set.copy()
+    load_static_df = n.c["Load"].static
+    bus_df = n.c["Bus"].static
+    load_static_df["province"] = load_static_df["bus"].map(bus_df["province"])
+    index_list = load_static_df.loc[load_static_df["province"] == province].index
+
     if province is not None:
-        load_df_filtered = load_df.loc[:, load_df.columns.str.startswith(province)]
+        index_list = load_static_df.loc[load_static_df["province"] == province].index
+        load_df_filtered = load_df.loc[:, index_list]
+        # load_df_filtered = load_df.loc[:, load_df.columns.str.startswith(province)]
         load_agg = load_df_filtered.sum(axis=1)
     else:
         load_agg = load_df.sum(axis=1)
@@ -272,7 +280,8 @@ def load_by_run_river(
     if province is not None and year is None:
         filter_hydro = gen_df[
             (gen_df["model"] == "hydro_ror")
-            & (gen_df["bus"].str.split("_").str[0] == province)
+            # & (gen_df["bus"].str.split("_").str[0] == province)
+            & (gen_df["province"] == province)
             & ((n.get_active_assets(c="Generator", investment_period=period)) == True)
         ]
     else:
