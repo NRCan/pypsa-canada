@@ -49,6 +49,7 @@ def avg_peak_method(
     pd.DataFrame
         Updated snapshot weighting dataframe with representative-day weights.
     """
+
     # Function to reshape a vector to (Number of days x 24)
     def daily_prof(data, hd):
         """Reshape an hourly series into a day-by-hour matrix."""
@@ -117,7 +118,9 @@ def avg_peak_method(
             for prov in regions_list:
                 if aggregate == False:
                     # Filter load to relevant province
-                    index_list = load_static_df.loc[load_static_df["province"] == prov].index
+                    index_list = load_static_df.loc[
+                        load_static_df["province"] == prov
+                    ].index
                     load_df_filtered = load_df.loc[:, index_list]
                 else:
                     index_list = load_static_df.loc[
@@ -186,7 +189,9 @@ def avg_peak_method(
             # Filter load to relevant province
             if aggregate == False:
                 # Filter load to relevant province
-                index_list = load_static_df.loc[load_static_df["province"] == prov].index
+                index_list = load_static_df.loc[
+                    load_static_df["province"] == prov
+                ].index
                 load_df_filtered = load_df.loc[:, index_list]
             else:
                 index_list = load_static_df.loc[
@@ -258,8 +263,6 @@ def avg_peak_method(
     for year_key, year_prov in year_info.items():
         for prov, prov_stats in year_prov.items():
             for month, stats in prov_stats.items():
-
-
                 peak_day = stats["peak_day"]
                 avg_day = stats["avg_day"]
 
