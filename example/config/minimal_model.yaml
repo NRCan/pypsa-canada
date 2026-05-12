@@ -50,14 +50,14 @@ components:
     "2050": 170
 
 snapshots:
-  method: "OPT_VRE_HYDRO"
+  #method: "OPT_VRE_HYDRO"
+  method: "CARPE_DIEM"
   load_mode: *load_mode
   folder_name: "model/minimal_model"
-  investment_periods: 5
 
   # Rep days config
   # rep_length: None
-  cluster: 50
+  cluster: 10
   include_hydro: true
   solver: *solver_name
   extreme_days_select: false

@@ -167,6 +167,7 @@ def main():
     options_settings = solving_settings["options"]["planning"]
     load_shedding = options_settings["load_shedding"]
     linearized_unit_commitment = options_settings["linearized_unit_commitment"]
+    include_objective_constant = options_settings["include_objective_constant"]
 
     solver_settings = solving_settings["solver"]
     solver_name = solver_settings["name"]
@@ -235,6 +236,7 @@ def main():
     network.optimize.create_model(
         multi_investment_periods=True,
         linearized_unit_commitment=linearized_uc_ena,
+        include_objective_constant=include_objective_constant,
     )
 
     logging.info(

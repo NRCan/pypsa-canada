@@ -18,11 +18,13 @@ year_settings:
 solving:
   options:
     planning:
+      include_objective_constant : true
       load_shedding: false
       linearized_unit_commitment: false
       keep_files: false
       store_model: false
     dispatch:
+      include_objective_constant : true
       load_shedding: false
       linearized_unit_commitment: false
       keep_files: false
@@ -132,7 +134,6 @@ snapshots:
   method: "DEFAULT"
   load_mode: *load_mode
   # folder_name: "model/Canada-National"
-  investment_periods: 5
 
   # Rep days config
   # rep_length: None
