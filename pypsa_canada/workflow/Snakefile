@@ -71,6 +71,7 @@ include: "rules/solve_dispatch.smk"
 # Post-processing rules
 include: "rules/post_process_planning.smk"
 include: "rules/post_process_dispatch.smk"
+include: "rules/plot_corridor_map.smk"
 include: "rules/compare_results.smk"
 include: "rules/export_idea.smk"
 
@@ -84,6 +85,8 @@ def get_all_targets():
         f"{RUN_OUTPUT_DIR}/post_process_planning",
         f"{RUN_OUTPUT_DIR}/post_process_dispatch",
         f"{RUN_OUTPUT_DIR}/compare_results",
+        f"{RUN_OUTPUT_DIR}/planning_corridor_utilization_map.html",
+        f"{RUN_OUTPUT_DIR}/dispatch_corridor_utilization_map.html",
     ]
     if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
         targets.append(f"{RUN_OUTPUT_DIR}/idea_output")
