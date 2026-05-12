@@ -168,7 +168,6 @@ def get_average_each_renewable(
         print(f"Generator_df = {gen_df}")
         filter_gen_df = gen_df[
             gen_df["carrier"].isin(RES) & (gen_df["province"] == province)
-            # & (gen_df["bus"].str.split("_").str[0] == province)
         ]
         print(f"After filter = {filter_gen_df}")
     else:
@@ -279,7 +278,6 @@ def load_by_run_river(
     if province is not None and year is None:
         filter_hydro = gen_df[
             (gen_df["model"] == "hydro_ror")
-            # & (gen_df["bus"].str.split("_").str[0] == province)
             & (gen_df["province"] == province)
             & ((n.get_active_assets(c="Generator", investment_period=period)) == True)
         ]
