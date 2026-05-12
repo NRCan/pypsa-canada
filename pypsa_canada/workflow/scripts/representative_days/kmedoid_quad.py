@@ -222,7 +222,6 @@ def load_p_set(
     load_static_df = n.c["Load"].static
     bus_df = n.c["Bus"].static
     load_static_df["province"] = load_static_df["bus"].map(bus_df["province"])
-    index_list = load_static_df.loc[load_static_df["province"] == province].index
 
     if province is not None:
         index_list = load_static_df.loc[load_static_df["province"] == province].index
