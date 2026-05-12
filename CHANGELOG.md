@@ -1,3 +1,9 @@
+## 0.2.0 (2026-05-12)
+
+### Features
+
+- Added post-process graphical visualisation
+
 ## 0.1.3 (2026-05-12)
 
 ### Bug Fixes
