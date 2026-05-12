@@ -186,9 +186,7 @@ def create_yearly_weightings(
     print(f"Load profile shape after snapshots: {network.loads_t.p_set.shape}")
     print(f"Load profile after snapshots:\n{network.loads_t.p_set}")
 
-    network.investment_period_weightings["years"] = list(np.diff(years)) + [
-        snapshot_config["investment_periods"]
-    ]
+    network.investment_period_weightings["years"] = years
     generate_investment_weightings(n=network, years=years, discount_rate=discount_rate)
 
     return network
