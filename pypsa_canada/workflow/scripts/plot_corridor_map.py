@@ -59,8 +59,6 @@ POST_PROCESS_FILE_GLOB = "**/*_hourly*.csv"  # e.g., AB_hourly.csv
 
 LINE_COLOR_WITH_DATA = "#3388ff"  # Blue for existing lines with flow data
 LINE_COLOR_NO_DATA = "#888888"  # Grey for existing lines without flow data
-LINE_COLOR_NEW = "#22bb44"  # Green for newly built lines with flow data
-LINE_COLOR_NEW_NO_DATA = "#99bb88"  # Muted green-grey for new lines without flow data
 
 
 # =============================================================================
@@ -183,32 +181,6 @@ def _get_cached_hourly_df(bus: str, nodal_index: dict) -> pd.DataFrame | None:
     df = read_csv_flex(filepath)
     _hourly_cache[bus] = df
     return df
-
-
-def _dispatch_topology_folder(dispatch_folder: str) -> str:
-    """
-    Return the subfolder containing the dispatch network topology files.
-
-    The dispatch solved network stores each investment-period year in a
-    separate subfolder (``2021/``, ``2025/``, …).  The last (chronologically
-    latest) year contains the most complete set of built lines and is used as
-    the topology reference.  If no year subfolders exist the dispatch folder
-    itself is returned.
-
-    Parameters
-    ----------
-    dispatch_folder : str
-
-    Returns
-    -------
-    str
-    """
-    year_dirs = sorted(
-        os.path.join(dispatch_folder, e)
-        for e in os.listdir(dispatch_folder)
-        if os.path.isdir(os.path.join(dispatch_folder, e)) and e.isdigit()
-    )
-    return year_dirs[-1] if year_dirs else dispatch_folder
 
 
 def canonical_pair(a: str, b: str):
@@ -879,25 +851,21 @@ def build_corridor_map(
         Label shown in the chart trace name (e.g. ``"Planning"`` or
         ``"Dispatch"``).
     """
+    # Reset the hourly-CSV cache so this map always reads from its own
+    # nodal_index files instead of reusing data cached by a previous map build.
+    _hourly_cache.clear()
+
     map_center = (
         np.mean([ll[0] for ll in bus_ll.values()]),
         np.mean([ll[1] for ll in bus_ll.values()]),
     )
     fmap = folium.Map(location=map_center, zoom_start=6, tiles="CartoDB positron")
     flow_layer = folium.FeatureGroup(
-        name="Existing lines (click for utilization)", show=True
+        name="Corridor utilization (click lines)", show=True
     )
     flow_layer.add_to(fmap)
-    new_flow_layer = folium.FeatureGroup(
-        name="Newly built lines (click for utilization)", show=True
-    )
-    new_flow_layer.add_to(fmap)
-    no_data_layer = folium.FeatureGroup(name="Existing lines — no flow data", show=True)
+    no_data_layer = folium.FeatureGroup(name="No flow data (grey)", show=True)
     no_data_layer.add_to(fmap)
-    new_no_data_layer = folium.FeatureGroup(
-        name="Newly built lines — no flow data", show=True
-    )
-    new_no_data_layer.add_to(fmap)
 
     skipped_coords = skipped_flow = drawn_lines = drawn_no_data = 0
 
@@ -1005,22 +973,16 @@ def build_corridor_map(
             else:
                 curve = make_curve(lat1, lon1, lat2, lon2, offset_m=offset_m, sign=sign)
 
-            is_line_new = bool(line.get("is_new", False))
-            if missing_flow:
-                line_color = (
-                    LINE_COLOR_NEW_NO_DATA if is_line_new else LINE_COLOR_NO_DATA
-                )
-                target_layer = new_no_data_layer if is_line_new else no_data_layer
-            else:
-                line_color = LINE_COLOR_NEW if is_line_new else LINE_COLOR_WITH_DATA
-                target_layer = new_flow_layer if is_line_new else flow_layer
-            new_tag = "[NEW] " if is_line_new else ""
+            if bool(line.get("is_new", False)):
+                continue  # skip visual representation of newly built lines
+            line_color = LINE_COLOR_NO_DATA if missing_flow else LINE_COLOR_WITH_DATA
+            target_layer = no_data_layer if missing_flow else flow_layer
             folium.PolyLine(
                 locations=curve,
                 color=line_color,
                 weight=3,
                 opacity=0.9,
-                tooltip=f"{new_tag}{bus_a} <-> {bus_b} ({kv_label}) | {line['name']} | s_nom={float(line['s_nom']):.1f}",
+                tooltip=f"{bus_a} <-> {bus_b} ({kv_label}) | {line['name']} | s_nom={float(line['s_nom']):.1f}",
                 popup=popup,
             ).add_to(target_layer)
             if missing_flow:
@@ -1058,20 +1020,23 @@ def main():
     planning_out_html = str(snakemake.output.planning_corridor_map)
     dispatch_out_html = str(snakemake.output.dispatch_corridor_map)
 
-    # Do planning map
+    # Topology (buses, lines, corridors) always comes from the planning network,
+    # which contains the full set of physical lines including newly built ones.
+    # The dispatch map reuses the same corridors so all planned lines appear on
+    # both maps; lines without dispatch flow data are drawn grey.
     bus_ll, _, bus_to_province = load_buses(
         os.path.join(planning_res_folder, "buses.csv")
     )
     lines, _ = load_lines(planning_res_folder)
-    planning_nodal_index = index_nodal_files(
-        planning_post_process_folder, POST_PROCESS_FILE_GLOB
-    )
     link_flows_ts, link_flows_df = load_link_flows(planning_res_folder)
 
     corridors: dict = defaultdict(list)
     for _, row in lines.iterrows():
         corridors[canonical_pair(row["bus0"], row["bus1"])].append(row)
 
+    planning_nodal_index = index_nodal_files(
+        planning_post_process_folder, POST_PROCESS_FILE_GLOB
+    )
     build_corridor_map(
         corridors,
         bus_ll,
@@ -1083,25 +1048,12 @@ def main():
         "Planning",
     )
 
-    # Resolve the dispatch topology folder (last investment-period year subfolder).
-    dispatch_topo_folder = _dispatch_topology_folder(dispatch_res_folder)
-
-    # Do dispatch map — topology from last year subfolder.
-    bus_ll, _, bus_to_province = load_buses(
-        os.path.join(dispatch_topo_folder, "buses.csv")
-    )
-    lines, _ = load_lines(dispatch_topo_folder)
     dispatch_nodal_index = index_nodal_files(
         dispatch_post_process_folder, POST_PROCESS_FILE_GLOB
     )
     dispatch_link_flows_ts, dispatch_link_flows_df = load_dispatch_link_flows(
         dispatch_res_folder
     )
-
-    corridors: dict = defaultdict(list)
-    for _, row in lines.iterrows():
-        corridors[canonical_pair(row["bus0"], row["bus1"])].append(row)
-
     build_corridor_map(
         corridors,
         bus_ll,
