@@ -235,3 +235,4 @@ postprocess:
   result_type: "Provincial"  # "Provincial" or "Nodal"
   reference_scenario: 0  # 0 = auto-select (scenario with most representative days)
   export_format: "idea"  # null = no export, "idea" = export to IDEA template format
+

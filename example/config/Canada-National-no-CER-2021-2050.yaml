@@ -145,3 +145,7 @@ dispatch:
       min_cap: 25
       # forecast hours based on net load ('load'), uniformly ('uniform'), or assign max to first UC period and carry leftover ('carryover')
       forecast_hours: 'carryover'
+
+# postprocess:
+#   result_type: "Provincial"  # "Provincial" or "Nodal"
+#   reference_scenario: 0  # 0 = auto-select (scenario with most representative days)
