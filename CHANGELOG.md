@@ -1,3 +1,9 @@
+## 0.2.3 (2026-05-13)
+
+### Bug Fixes
+
+- Initial commit
+
 ## 0.2.2 (2026-05-13)
 
 ### Bug Fixes
