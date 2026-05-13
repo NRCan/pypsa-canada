@@ -1,3 +1,10 @@
+## 0.2.5 (2026-05-13)
+
+### Bug Fixes
+
+- Removed npm dependabot
+- Removed npm dependabot
+
 ## 0.2.4 (2026-05-13)
 
 ### Bug Fixes
