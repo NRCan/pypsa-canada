@@ -1,0 +1,238 @@
+# input_data: model/Canada-National
+
+run:
+  # name: "default-run" # use this to keep track of runs with different settings
+  disable_progressbar: false # set to true to disable the progressbar
+  shared_resources: false # set to true to share the default resources across runs
+  shared_cutouts: true # set to true to share the default cutout(s) across runs
+  validation: false # set to true to run back-casting plots
+  export_csv: false # set to true to export csv files of the model outputs
+
+year_settings:
+  ref_year: 2021
+  start_year: 2021
+  forecast_year: 2050
+  investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
+  discount_rate: 0.05
+
+solving:
+  options:
+    planning:
+      include_objective_constant : true
+      load_shedding: false
+      linearized_unit_commitment: false
+      keep_files: false
+      store_model: false
+    dispatch:
+      include_objective_constant : true
+      load_shedding: false
+      linearized_unit_commitment: false
+      keep_files: false
+      store_model: false
+  solver:
+    name: &solver_name highs
+    options: highs-default
+  solver_options:
+    "highs-default":
+      threads: 1
+      solver: ipm
+      run_crossover: 'off'
+      small_matrix_value: 1.0e-06
+      large_matrix_value: 1000000000.0
+      primal_feasibility_tolerance: 1.0e-05
+      dual_feasibility_tolerance: 1.0e-05
+      ipm_optimality_tolerance: 0.0001
+      parallel: 'on'
+      random_seed: 123
+    "highs-simplex":
+      solver: simplex
+      parallel: 'on'
+      primal_feasibility_tolerance: 1.0e-05
+      dual_feasibility_tolerance: 1.0e-05
+      random_seed: 123
+    "gurobi-default":
+      threads: 32
+      method: 2
+      crossover: 0
+      BarConvTol: 1.0e-05
+      Seed: 123
+      AggFill: 0
+      PreDual: 0
+      GURO_PAR_BARDENSETHRESH: 200
+    "gurobi-numeric-focus":
+      NumericFocus: 3
+      method: 2
+      crossover: 0
+      BarHomogeneous: 1
+      BarConvTol: 1.0e-05
+      FeasibilityTol: 0.0001
+      OptimalityTol: 0.0001
+      ObjScale: -0.5
+      threads: 8
+      Seed: 123
+    "gurobi-fallback":
+      crossover: 0
+      method: 2
+      BarHomogeneous: 1
+      BarConvTol: 1.0e-05
+      FeasibilityTol: 1.0e-05
+      OptimalityTol: 1.0e-05
+      Seed: 123
+      threads: 8
+    "cplex-default":
+      threads: 4
+      lpmethod: 4
+      solutiontype: 2
+      barrier.convergetol: 1.0e-05
+      feasopt.tolerance: 1.0e-06
+    "copt-default":
+      Threads: 8
+      LpMethod: 2
+      Crossover: 0
+      RelGap: 1.0e-06
+      Dualize: 0
+    "copt-gpu":
+      LpMethod: 6
+      GPUMode: 1
+      PDLPTol: 1.0e-05
+      Crossover: 0
+    "xpress-default":
+      threads: 8
+      lpflags: 4
+      crossover: 0
+      bargaptarget: 1.0e-05
+      baralg: 2
+    "xpress-gpu":
+      lpflags: 4
+      crossover: 0
+      baralg: 4
+      barhggpu: 1
+      barhgreltol: 1.0e-05
+    "cbc-default": {}
+    "glpk-default": {}
+
+load:
+  load_mode: &load_mode "custom"
+  # load_growth_forecast: "model/Canada-National/loads_forecast.csv"
+
+components:
+  override_dir: ""
+  components_dir: "data/components"
+  costs_dir: "data/costs"
+  obps: true
+  technology_costs: "Default_costs"
+  # carbon_tax:
+  #   "2021": 50 # $ per tonne, based on federal minimums
+  #   "2025": 125
+  #   "2030": 170
+  #   "2035": 170
+  #   "2040": 170
+  #   "2045": 170
+  #   "2050": 170
+
+snapshots:
+  method: "DEFAULT"
+  load_mode: *load_mode
+  # folder_name: "model/Canada-National"
+
+  # Rep days config
+  # rep_length: None
+  cluster: 50
+  include_hydro: true
+  solver: *solver_name
+  extreme_days_select: false
+  save_fig: false
+  save_csv: false
+  saving_folder_path: saves
+  # provinces_selection: ["AB", "BC", "MB", "NB", "NS", "ON", "PE", "QC", "SK", "NL"]
+  # year: None
+  aggregate: false
+
+extra_loads:
+  is_used: false
+  extra_loads: data/base
+  path: data/base
+
+planning:
+  constraints:
+    add_bidirection_link:
+      enable: false
+    add_stop_production:
+      enable: false
+    CER_constraint:
+      enable: false
+      # aggregation levels: provincial, group, individual
+      aggregation: 'provincial'
+      # year that constraint becomes active
+      year: 2035
+      # carriers to include
+      carriers: ['oil', 'gas', 'diesel']
+      # values for emissions limit and offset is emission intensity (in tC02eq/GWh)
+      values: {
+        limit: {2035: 65, 2050: 0},
+        offset: {2035: 35, 2050: 42}
+        }
+      # minimum capacity
+      min_cap: 25
+    NZ_constraint:
+      enable: false
+    planning_reserve_margin:
+      enable: false
+      capacity_values_placeholder_filepath: "data/constraints/capacity_values_placeholder.csv"
+      # provinces_list:
+      #   "PE": 1.2
+      #   "NB": 1.2
+      #   "NS": 1.2
+      #   "AB": 1.2
+      #   "BC": 1.2
+      #   "MB": 1.2
+      #   "ON": 1.2
+      #   "QC": 1.2
+      #   "SK": 1.2
+      #   "NL": 1.2
+    component_capacity_expansion_constraint:
+      enable: false
+      # custom_constraint_filepath: ""
+
+dispatch:
+  #Snapshots related
+  horizon: 336 #336 #2 weeks in hours
+  overlap: 48 #48
+  investment_period: [] #If empty, it will take the planning investment periods
+
+  constraints:
+    add_stop_production:
+      enable: false
+      2030: ["coal"]
+    add_spilling_variable:
+      enable: false
+    add_bidirection_link:
+      enable: false
+    add_prevent_spill_if_not_fully_charged:
+      enable: false
+    #   maximum_soc_storage_value: 2000
+    CER_constraint:
+      enable: false
+      # modes = hourly, emissions
+      mode: 'emissions'
+      # aggregation levels: provincial, group, individual
+      aggregation: 'provincial'
+      # year that constraint becomes active
+      year: 2035
+      # carriers to include
+      carriers: ['oil', 'gas', 'diesel']
+      # values for hourly mode is number of hours, values for emissions mode is emission intensity (in tC02eq/GWh)
+      values: {
+        limit: {2035: 65, 2050: 0},
+        offset: {2035: 35, 2050: 42}
+        }
+      # minimum capacity
+      min_cap: 25
+      # forecast hours based on net load ('load'), uniformly ('uniform'), or assign max to first UC period and carry leftover ('carryover')
+      forecast_hours: 'carryover'
+
+postprocess:
+  result_type: "Provincial"  # "Provincial" or "Nodal"
+  reference_scenario: 0  # 0 = auto-select (scenario with most representative days)
+  export_format: "idea"  # null = no export, "idea" = export to IDEA template format
+

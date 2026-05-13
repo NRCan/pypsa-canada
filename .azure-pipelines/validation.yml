@@ -1,0 +1,49 @@
+# Python package
+# Create and test a Python package on multiple Python versions.
+# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+
+pr:
+- main
+
+trigger:
+- main
+
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+# jobs:
+#  - job: 'PyPSU_PythonVersions'
+pool:
+  vmImage: ubuntu-latest
+strategy:
+  matrix:
+    Python312:
+      python.version: '3.12'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(python.version)'
+  displayName: 'Use Python $(python.version)'
+
+- script: |
+    python -m pip install --upgrade pip
+    python -m pip install -e .[dev]
+    python -m pip install pytest-azurepipelines unittest-xml-reporting pytest-cov
+    python -m pip install --upgrade pre-commit
+  displayName: 'Install dependencies'
+  workingDirectory: $(System.DefaultWorkingDirectory)
+
+- script: |
+    python -m pytest -v -rA --junitxml=junit.xml  --rootdir=tests --cov-report xml --cov-report html --cov=$(System.DefaultWorkingDirectory)
+  displayName: Generate coverage report
+
+- script: pre-commit run --all-files --hook-stage=manual --show-diff-on-failure
+  displayName: 'Check Code Quality'
+
+- task: PublishCodeCoverageResults@2
+  inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+

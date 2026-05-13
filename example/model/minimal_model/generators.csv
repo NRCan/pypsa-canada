@@ -1,0 +1,11 @@
+name,bus,model,group,p_nom,p_nom_extendable,p_nom_min,p_nom_max,build_year
+BUS_1 Coal,BUS_1,coal_IGCC,ungrouped,300,FALSE,0,0,2000
+BUS_2 Wind,BUS_2,wind_2021,ungrouped,100,FALSE,0,0,2000
+BUS_3 Gas,BUS_3,gas_CC,ungrouped,500,FALSE,0,0,2000
+BUS_4 Solar,BUS_4,default_solar_PV,ungrouped,300,FALSE,0,0,2000
+BUS_5 SMR,BUS_5,default_SMR,ungrouped,600,FALSE,0,0,2000
+BUS_1 OPT Diesel,BUS_1,default_diesel,ungrouped,0,TRUE,0,inf,2030
+BUS_2 OPT Wind,BUS_2,wind_new,ungrouped,0,TRUE,0,inf,2030
+BUS_3 OPT Gas,BUS_3,gas_CC,ungrouped,0,TRUE,0,inf,2030
+BUS_4 OPT Solar,BUS_4,default_solar_PV,ungrouped,0,TRUE,0,inf,2030
+BUS_5 OPT SMR,BUS_5,default_SMR,ungrouped,0,TRUE,0,inf,2030

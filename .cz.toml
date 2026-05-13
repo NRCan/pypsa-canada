@@ -1,0 +1,111 @@
+[tool.commitizen]
+name = "cz_customize"
+version_provider = "pep621"
+tag_format = "$version"
+version_files = [
+    "pyproject.toml:version",
+    "pypsa_canada/__version__.py",
+]
+update_changelog_on_bump = true
+annotated_tag = true
+bump_message = "release $current_version -> $new_version [skip ci]"
+
+[tool.commitizen.customize]
+message_template = "{{change_type}}:{% if show_message %} {{message}}{% endif %}"
+example = "feat: this feature enables customization through config file"
+schema_pattern = "(?i)^\\[?(?P<change_type>break|breaking|feat|feature|fix|docs|refactor|perf|test|chore)\\]?:\\s(?P<message>.+)$"
+bump_pattern = "(?i)^(?:Merged PR \\d+:\\s+)?\\-?\\s*\\[?(?P<change_type>break|breaking|feat|feature|fix|docs|refactor|perf|test|chore)\\]?:\\s*"
+#bump_pattern = 'Merged PR.*?.(break|breaking|feat|feature|fix|docs|refactor|perf|test|chore).:'
+change_type_order = ["BREAKING CHANGE", "feat", "fix", "refactor", "perf", "docs", "test", "chore"]
+info_path = "cz_customize_info.txt"
+info = """
+Commit message format: [type]: description OR type: description
+Also supports PR merge format: Merged PR <number>: [type]: description
+
+Supported types (case-insensitive):
+  - break or breaking: Breaking changes (MAJOR version bump)
+  - feat or feature: New features (MINOR version bump)
+  - fix: Bug fixes (PATCH version bump)
+  - docs: Documentation changes (PATCH version bump)
+  - refactor: Code refactoring (PATCH version bump)
+  - perf: Performance improvements (PATCH version bump)
+  - test: Test changes (PATCH version bump)
+  - chore: Maintenance tasks (PATCH version bump)
+
+Examples (all formats work):
+  - feat: First implementation of opendss manager
+  - [feat]: First implementation of opendss manager
+  - Merged PR 1011: [fix]: Bug fix
+  - Merged PR 1015: Feat: New feature
+  - FEAT: Same as above (case-insensitive)
+
+Note: The space after the colon is required!
+"""
+commit_parser = "(?i)^(?:Merged PR \\d+:\\s*)?(?:\\-\\s*)?\\[?(?P<change_type>break|breaking|feat|feature|fix|docs|refactor|perf|test|chore)\\]?:\\s+(?:\\[?(?:break|breaking|feat|feature|fix|docs|refactor|perf|test|chore)\\]?:\\s+)?(?P<message>.+?)\\s*$"
+changelog_pattern = "(?i)^(?:Merged PR \\d+:\\s*)?(?:\\-\\s*)?\\[?(?:break|breaking|feat|feature|fix|docs|refactor|perf|test|chore)\\]?:"
+#template = ".cz_changelog.j2"
+
+[tool.commitizen.customize.bump_map]
+break = "MAJOR"
+BREAK = "MAJOR"
+Break = "MAJOR"
+breaking = "MAJOR"
+BREAKING = "MAJOR"
+Breaking = "MAJOR"
+feat = "MINOR"
+FEAT = "MINOR"
+Feat = "MINOR"
+feature = "MINOR"
+FEATURE = "MINOR"
+Feature = "MINOR"
+fix = "PATCH"
+FIX = "PATCH"
+Fix = "PATCH"
+docs = "PATCH"
+DOCS = "PATCH"
+Docs = "PATCH"
+refactor = "PATCH"
+REFACTOR = "PATCH"
+Refactor = "PATCH"
+perf = "PATCH"
+PERF = "PATCH"
+Perf = "PATCH"
+test = "PATCH"
+TEST = "PATCH"
+Test = "PATCH"
+chore = "PATCH"
+CHORE = "PATCH"
+Chore = "PATCH"
+
+[tool.commitizen.customize.change_type_map]
+break = "Breaking Changes"
+BREAK = "Breaking Changes"
+Break = "Breaking Changes"
+breaking = "Breaking Changes"
+BREAKING = "Breaking Changes"
+Breaking = "Breaking Changes"
+feat = "Features"
+FEAT = "Features"
+Feat = "Features"
+feature = "Features"
+FEATURE = "Features"
+Feature = "Features"
+fix = "Bug Fixes"
+FIX = "Bug Fixes"
+Fix = "Bug Fixes"
+docs = "Documentation"
+DOCS = "Documentation"
+Docs = "Documentation"
+refactor = "Code Refactoring"
+REFACTOR = "Code Refactoring"
+Refactor = "Code Refactoring"
+perf = "Performance Improvements"
+PERF = "Performance Improvements"
+Perf = "Performance Improvements"
+test = "Tests"
+TEST = "Tests"
+Test = "Tests"
+chore = "Maintenance"
+CHORE = "Maintenance"
+Chore = "Maintenance"
+

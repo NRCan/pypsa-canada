@@ -1,0 +1,121 @@
+from snakemake.io import directory
+from pathlib import Path
+import yaml
+from os.path import normpath, exists, join
+from shutil import copyfile, move, rmtree
+from snakemake.utils import min_version
+from datetime import datetime
+
+min_version("8.11")
+
+from scripts._helpers import (
+    path_provider,
+    get_scenarios,
+    get_rdir,
+    get_shadow,
+)
+from scripts.helpers import merge_with_defaults
+
+# Merge config with defaults to ensure all required keys are present
+config = merge_with_defaults(config)
+
+# scenarios = get_scenarios(run)
+
+# for run in config["runs"]:
+#     print(run["run"]["name"])
+#     print(run["name"])
+
+run = config["run"]
+RDIR = get_rdir(run)
+
+RUN_NAME = f"{config["run"]["name"]}"
+TIMESTAMP = datetime.now().strftime("%Y-%m-%d_%H-%M")
+
+NET_DIR = "networks"
+RCS_DIR = "resources"
+RES_DIR = "results"
+LOG_DIR = "logs"
+
+RUN_NET_DIR = f"{RCS_DIR}/{RUN_NAME}/{NET_DIR}"
+RUN_RES_DIR = f"{RES_DIR}/{RUN_NAME}"
+RUN_OUTPUT_DIR = f"{RUN_RES_DIR}/run_{TIMESTAMP}"
+RUN_LOG_DIR = f"{LOG_DIR}/{RUN_NAME}"
+
+# shadow_config = get_shadow(run)
+
+# shared_resources = run["shared_resources"]["policy"]
+# exclude_from_shared = run["shared_resources"]["exclude"]
+# logs = path_provider("logs/", RDIR, shared_resources, exclude_from_shared)
+# benchmarks = path_provider("benchmarks/", RDIR, shared_resources, exclude_from_shared)
+# resources = path_provider("resources/", RDIR, shared_resources, exclude_from_shared)
+
+#cutout_dir = config["atlite"]["cutout_directory"]
+#CDIR = Path(cutout_dir).joinpath("" if run["shared_cutouts"] else RDIR)
+RESULTS = "results/" + RDIR
+
+
+# Rules are in order of use
+include: "rules/load_network.smk"
+include: "rules/add_components.smk"
+include: "rules/add_loads.smk"
+include: "rules/add_snapshots.smk"
+include: "rules/add_representative_days.smk"
+include: "rules/add_extra_loads.smk"
+include: "rules/modify_components.smk"
+
+include: "rules/solve_planning.smk"
+
+include: "rules/create_dispatch_network.smk"
+include: "rules/solve_dispatch.smk"
+
+# Post-processing rules
+include: "rules/post_process_planning.smk"
+include: "rules/post_process_dispatch.smk"
+# include: "rules/plot_corridor_map.smk"
+include: "rules/create_summary.smk"
+include: "rules/export_idea.smk"
+
+# Check if IDEA export is requested
+EXPORT_FORMAT = config.get("postprocess", {}).get("export_format", None)
+
+def get_all_targets():
+    targets = [
+        f"{RUN_OUTPUT_DIR}/planning_solved_network",
+        f"{RUN_OUTPUT_DIR}/dispatch_solved_network",
+        f"{RUN_OUTPUT_DIR}/post_process_planning",
+        f"{RUN_OUTPUT_DIR}/post_process_dispatch",
+        f"{RUN_OUTPUT_DIR}/results_summary.csv",
+        # f"{RUN_OUTPUT_DIR}/planning_corridor_utilization_map.html",
+        # f"{RUN_OUTPUT_DIR}/dispatch_corridor_utilization_map.html",
+    ]
+    if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
+        targets.append(f"{RUN_OUTPUT_DIR}/idea_outputs.csv")
+    return targets
+
+rule all:
+    input:
+        get_all_targets()
+
+rule clean_all:
+    message:
+        "Cleaning all"
+    shell:
+        "rm -rf {RCS_DIR}/* {RES_DIR}/* {LOG_DIR}/*"
+
+rule clean_unsolved:
+    message:
+        "Cleaning run Unsolved"
+    shell:
+        "rm -rf {NET_DIR}/{RUN_NAME}"
+
+rule clean_results:
+    message:
+        "Cleaning run Results"
+    shell:
+        "rm -rf {RES_DIR}/{RUN_NAME}"
+
+rule clean_logs:
+    message:
+        "Cleaning run Logs"
+    shell:
+        "rm -rf {LOG_DIR}/{RUN_NAME}"

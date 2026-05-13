@@ -1,0 +1,5 @@
+model,carrier,marginal_cost,marginal_cost_storage,p_min_pu,p_max_pu,efficiency_store,efficiency_dispatch,standing_loss,lifetime
+hydro_storage,hydro,3.3,0,0,1,1,1,0,50
+default_liion_battery,liion,0,0,-1,1,0.921954446,0.921954446,0,25
+default_DAC,co2_storage,0,203.75,-1,0,0.813,1,1,30
+default_EV,,0,0,-1,1,0.95,0.95,0,15
