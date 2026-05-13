@@ -145,5 +145,6 @@ example/results/
 example/*.csv
 .vscode/*
 savescheck_csv.txt
+
 example/model/Canada-National/*
-example/config/Canada-National-no-CER-2021-2050.yaml
+example/config/Canada-National*
