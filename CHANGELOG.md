@@ -1,3 +1,10 @@
+## 0.2.4 (2026-05-13)
+
+### Bug Fixes
+
+- Added old canada model in gitignore
+- Added old canada model in gitignore
+
 ## 0.2.3 (2026-05-13)
 
 ### Bug Fixes
