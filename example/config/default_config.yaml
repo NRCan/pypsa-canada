@@ -133,7 +133,7 @@ components:
 snapshots:
   method: "DEFAULT"
   load_mode: *load_mode
-  # folder_name: "model/Canada-National"
+  last_investment_period: 5
 
   # Rep days config
   # rep_length: None
