@@ -1,3 +1,10 @@
+## 0.2.6 (2026-05-14)
+
+### Bug Fixes
+
+- Correct investment_periods values
+- Correct investment_periods values
+
 ## 0.2.5 (2026-05-13)
 
 ### Bug Fixes
