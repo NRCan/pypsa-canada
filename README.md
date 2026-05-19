@@ -109,7 +109,7 @@ Following these steps, most dependencies should be installed and you should be a
 (pypsa-cad_py312)  >> pypsa_canada run -f scenarios\Canada-National-no-CER.yaml --unlock
 ```
 
-## Developpers
+## Developers
 Pre-commit hooks are used within this project. The pre-commit hooks will be enforced through a pipeline during the pull request (PR). If it fails, the PR will be rejected. To validate if your changes are meeting the minimum standard, you should execute the following. If there are any issues, resolve them and commit again.
 ```bash
 (pypsa-canada_py312)  >> pre-commit run --all-files --hook-stage manual
