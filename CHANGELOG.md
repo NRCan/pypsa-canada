@@ -1,3 +1,10 @@
+## 0.2.7 (2026-05-19)
+
+### Maintenance
+
+- merging github PR#2
+- Update README.md to fix typo
+
 ## 0.2.6 (2026-05-14)
 
 ### Bug Fixes
