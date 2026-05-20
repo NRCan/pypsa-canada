@@ -44,6 +44,20 @@ solving:
       ipm_optimality_tolerance: 0.0001
       parallel: 'on'
       random_seed: 123
+    "highs-fast":
+      threads: 8
+      solver: ipm
+      run_crossover: 'off'
+      small_matrix_value: 1.0e-06
+      large_matrix_value: 1000000000.0
+      primal_feasibility_tolerance: 1.0e-01
+      dual_feasibility_tolerance: 1.0e-01
+      ipm_optimality_tolerance: 0.01
+      parallel: 'on'
+      random_seed: 123
+      # time_limit: 30
+      mip_abs_gap: 0.1
+      mip_rel_gap: 0.1
     "highs-simplex":
       solver: simplex
       parallel: 'on'
@@ -133,7 +147,7 @@ components:
 snapshots:
   method: "DEFAULT"
   load_mode: *load_mode
-  last_investment_period: 5
+  last_investment_period: 5 #duration in years
 
   # Rep days config
   # rep_length: None

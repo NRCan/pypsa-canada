@@ -1,4 +1,4 @@
 name,bus,p_nom,model,max_hours,state_of_charge_initial,p_nom_extendable,build_year,spill_cost
-BUS_1 Hydro Storage,BUS_1,600,hydro_storage,10,600,FALSE,2000,1.00E-05
+BUS_1 Hydro Storage,BUS_1,600,hydro_storage,10,600,FALSE,2000,1
 BUS_4 Battery,BUS_4,500,default_liion_battery,4,250,FALSE,2000,0
 BUS_4 OPT Battery,BUS_4,0,default_liion_battery,4,0,TRUE,2030,0

@@ -20,11 +20,3 @@ load_commitable,0,0,0,0,0,0,0,0
 load_non_commitable,0,0,0,0,0,0,0,0
 default_DAC,0,0,0,0,0,0,0,0
 default_EV,0,0,0,0,0,0,0,0
-Sydney Bight_offshore_fixed,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355
-French Bank_offshore_fixed,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355
-Middle Bank_offshore_fixed,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355
-Sable Island Bank_offshore_fixed,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355
-Sydney Bight_offshore_floating,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355
-French Bank_offshore_floating,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355
-Middle Bank_offshore_floating,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355
-Sable Island Bank_offshore_floating,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355,0.5355
