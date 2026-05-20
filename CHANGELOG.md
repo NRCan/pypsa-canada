@@ -1,3 +1,9 @@
+## 0.2.9 (2026-05-20)
+
+### Bug Fixes
+
+- Update github pipeline
+
 ## 0.2.8 (2026-05-20)
 
 ### Bug Fixes
