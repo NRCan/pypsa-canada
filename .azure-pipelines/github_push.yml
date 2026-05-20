@@ -1,0 +1,26 @@
+trigger:
+  - main  # Change this to match your default branch name
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- checkout: self
+  persistCredentials: true
+  fetchDepth: 1 # A shallow clone is fine now since we are only pushing a single branch
+
+- script: |
+    # 1. Format the target GitHub URL
+    GITHUB_URL="https://$(GITHUB_PAT)@github.com/NRCan/pypsa-canada.git"
+
+    # 2. Configure local Git identity
+    git config --global user.email "devops-agent@azure.com"
+    git config --global user.name "Azure DevOps Agent"
+
+    # 3. Push ONLY the current branch to the exact same branch name on GitHub
+    # Removing --tags ensures tags are ignored
+    echo "Pushing $(Build.SourceBranchName) to GitHub..."
+    git push $GITHUB_URL HEAD:refs/heads/$(Build.SourceBranchName) --force
+  displayName: 'Sync Single Branch to GitHub'
+  env:
+    GITHUB_PAT: $(GITHUB_PAT)
