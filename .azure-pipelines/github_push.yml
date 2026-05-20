@@ -7,7 +7,7 @@ pool:
 steps:
 - checkout: self
   persistCredentials: true
-  fetchDepth: 1 # A shallow clone is fine now since we are only pushing a single branch
+  fetchDepth: 0
 
 - script: |
     # 1. Format the target GitHub URL
