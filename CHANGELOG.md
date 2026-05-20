@@ -1,3 +1,10 @@
+## 0.2.8 (2026-05-20)
+
+### Bug Fixes
+
+- Remove additionnal costs folder and simplify minimal model config
+- Remove additionnal costs folder and simplify minimal model config
+
 ## 0.2.7 (2026-05-19)
 
 ### Maintenance
