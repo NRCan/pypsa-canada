@@ -87,10 +87,32 @@ def get_all_targets():
         f"{RUN_OUTPUT_DIR}/results_summary.csv",
         # f"{RUN_OUTPUT_DIR}/planning_corridor_utilization_map.html",
         # f"{RUN_OUTPUT_DIR}/dispatch_corridor_utilization_map.html",
+        f"{RUN_OUTPUT_DIR}/compare_results",
+        f"{RUN_RES_DIR}/config.yaml",
+        f"{RUN_RES_DIR}/run.log"
     ]
     if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
         targets.append(f"{RUN_OUTPUT_DIR}/idea_outputs.csv")
     return targets
+
+rule copy_config:
+    input:
+        planning=f"{RUN_RES_DIR}/planning_solved_network_{TIMESTAMP}",
+        dispatch=f"{RUN_RES_DIR}/dispatch_solved_network_{TIMESTAMP}",
+    output:
+        f"{RUN_RES_DIR}/config_{TIMESTAMP}.yaml"
+    run:
+        import shutil
+        shutil.copy(workflow.configfiles[0], str(output[0]))
+
+rule collect_logs:
+    input:
+        planning=f"{RUN_RES_DIR}/planning_solved_network_{TIMESTAMP}",
+        dispatch=f"{RUN_RES_DIR}/dispatch_solved_network_{TIMESTAMP}",
+    output:
+        f"{RUN_RES_DIR}/run_{TIMESTAMP}.log"
+    shell:
+        "cat {RUN_LOG_DIR}/*.log > {output}"
 
 rule all:
     input:
