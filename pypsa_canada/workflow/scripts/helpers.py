@@ -114,6 +114,7 @@ def setup_script_logging(log_path, level=logging.DEBUG):
         format="%(asctime)s %(levelname)s %(message)s",
     )
 
+
 def collect_crash_artifacts(
     crash_dir: Path,
     log_files,
@@ -125,17 +126,17 @@ def collect_crash_artifacts(
     crash_dir.mkdir(parents=True, exist_ok=True)
 
     # Write merged config (includes defaults, not just the user file)
-    with open(crash_dir / "config.yaml", "w") as f:
+    with open(crash_dir / "config.yaml", "w", encoding="utf-8") as f:
         yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
 
     # Concatenate only log files written during this run (mtime >= run start)
     combined_log = crash_dir / "crash_run.log"
-    with open(combined_log, "w") as out:
+    with open(combined_log, "w", encoding="utf-8") as out:
         for log_path in log_files:
             p = Path(str(log_path))
             if p.exists() and p.stat().st_mtime >= run_start_time:
                 out.write(f"=== {p.name} ===\n")
-                out.write(p.read_text())
+                out.write(p.read_text(encoding="utf-8", errors="replace"))
                 out.write("\n")
 
     # Collect only network files written during this run (mtime >= run start)
@@ -155,4 +156,3 @@ def collect_crash_artifacts(
         if this_run_nets:
             latest = max(this_run_nets, key=lambda f: f.stat().st_mtime)
             shutil.copy(latest, crash_dir / "crash_network.nc")
-

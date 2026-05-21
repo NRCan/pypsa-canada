@@ -89,7 +89,6 @@ def get_all_targets():
         f"{RUN_OUTPUT_DIR}/results_summary.csv",
         # f"{RUN_OUTPUT_DIR}/planning_corridor_utilization_map.html",
         # f"{RUN_OUTPUT_DIR}/dispatch_corridor_utilization_map.html",
-        f"{RUN_OUTPUT_DIR}/compare_results",
         f"{RUN_OUTPUT_DIR}/config.yaml",
         f"{RUN_OUTPUT_DIR}/run.log"
     ]
@@ -108,21 +107,29 @@ rule copy_config:
         with open(str(output[0]), "w") as f:
             yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
 
+def get_log_inputs(wildcards=None):
+    logs = [
+        *rules.load_network.log,
+        *rules.add_components.log,
+        *rules.add_loads.log,
+        *rules.add_snapshots.log,
+        *rules.add_representative_days.log,
+        *rules.add_extra_loads.log,
+        *rules.modify_components.log,
+        *rules.solve_planning.log,
+        *rules.create_dispatch_network.log,
+        *rules.solve_dispatch.log,
+        *rules.post_process_planning.log,
+        *rules.post_process_dispatch.log,
+        *rules.compare_results.log,
+    ]
+    if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
+        logs += [*rules.export_idea.log]
+    return logs
+
 rule collect_logs:
     input:
-        rules.load_network.log,
-        rules.add_components.log,
-        rules.add_loads.log,
-        rules.add_snapshots.log,
-        rules.add_representative_days.log,
-        rules.add_extra_loads.log,
-        rules.modify_components.log,
-        rules.solve_planning.log,
-        rules.create_dispatch_network.log,
-        rules.solve_dispatch.log,
-        rules.post_process_planning.log,
-        rules.post_process_dispatch.log,
-        rules.compare_results.log,
+        get_log_inputs
     output:
         f"{RUN_OUTPUT_DIR}/run.log"
     shell:
@@ -149,6 +156,8 @@ onerror:
         *rules.post_process_dispatch.log,
         *rules.compare_results.log,
     ]
+    if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
+        log_files += [*rules.export_idea.log]
     collect_crash_artifacts(crash_dir, log_files, config, RUN_NET_DIR, RUN_START.timestamp())
     print(f"--- Crash artifacts saved to {crash_dir} ---\n")
 
