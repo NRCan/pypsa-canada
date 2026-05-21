@@ -5,6 +5,7 @@ from os.path import normpath, exists, join
 from shutil import copyfile, move, rmtree
 from snakemake.utils import min_version
 from datetime import datetime
+import shutil
 
 min_version("8.11")
 
@@ -117,6 +118,29 @@ rule collect_logs:
 rule all:
     input:
         get_all_targets()
+
+rule copy_config:
+    output:
+        f"{RUN_RES_DIR}/config_{TIMESTAMP}.yaml"
+    run:
+        shutil.copy(workflow.configfiles[0], str(output[0]))
+
+rule collect_logs:
+    input:
+        f"{RUN_LOG_DIR}/load_network.log",
+        f"{RUN_LOG_DIR}/add_components.log",
+        f"{RUN_LOG_DIR}/add_loads.log",
+        f"{RUN_LOG_DIR}/add_snapshots.log",
+        f"{RUN_LOG_DIR}/add_representative_days.log",
+        f"{RUN_LOG_DIR}/add_extra_loads.log",
+        f"{RUN_LOG_DIR}/modify_components.log",
+        f"{RUN_LOG_DIR}/solve_planning_{TIMESTAMP}.log",
+        f"{RUN_LOG_DIR}/create_dispatch_network.log",
+        f"{RUN_LOG_DIR}/solve_dispatch_{TIMESTAMP}.log",
+    output:
+        f"{RUN_RES_DIR}/run_{TIMESTAMP}.log"
+    shell:
+        "cat {input} > {output}"
 
 rule clean_all:
     message:
