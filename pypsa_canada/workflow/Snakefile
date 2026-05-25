@@ -30,16 +30,28 @@ run = config["run"]
 RDIR = get_rdir(run)
 
 RUN_NAME = f"{config["run"]["name"]}"
-RUN_START = datetime.now()
-TIMESTAMP = RUN_START.strftime("%Y-%m-%d_%Hh%M")
 
 NET_DIR = "networks"
 RCS_DIR = "resources"
 RES_DIR = "results"
 LOG_DIR = "logs"
 
-RUN_NET_DIR = f"{RCS_DIR}/{RUN_NAME}/{NET_DIR}"
 RUN_RES_DIR = f"{RES_DIR}/{RUN_NAME}"
+
+# Persist the timestamp so all Snakemake re-parses (e.g. cluster/multi-job)
+# use the same value, keeping timestamped log paths consistent across jobs.
+_ts_file = Path(RUN_RES_DIR) / ".last_run_timestamp"
+if _ts_file.exists():
+    TIMESTAMP = _ts_file.read_text().strip()
+    RUN_START = datetime.strptime(TIMESTAMP, "%Y-%m-%d_%Hh%M")
+else:
+    RUN_START = datetime.now()
+    TIMESTAMP = RUN_START.strftime("%Y-%m-%d_%Hh%M")
+    _ts_file.parent.mkdir(parents=True, exist_ok=True)
+    _ts_file.write_text(TIMESTAMP)
+
+
+RUN_NET_DIR = f"{RCS_DIR}/{RUN_NAME}/{NET_DIR}"
 RUN_OUTPUT_DIR = f"{RUN_RES_DIR}/run_{TIMESTAMP}"
 RUN_LOG_DIR = f"{LOG_DIR}/{RUN_NAME}"
 
@@ -81,31 +93,30 @@ include: "rules/export_idea.smk"
 EXPORT_FORMAT = config.get("postprocess", {}).get("export_format", None)
 
 def get_all_targets():
+    # targets = [
+    #     f"{RUN_OUTPUT_DIR}/planning_solved_network",
+    #     f"{RUN_OUTPUT_DIR}/dispatch_solved_network",
+    #     f"{RUN_OUTPUT_DIR}/post_process_planning",
+    #     f"{RUN_OUTPUT_DIR}/post_process_dispatch",
+    #     f"{RUN_OUTPUT_DIR}/results_summary.csv",
+    #     # f"{RUN_OUTPUT_DIR}/planning_corridor_utilization_map.html",
+    #     # f"{RUN_OUTPUT_DIR}/dispatch_corridor_utilization_map.html",
+    #     f"{RUN_OUTPUT_DIR}/config.yaml",
+    #     f"{RUN_OUTPUT_DIR}/run.log"
+    # ]
     targets = [
-        f"{RUN_OUTPUT_DIR}/planning_solved_network",
-        f"{RUN_OUTPUT_DIR}/dispatch_solved_network",
-        f"{RUN_OUTPUT_DIR}/post_process_planning",
-        f"{RUN_OUTPUT_DIR}/post_process_dispatch",
-        f"{RUN_OUTPUT_DIR}/results_summary.csv",
-        # f"{RUN_OUTPUT_DIR}/planning_corridor_utilization_map.html",
-        # f"{RUN_OUTPUT_DIR}/dispatch_corridor_utilization_map.html",
+        *rules.solve_planning.output,
+        *rules.solve_dispatch.output,
+        *rules.post_process_planning.output,
+        *rules.post_process_dispatch.output,
+        *rules.compare_results.output,
         f"{RUN_OUTPUT_DIR}/config.yaml",
         f"{RUN_OUTPUT_DIR}/run.log"
     ]
+
     if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
         targets.append(f"{RUN_OUTPUT_DIR}/idea_outputs.csv")
     return targets
-
-rule all:
-    input:
-        get_all_targets()
-
-rule copy_config:
-    output:
-        f"{RUN_OUTPUT_DIR}/config.yaml"
-    run:
-        with open(str(output[0]), "w") as f:
-            yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
 
 def get_log_inputs(wildcards=None):
     logs = [
@@ -127,13 +138,31 @@ def get_log_inputs(wildcards=None):
         logs += [*rules.export_idea.log]
     return logs
 
+rule all:
+    input:
+        get_all_targets()
+
+rule copy_config:
+    output:
+        f"{RUN_OUTPUT_DIR}/config.yaml"
+    run:
+        with open(str(output[0]), "w") as f:
+            yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
+
+
 rule collect_logs:
     input:
         get_log_inputs
     output:
         f"{RUN_OUTPUT_DIR}/run.log"
-    shell:
-        "cat {input} > {output}"
+    run:
+        with open(str(output[0]), "w") as out_f:
+            for log_file in input:
+                try:
+                    with open(str(log_file), "r") as in_f:
+                        out_f.write(in_f.read())
+                except FileNotFoundError:
+                    pass
 
 onerror:
     crash_dir = Path(RUN_RES_DIR) / f"crash_{TIMESTAMP}"
@@ -141,47 +170,8 @@ onerror:
     if run_output_dir.exists():
         run_output_dir.rename(crash_dir)
     print(f"\n--- Crash detected: collecting artifacts to {crash_dir} ---")
-    log_files = [
-        *rules.load_network.log,
-        *rules.add_components.log,
-        *rules.add_loads.log,
-        *rules.add_snapshots.log,
-        *rules.add_representative_days.log,
-        *rules.add_extra_loads.log,
-        *rules.modify_components.log,
-        *rules.solve_planning.log,
-        *rules.create_dispatch_network.log,
-        *rules.solve_dispatch.log,
-        *rules.post_process_planning.log,
-        *rules.post_process_dispatch.log,
-        *rules.compare_results.log,
-    ]
+    log_files = get_log_inputs()
     if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
-        log_files += [*rules.export_idea.log]
+        log_files += [f"{RUN_LOG_DIR}/export_idea_{TIMESTAMP}.log"]
     collect_crash_artifacts(crash_dir, log_files, config, RUN_NET_DIR, RUN_START.timestamp())
     print(f"--- Crash artifacts saved to {crash_dir} ---\n")
-
-
-rule clean_all:
-    message:
-        "Cleaning all"
-    shell:
-        "rm -rf {RCS_DIR}/* {RES_DIR}/* {LOG_DIR}/*"
-
-rule clean_unsolved:
-    message:
-        "Cleaning run Unsolved"
-    shell:
-        "rm -rf {NET_DIR}/{RUN_NAME}"
-
-rule clean_results:
-    message:
-        "Cleaning run Results"
-    shell:
-        "rm -rf {RES_DIR}/{RUN_NAME}"
-
-rule clean_logs:
-    message:
-        "Cleaning run Logs"
-    shell:
-        "rm -rf {LOG_DIR}/{RUN_NAME}"
