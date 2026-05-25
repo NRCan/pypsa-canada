@@ -2,6 +2,7 @@ import logging
 
 import click
 
+from pypsa_canada.cli.clean import clean
 from pypsa_canada.cli.dag import dag
 from pypsa_canada.cli.export_idea import export_idea
 from pypsa_canada.cli.postprocess_summary import generate_postprocess_summary
@@ -16,6 +17,7 @@ def cli():
 
 
 cli.add_command(run)
+cli.add_command(clean)
 cli.add_command(dag)
 cli.add_command(generate_postprocess_summary)
 cli.add_command(export_idea)
