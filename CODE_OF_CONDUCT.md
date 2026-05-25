@@ -1,8 +1,8 @@
-# Contributor Covenant Code of Conduct for the [`project_name`] project
+# Contributor Covenant Code of Conduct for the [PyPSA-Canada](https://github.com/NRCan/pypsa-canada) project
 
-([Français](#code-de-conduite-pour-le-projet-nom-du-projet))
+([Français](#code-de-conduite-pour-le-projet-PyPSA-Canada))
 
-Contributors to repositories hosted in [`project_name`] are expected to follow the Contributor Covenant Code of Conduct, and those working within Government are also expected to follow the Values and Ethics Code for the Public Sector
+Contributors to repositories hosted in [PyPSA-Canada](https://github.com/NRCan/pypsa-canada) are expected to follow the Contributor Covenant Code of Conduct, and those working within Government are also expected to follow the Values and Ethics Code for the Public Sector
 
 ## Values and Ethics Code for the Public Sector
 
@@ -38,9 +38,7 @@ Project maintainers have the right and responsibility to remove, edit, or reject
 
 ## Scope
 
-This Code of Conduct applies both within project spaces and in public spaces when an individual is representing the project, members or [`department`].
-Examples of representing a project, members or [`department`] include using an official project e-mail address, posting via an official social media account, or acting as an appointed representative at an online or offline event.
-Representation of a project may be further defined and clarified by project maintainers.
+This Code of Conduct applies within all project spaces, and it also applies when an individual is representing the project or its community in public spaces. Examples of representing a project or community include using an official project e-mail address, posting via an official social media account, or acting as an appointed representative at an online or offline event. Representation of a project may be further defined and clarified by project maintainers.
 
 ## Enforcement
 
@@ -62,12 +60,12 @@ This Code of Conduct is also inspired by GDS' `alphagov` [Code of conduct](https
 
 ---
 <!--markdownlint-disable MD025-->
-# Code de conduite pour le projet [`nom du projet`]
+# Code de conduite pour le projet [PyPSA-Canada](https://github.com/NRCan/pypsa-canada)
 <!--markdownlint-enable MD025-->
 
-([English](#contributor-covenant-code-of-conduct-for-the-project_name-project))
+([English](#contributor-covenant-code-of-conduct-for-the-PyPSA-Canada-project))
 
-Les contributeurs aux dépôts hébergés dans [`nom du projet`] sont tenus de respecter le Code de conduite du Pacte des contributeurs, et ceux qui travaillent au sein du gouvernement sont également tenus de respecter le Code de valeurs et d'éthique du secteur public.
+Les contributeurs aux dépôts hébergés dans [PyPSA-Canada](https://github.com/NRCan/pypsa-canada) sont tenus de respecter le Code de conduite du Pacte des contributeurs, et ceux qui travaillent au sein du gouvernement sont également tenus de respecter le Code de valeurs et d'éthique du secteur public.
 
 ## Notre engagement
 
