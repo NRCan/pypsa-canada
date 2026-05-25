@@ -37,12 +37,12 @@ rule collect_logs:
     output:
         f"{RUN_OUTPUT_DIR}/run.log"
     run:
-        with open(str(output[0]), "w") as out_f:
+        with open(str(output[0]), encoding="utf-8", errors="replace", mode="w") as out_f:
             for log_file in input:
                 header = f"{'='*60}\n## {log_file}\n{'='*60}\n"
                 out_f.write(header)
                 try:
-                    with open(str(log_file), "r") as in_f:
+                    with open(str(log_file), "r", encoding="utf-8", errors="replace") as in_f:
                         out_f.write(in_f.read())
                 except FileNotFoundError:
                     out_f.write("[log file not found]\n")
