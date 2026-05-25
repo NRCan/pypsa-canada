@@ -1,3 +1,10 @@
+## 0.2.10 (2026-05-25)
+
+### Bug Fixes
+
+- Update Code of Conduct
+- Update Code of Conduct
+
 ## 0.2.9 (2026-05-20)
 
 ### Bug Fixes
