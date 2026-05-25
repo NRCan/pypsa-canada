@@ -135,7 +135,7 @@ def collect_crash_artifacts(
         for log_path in log_files:
             p = Path(str(log_path))
             if p.exists() and p.stat().st_mtime >= run_start_time:
-                out.write(f"=== {p.name} ===\n")
+                out.write(f"{'=' * 60}\n## {p}\n{'=' * 60}\n")
                 out.write(p.read_text(encoding="utf-8", errors="replace"))
                 out.write("\n")
 

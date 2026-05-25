@@ -28,7 +28,9 @@ def _get_run_name(config: dict) -> str:
     return name or ""
 
 
-def _build_target_dirs(workdir: Path, run_name: str, results: bool, resources: bool, logs: bool) -> list[Path]:
+def _build_target_dirs(
+    workdir: Path, run_name: str, results: bool, resources: bool, logs: bool
+) -> list[Path]:
     targets = []
     if results:
         targets.append(workdir / "results" / run_name)
