@@ -1,3 +1,10 @@
+## 0.2.12 (2026-05-26)
+
+### Bug Fixes
+
+- Fix Transmission flow for idea format
+- Change "Region" and "Variable" of Transmission flow for idea format to fix it
+
 ## 0.2.11 (2026-05-26)
 
 ### Bug Fixes
