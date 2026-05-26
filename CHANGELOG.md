@@ -1,3 +1,9 @@
+## 0.2.11 (2026-05-26)
+
+### Bug Fixes
+
+- [#2052] Added config and log files to run output
+
 ## 0.2.10 (2026-05-25)
 
 ### Bug Fixes
