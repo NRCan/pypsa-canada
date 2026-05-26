@@ -43,7 +43,7 @@ RUN_RES_DIR = f"{RES_DIR}/{RUN_NAME}"
 RUN_NET_DIR = f"{RCS_DIR}/{RUN_NAME}/{NET_DIR}"
 RUN_LOG_DIR = f"{LOG_DIR}/{RUN_NAME}"
 
-# Persist the timestamp at the run-level directory 
+# Persist the timestamp at the run-level directory
 # The file is cleaned up by the onerror / onsuccess handlers
 _ts_file = Path(RUN_RES_DIR) / ".run_timestamp"
 if _ts_file.exists():
