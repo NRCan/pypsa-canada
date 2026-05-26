@@ -217,7 +217,7 @@ IDEA_COLUMNS = ["Model", "Scenario", "Region", "Time", "Variable", "Unit", "Valu
 # ────────────────────────────────────────────
 
 
-def map_to_idea_variable(parameter, variable):
+def map_to_idea_variable(parameter, variable, region):
     """
     Convert (Parameter, Variable) pair to IDEA-style variable name.
 
@@ -230,8 +230,9 @@ def map_to_idea_variable(parameter, variable):
 
     # Line flow uses the cad-style "to <destination>" naming.
     if parameter == "Line_Flow":
-        if variable and variable != "All":
-            return f"{idea_param}|to {variable}"
+        if region:
+            destination = region.split("->")[-1]
+            return f"{idea_param}|to {destination}"
         return idea_param
 
     # All other mapped parameters are exported with an Electricity technology layer.
@@ -266,8 +267,15 @@ def convert_to_idea_format(df):
 
     # Map Parameter + Variable → IDEA Variable
     result["Variable"] = result.apply(
-        lambda row: map_to_idea_variable(row["Parameter"], row["Variable"]), axis=1
+        lambda row: map_to_idea_variable(
+            row["Parameter"], row["Variable"], row["Region"]
+        ),
+        axis=1,
     )
+
+    # Assign the shipping province to the “Region” column for transmission flow
+    mask = result["Variable"].str.contains("Transmission flow", na=False)
+    result.loc[mask, "Region"] = result.loc[mask, "Region"].str.split("->").str[0]
 
     # Drop the Parameter column (now encoded in Variable)
     result = result.drop(columns=["Parameter"], errors="ignore")
