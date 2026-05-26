@@ -5,6 +5,7 @@ from os.path import normpath, exists, join
 from shutil import copyfile, move, rmtree
 from snakemake.utils import min_version
 from datetime import datetime
+import shutil
 
 min_version("8.11")
 
@@ -14,7 +15,7 @@ from scripts._helpers import (
     get_rdir,
     get_shadow,
 )
-from scripts.helpers import merge_with_defaults
+from scripts.helpers import merge_with_defaults, collect_crash_artifacts
 
 # Merge config with defaults to ensure all required keys are present
 config = merge_with_defaults(config)
@@ -29,17 +30,31 @@ run = config["run"]
 RDIR = get_rdir(run)
 
 RUN_NAME = f"{config["run"]["name"]}"
-TIMESTAMP = datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 NET_DIR = "networks"
 RCS_DIR = "resources"
 RES_DIR = "results"
 LOG_DIR = "logs"
 
-RUN_NET_DIR = f"{RCS_DIR}/{RUN_NAME}/{NET_DIR}"
+RUN_START = datetime.now()
+TIMESTAMP = RUN_START.strftime("%Y-%m-%d_%Hh%M")
+
 RUN_RES_DIR = f"{RES_DIR}/{RUN_NAME}"
-RUN_OUTPUT_DIR = f"{RUN_RES_DIR}/run_{TIMESTAMP}"
+RUN_NET_DIR = f"{RCS_DIR}/{RUN_NAME}/{NET_DIR}"
 RUN_LOG_DIR = f"{LOG_DIR}/{RUN_NAME}"
+
+# Persist the timestamp at the run-level directory
+# The file is cleaned up by the onerror / onsuccess handlers
+_ts_file = Path(RUN_RES_DIR) / ".run_timestamp"
+if _ts_file.exists():
+    TIMESTAMP = _ts_file.read_text().strip()
+    RUN_START = datetime.strptime(TIMESTAMP, "%Y-%m-%d_%Hh%M")
+else:
+    Path(RUN_RES_DIR).mkdir(parents=True, exist_ok=True)
+    _ts_file.write_text(TIMESTAMP)
+
+RUN_OUTPUT_DIR = f"{RUN_RES_DIR}/run_{TIMESTAMP}"
+Path(RUN_OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
 # shadow_config = get_shadow(run)
 
@@ -74,48 +89,26 @@ include: "rules/post_process_dispatch.smk"
 # include: "rules/plot_corridor_map.smk"
 include: "rules/create_summary.smk"
 include: "rules/export_idea.smk"
+include: "rules/finalize.smk"
 
 # Check if IDEA export is requested
 EXPORT_FORMAT = config.get("postprocess", {}).get("export_format", None)
 
 def get_all_targets():
     targets = [
-        f"{RUN_OUTPUT_DIR}/planning_solved_network",
-        f"{RUN_OUTPUT_DIR}/dispatch_solved_network",
-        f"{RUN_OUTPUT_DIR}/post_process_planning",
-        f"{RUN_OUTPUT_DIR}/post_process_dispatch",
-        f"{RUN_OUTPUT_DIR}/results_summary.csv",
-        # f"{RUN_OUTPUT_DIR}/planning_corridor_utilization_map.html",
-        # f"{RUN_OUTPUT_DIR}/dispatch_corridor_utilization_map.html",
+        *rules.solve_planning.output,
+        *rules.solve_dispatch.output,
+        *rules.post_process_planning.output,
+        *rules.post_process_dispatch.output,
+        *rules.compare_results.output,
+        *rules.copy_config.output,
+        *rules.collect_logs.output
     ]
+
     if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
-        targets.append(f"{RUN_OUTPUT_DIR}/idea_outputs.csv")
+        targets.append(*rules.export_idea.output)
     return targets
 
 rule all:
     input:
         get_all_targets()
-
-rule clean_all:
-    message:
-        "Cleaning all"
-    shell:
-        "rm -rf {RCS_DIR}/* {RES_DIR}/* {LOG_DIR}/*"
-
-rule clean_unsolved:
-    message:
-        "Cleaning run Unsolved"
-    shell:
-        "rm -rf {NET_DIR}/{RUN_NAME}"
-
-rule clean_results:
-    message:
-        "Cleaning run Results"
-    shell:
-        "rm -rf {RES_DIR}/{RUN_NAME}"
-
-rule clean_logs:
-    message:
-        "Cleaning run Logs"
-    shell:
-        "rm -rf {LOG_DIR}/{RUN_NAME}"
