@@ -36,24 +36,25 @@ RCS_DIR = "resources"
 RES_DIR = "results"
 LOG_DIR = "logs"
 
-RUN_RES_DIR = f"{RES_DIR}/{RUN_NAME}"
+RUN_START = datetime.now()
+TIMESTAMP = RUN_START.strftime("%Y-%m-%d_%Hh%M")
 
-# Persist the timestamp so all Snakemake re-parses (e.g. cluster/multi-job)
-# use the same value, keeping timestamped log paths consistent across jobs.
-_ts_file = Path(RUN_RES_DIR) / ".last_run_timestamp"
+RUN_RES_DIR = f"{RES_DIR}/{RUN_NAME}"
+RUN_NET_DIR = f"{RCS_DIR}/{RUN_NAME}/{NET_DIR}"
+RUN_LOG_DIR = f"{LOG_DIR}/{RUN_NAME}"
+
+# Persist the timestamp at the run-level directory 
+# The file is cleaned up by the onerror / onsuccess handlers
+_ts_file = Path(RUN_RES_DIR) / ".run_timestamp"
 if _ts_file.exists():
     TIMESTAMP = _ts_file.read_text().strip()
     RUN_START = datetime.strptime(TIMESTAMP, "%Y-%m-%d_%Hh%M")
 else:
-    RUN_START = datetime.now()
-    TIMESTAMP = RUN_START.strftime("%Y-%m-%d_%Hh%M")
-    _ts_file.parent.mkdir(parents=True, exist_ok=True)
+    Path(RUN_RES_DIR).mkdir(parents=True, exist_ok=True)
     _ts_file.write_text(TIMESTAMP)
 
-
-RUN_NET_DIR = f"{RCS_DIR}/{RUN_NAME}/{NET_DIR}"
 RUN_OUTPUT_DIR = f"{RUN_RES_DIR}/run_{TIMESTAMP}"
-RUN_LOG_DIR = f"{LOG_DIR}/{RUN_NAME}"
+Path(RUN_OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
 # shadow_config = get_shadow(run)
 

@@ -54,9 +54,17 @@ onerror:
     run_output_dir = Path(RUN_OUTPUT_DIR)
     if run_output_dir.exists():
         run_output_dir.rename(crash_dir)
+    # Remove the sentinel so the next invocation starts with a fresh timestamp.
+    if _ts_file.exists():
+        _ts_file.unlink()
     print(f"\n--- Crash detected: collecting artifacts to {crash_dir} ---")
     log_files = get_log_inputs()
     if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
         log_files += [*rules.export_idea.log]
     collect_crash_artifacts(crash_dir, log_files, config, RUN_NET_DIR, RUN_START.timestamp())
     print(f"--- Crash artifacts saved to {crash_dir} ---\n")
+
+onsuccess:
+    # Remove the sentinel so the next invocation starts with a fresh timestamp.
+    if _ts_file.exists():
+        _ts_file.unlink()
