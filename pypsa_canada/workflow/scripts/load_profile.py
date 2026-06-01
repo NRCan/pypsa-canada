@@ -99,7 +99,7 @@ def read_load_profile(
             # FULL_LOAD expects a complete time series and keeps the timestamp index.
             return _read_load_growth_csv(load_growth_forecast, parse_dates=True)
         case LoadProfile.GROWTH_FORECAST:
-            # GROWTH_FORECAST stores annual growth factors by year column.
+            # GROWTH_FORECAST expects annual growth factors by year column and apply on base year profile loads-p_set
             return _read_load_growth_csv(load_growth_forecast, parse_dates=False)
         case LoadProfile.CER:
             # Missing: the CER forecast source, column mapping, and validation rules.

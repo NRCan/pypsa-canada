@@ -31,9 +31,12 @@ solving:
     options: highs-fast
 
 load:
-  load_mode: &load_mode "GROWTH_FORECAST"
-  load_growth_forecast: "model/minimal_model/load_growth.csv"
-  # load_growth_forecast: "model/minimal_model/loads_forecast.csv"
+  #Load CSV file already containing every year load:
+  load_mode: &load_mode "FULL_LOAD"
+  load_growth_forecast: "model/minimal_model/loads_forecast.csv"
+  #Apply growth factor to a base year profile "loads-p_set.csv":
+  # load_mode: &load_mode "GROWTH_FORECAST"
+  # load_growth_forecast: "model/minimal_model/load_growth.csv"
 
 components:
   override_dir: ""
