@@ -28,7 +28,9 @@ def main():
     # )
     initial_loads_p_set = snakemake.input.loads_p_set
 
-    loads_p_set_updated = apply_load_profile(load_config, investment_periods, initial_loads_p_set)
+    loads_p_set_updated = apply_load_profile(
+        load_config, investment_periods, initial_loads_p_set
+    )
     loads_p_set_updated.to_csv(snakemake.output.loads_p_set)
 
 

@@ -245,7 +245,9 @@ def _apply_load_profile(
         NotImplementedError: If the selected load mode is not yet implemented.
     """
     if load_mode == LoadProfile.DEFAULT:
-        logging.info("Using default load profile: base network load without applying growth forecast.")
+        logging.info(
+            "Using default load profile: base network load without applying growth forecast."
+        )
         return network
 
     loads_forecast_df: pd.DataFrame = pd.read_csv(
@@ -254,11 +256,15 @@ def _apply_load_profile(
 
     match load_mode:
         case LoadProfile.FULL_LOAD:
-            logging.info("Using full load profile: applying pre-computed load forecast to network.")
+            logging.info(
+                "Using full load profile: applying pre-computed load forecast to network."
+            )
             network.loads_t.p_set = loads_forecast_df.copy()
             return network
         case LoadProfile.GROWTH_FORECAST:
-            logging.info("Using growth forecast load profile: applying load growth forecast to network for all investment periods.")
+            logging.info(
+                "Using growth forecast load profile: applying load growth forecast to network for all investment periods."
+            )
             network.loads_t.p_set = loads_forecast_df.copy()
             return network
         case LoadProfile.CER:
