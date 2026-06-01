@@ -1,3 +1,11 @@
+"""
+Helpers for loading and applying load-growth forecasts.
+
+Only ``DEFAULT``, ``FULL_LOAD``, and ``GROWTH_FORECAST`` are implemented.
+``CER`` and ``CODERS`` are documented placeholders for future forecast sources;
+they still need their input data formats and conversion logic defined.
+"""
+
 from enum import Enum
 
 import numpy as np
@@ -50,6 +58,22 @@ def load_year_forecast(load_growth_forecast: str, year: list[int]) -> pd.DataFra
     return load_growth[load_growth.index.year.isin(year)]
 
 
+def _read_load_growth_csv(path: str, parse_dates: bool) -> pd.DataFrame:
+    """Read a load-growth CSV and convert missing-file errors into a domain error."""
+    if not path:
+        raise LoadGrowthFileMissing(
+            "A load growth file path is required for this mode."
+        )
+
+    try:
+        # FULL_LOAD keeps the index as-is, while GROWTH_FORECAST expects dates.
+        if parse_dates:
+            return pd.read_csv(path, index_col=0, parse_dates=[0])
+        return pd.read_csv(path, index_col=0)
+    except FileNotFoundError as exc:
+        raise LoadGrowthFileMissing(f"Load growth file not found at {path}") from exc
+
+
 def read_load_profile(
     load_mode: LoadProfile, load_growth_forecast: str
 ) -> pd.DataFrame:
@@ -69,43 +93,28 @@ def read_load_profile(
     """
     match load_mode:
         case LoadProfile.DEFAULT:
-            print("No load growth read for DEFAULT load profile")
-        # Loads full load profile from model data
+            # DEFAULT is handled by the base network; there is nothing to read.
+            return pd.DataFrame()
         case LoadProfile.FULL_LOAD:
-            print(f"Loading load growth path = {load_growth_forecast}")
-            try:
-                load_growth = pd.read_csv(
-                    load_growth_forecast, index_col=0, parse_dates=[0]
-                )
-            except FileNotFoundError:
-                raise LoadGrowthFileMissing(
-                    f"Load growth file not found at {load_growth_forecast}"
-                )
-            # TODO: check why this is used in old workflow
-            # load_growth = load_growth[load_growth.index.year.isin(specific_year)]
-
-        # Loads load growth forecast to apply to load profile
+            # FULL_LOAD expects a complete time series and keeps the timestamp index.
+            return _read_load_growth_csv(load_growth_forecast, parse_dates=True)
         case LoadProfile.GROWTH_FORECAST:
-            print(f"Loading load growth path = {load_growth_forecast}")
-            try:
-                load_growth = pd.read_csv(load_growth_forecast, index_col=0)
-            except FileNotFoundError:
-                raise LoadGrowthFileMissing(
-                    f"Load growth file not found at {load_growth_forecast}"
-                )
-
+            # GROWTH_FORECAST stores annual growth factors by year column.
+            return _read_load_growth_csv(load_growth_forecast, parse_dates=False)
         case LoadProfile.CER:
+            # Missing: the CER forecast source, column mapping, and validation rules.
             raise NotImplementedError("Unimplemented")
         case LoadProfile.CODERS:
+            # Missing: the CODERS forecast source, column mapping, and validation rules.
             raise NotImplementedError("Unimplemented")
         case _:
             raise Exception("Invalid load mode")
 
-    return load_growth
-
 
 def apply_load_profile(
-    load_config: dict, investment_periods: list[int], initial_loads_p_set_path: str = None
+    load_config: dict,
+    investment_periods: list[int],
+    initial_loads_p_set_path: str | None = None,
 ) -> pd.DataFrame:
     """
     Apply load forecast based on configuration settings.
@@ -122,20 +131,28 @@ def apply_load_profile(
         KeyError: If required configuration keys are missing.
     """
     load_mode: LoadProfile = LoadProfile[load_config["load_mode"].upper()]
-    load_growth_forecast = load_config["load_growth_forecast"]
+
+    if load_mode == LoadProfile.DEFAULT:
+        # The default profile is already embedded in the base network.
+        raise Exception("Default load profile should not run add_loads")
+
+    load_growth_forecast = load_config.get("load_growth_forecast")
+    if not load_growth_forecast:
+        raise LoadGrowthFileMissing(
+            f"load_growth_forecast is required for load mode {load_mode.name}"
+        )
 
     print(f"Loading load profile: {load_mode.name}")
     load_growth = read_load_profile(
         load_mode=load_mode, load_growth_forecast=load_growth_forecast
     )
     match load_mode:
-        # Keeps base model profile
-        case LoadProfile.DEFAULT:
-            raise Exception("Default load profile should not run add_loads")
-        # Applies load_growth to network load
+        # FULL_LOAD already contains the complete time series, so it can be
+        # written back directly without touching the reference load profile.
         case LoadProfile.FULL_LOAD:
             return load_growth
-        # Applies load_growth to network for all investment periods
+
+        # GROWTH_FORECAST scales the reference load for each investment period.
         case LoadProfile.GROWTH_FORECAST:
             initial_loads_p_set = pd.read_csv(
                 initial_loads_p_set_path, index_col=0, parse_dates=[0]
@@ -144,8 +161,10 @@ def apply_load_profile(
                 initial_loads_p_set, load_growth, investment_periods
             )
         case LoadProfile.CER:
+            # Missing: CER-specific load forecast preprocessing and scaling rules.
             raise NotImplementedError("CER load profile processing not yet implemented")
         case LoadProfile.CODERS:
+            # Missing: CODERS-specific load forecast preprocessing and scaling rules.
             raise NotImplementedError(
                 "CODERS load profile processing not yet implemented"
             )
@@ -156,7 +175,7 @@ def apply_load_profile(
 def generate_load_profile_from_forecast(
     initial_load_df: pd.DataFrame,
     load_growth_forecast: pd.DataFrame,
-    investement_periods: list[int],
+    investment_periods: list[int],
 ) -> pd.DataFrame:
     """
     Apply interpolated load growth factors for all investment years.
@@ -168,7 +187,7 @@ def generate_load_profile_from_forecast(
     Args:
         initial_load_df: Reference load data DataFrame (single year, up to 8760 rows).
         load_growth_forecast: Load growth forecast DataFrame with growth factors for specific years.
-        years: List of investment years to apply growth for.
+        investment_periods: List of investment years to apply growth for.
 
     Returns:
         DataFrame with scaled load values stacked across all years.
@@ -191,11 +210,13 @@ def generate_load_profile_from_forecast(
     print("forecast_years for load growth:\n", forecast_years)
 
     def get_growth_factors(year: int) -> pd.Series:
+        # Clamp years outside the forecast range to the nearest available year.
         if year <= forecast_years[0]:
             return load_growth_forecast[str(forecast_years[0])].astype(float)
         if year >= forecast_years[-1]:
             return load_growth_forecast[str(forecast_years[-1])].astype(float)
 
+        # Linearly interpolate between the surrounding forecast years.
         upper_idx = np.searchsorted(forecast_years, year, side="right")
         year_before = forecast_years[upper_idx - 1]
         year_after = forecast_years[upper_idx]
@@ -209,7 +230,8 @@ def generate_load_profile_from_forecast(
     annual_profiles = []
     base_year = base_df.index[0].year
 
-    for year in investement_periods:
+    for year in investment_periods:
+        # Scale the reference load and shift its timestamps to the target year.
         growth_factors = get_growth_factors(year)
         scaled_df = base_df.mul(growth_factors.reindex(base_df.columns), axis=1)
         scaled_df.index = base_df.index + pd.DateOffset(years=year - base_year)
@@ -217,6 +239,7 @@ def generate_load_profile_from_forecast(
 
     load_profile = pd.concat(annual_profiles)
 
+    # The stacked profile is what downstream workflow steps write back to disk.
     print(f"load_df after applying load growth:\n{load_profile}")
 
     return load_profile

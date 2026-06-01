@@ -6,7 +6,7 @@ import traceback
 import numpy as np
 import pandas as pd
 from helpers import setup_script_logging
-from load_load_forecast import (
+from load_profile import (
     LoadProfile,
 )
 from pypsa import Network

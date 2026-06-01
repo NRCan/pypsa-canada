@@ -4,7 +4,7 @@ import sys
 import traceback
 
 from helpers import setup_script_logging
-from load_load_forecast import apply_load_profile
+from load_profile import apply_load_profile
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
