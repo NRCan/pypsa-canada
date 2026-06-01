@@ -72,7 +72,8 @@ RESULTS = "results/" + RDIR
 # Rules are in order of use
 include: "rules/load_network.smk"
 include: "rules/add_components.smk"
-include: "rules/add_loads.smk"
+if config["load"]["load_mode"].upper() != "DEFAULT": # Only add loads if not using default load profile, whose loads are already in the base network
+    include: "rules/add_loads.smk"
 include: "rules/add_snapshots.smk"
 include: "rules/add_representative_days.smk"
 include: "rules/add_extra_loads.smk"

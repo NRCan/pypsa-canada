@@ -8,7 +8,6 @@ import pandas as pd
 from helpers import setup_script_logging
 from load_load_forecast import (
     LoadProfile,
-    apply_load_growth_from_forecast,
 )
 from pypsa import Network
 
@@ -184,7 +183,7 @@ def create_yearly_weightings(
     network.periods = years
 
     # Apply load growth based on selected profile
-    network = apply_growth_load(network, load_mode)
+    network = _apply_load_profile(network, load_mode)
 
     print(f"Load profile shape after snapshots: {network.loads_t.p_set.shape}")
     print(f"Load profile after snapshots:\n{network.loads_t.p_set}")
@@ -225,7 +224,7 @@ def generate_investment_weightings(
     return n
 
 
-def apply_growth_load(
+def _apply_load_profile(
     network: Network,
     load_mode: LoadProfile,  # snapshot_config: dict
 ) -> Network:
@@ -245,26 +244,22 @@ def apply_growth_load(
     Raises:
         NotImplementedError: If the selected load mode is not yet implemented.
     """
+    if load_mode == LoadProfile.DEFAULT:
+        logging.info("Using default load profile: base network load without applying growth forecast.")
+        return network
+
     loads_forecast_df: pd.DataFrame = pd.read_csv(
         snakemake.input.loads_p_set, index_col=[0]
     )
-    # years = snapshot_config["years"]
 
     match load_mode:
-        case LoadProfile.FULL_LOAD | LoadProfile.DEFAULT:
-            # Just copy the load profile
+        case LoadProfile.FULL_LOAD:
+            logging.info("Using full load profile: applying pre-computed load forecast to network.")
             network.loads_t.p_set = loads_forecast_df.copy()
             return network
         case LoadProfile.GROWTH_FORECAST:
-            # Load the csv for growth forecast
-            years = config["year_settings"]["investment_period"]
-
-            # Apply to all years
-            network.loads_t.p_set = apply_load_growth_from_forecast(
-                load_df=network.loads_t.p_set.copy(),
-                load_growth_node=loads_forecast_df,
-                years=years,
-            )
+            logging.info("Using growth forecast load profile: applying load growth forecast to network for all investment periods.")
+            network.loads_t.p_set = loads_forecast_df.copy()
             return network
         case LoadProfile.CER:
             raise NotImplementedError("CER load profile processing not yet implemented")

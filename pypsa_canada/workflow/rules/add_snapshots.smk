@@ -3,7 +3,7 @@
 rule add_snapshots:
     input:
         input_data=f"{RUN_NET_DIR}/add_components.nc",
-        loads_p_set=f"{RUN_NET_DIR}/add_loads.csv"
+        loads_p_set=f"{RUN_NET_DIR}/add_loads.csv" if config["load"]["load_mode"].upper() != "DEFAULT" else []
     output:
         planning_unsolved_network=f"{RUN_NET_DIR}/add_snapshots.nc"
     log:

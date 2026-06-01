@@ -5,7 +5,6 @@ def get_log_inputs(wildcards=None):
     logs = [
         *rules.load_network.log,
         *rules.add_components.log,
-        *rules.add_loads.log,
         *rules.add_snapshots.log,
         *rules.add_representative_days.log,
         *rules.add_extra_loads.log,
@@ -19,6 +18,8 @@ def get_log_inputs(wildcards=None):
         *rules.copy_config.log,
         *rules.collect_logs.log
     ]
+    if config["load"]["load_mode"].upper() != "DEFAULT": # Only add loads if not using default load profile, whose loads are already in the base network
+        logs += [*rules.add_loads.log]
     if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
         logs += [*rules.export_idea.log]
     return logs
