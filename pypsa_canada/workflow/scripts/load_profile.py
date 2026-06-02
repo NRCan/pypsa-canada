@@ -111,6 +111,22 @@ def read_load_profile(
             raise Exception("Invalid load mode")
 
 
+def _filter_load_profile_to_investment_periods(
+    load_profile: pd.DataFrame, investment_periods: list[int]
+) -> pd.DataFrame:
+    """Keep only rows whose timestamps belong to the configured investment years."""
+    if load_profile.empty or not investment_periods:
+        return load_profile
+
+    filtered_load_profile = load_profile.copy()
+    if not isinstance(filtered_load_profile.index, pd.DatetimeIndex):
+        filtered_load_profile.index = pd.to_datetime(filtered_load_profile.index)
+
+    return filtered_load_profile[
+        filtered_load_profile.index.year.isin(investment_periods)
+    ]
+
+
 def apply_load_profile(
     load_config: dict,
     investment_periods: list[int],
@@ -150,7 +166,9 @@ def apply_load_profile(
         # FULL_LOAD already contains the complete time series, so it can be
         # written back directly without touching the reference load profile.
         case LoadProfile.FULL_LOAD:
-            return load_growth
+            return _filter_load_profile_to_investment_periods(
+                load_growth, investment_periods
+            )
 
         # GROWTH_FORECAST scales the reference load for each investment period.
         case LoadProfile.GROWTH_FORECAST:
