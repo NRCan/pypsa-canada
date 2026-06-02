@@ -6,7 +6,9 @@ import traceback
 import numpy as np
 import pandas as pd
 from helpers import setup_script_logging
-from load_load_forecast import LoadProfile, load_load_forecast
+from load_profile import (
+    LoadProfile,
+)
 from pypsa import Network
 
 # Snakemake injects a global `snakemake` object when using `script:`.
@@ -181,7 +183,7 @@ def create_yearly_weightings(
     network.periods = years
 
     # Apply load growth based on selected profile
-    network = apply_growth_load(network, load_mode)
+    network = _apply_load_profile(network, load_mode)
 
     print(f"Load profile shape after snapshots: {network.loads_t.p_set.shape}")
     print(f"Load profile after snapshots:\n{network.loads_t.p_set}")
@@ -222,7 +224,7 @@ def generate_investment_weightings(
     return n
 
 
-def apply_growth_load(
+def _apply_load_profile(
     network: Network,
     load_mode: LoadProfile,  # snapshot_config: dict
 ) -> Network:
@@ -242,16 +244,28 @@ def apply_growth_load(
     Raises:
         NotImplementedError: If the selected load mode is not yet implemented.
     """
-    loads_df: pd.DataFrame = pd.read_csv(snakemake.input.loads_p_set, index_col=[0])
-    # years = snapshot_config["years"]
+    if load_mode == LoadProfile.DEFAULT:
+        logging.info(
+            "Using default load profile: base network load without applying growth forecast."
+        )
+        return network
+
+    loads_forecast_df: pd.DataFrame = pd.read_csv(
+        snakemake.input.loads_p_set, index_col=[0]
+    )
 
     match load_mode:
-        case LoadProfile.DEFAULT:
-            raise NotImplementedError(
-                "DEFAULT load profile processing not yet implemented"
+        case LoadProfile.FULL_LOAD:
+            logging.info(
+                "Using full load profile: applying pre-computed load forecast to network."
             )
-        case LoadProfile.CUSTOM:
-            network.loads_t.p_set = loads_df.copy()
+            network.loads_t.p_set = loads_forecast_df.copy()
+            return network
+        case LoadProfile.GROWTH_FORECAST:
+            logging.info(
+                "Using growth forecast load profile: applying load growth forecast to network for all investment periods."
+            )
+            network.loads_t.p_set = loads_forecast_df.copy()
             return network
         case LoadProfile.CER:
             raise NotImplementedError("CER load profile processing not yet implemented")
@@ -263,82 +277,6 @@ def apply_growth_load(
             raise ValueError(
                 f"Invalid load mode: {load_mode}. Check load_profile option in config."
             )
-
-
-def apply_growth_load_from_forecast(
-    network: Network,
-    load_df: pd.DataFrame,
-    load_growth_forecast: str,
-    load_mode: LoadProfile,
-    years: list[int],
-    year: int,
-    snapshot_config: dict,
-) -> Network:
-    """
-    Apply interpolated load growth factors to network loads.
-
-    Applies year-specific growth factors from a forecast file, with linear
-    interpolation between forecast years when needed.
-
-    Args:
-        network: PyPSA Network to update.
-        load_df: Reference load data DataFrame.
-        load_growth_forecast: Path to load growth forecast file.
-        load_mode: Load profile type identifier.
-        years: List of all years in the planning horizon.
-        year: Target year for which to apply growth.
-
-    Returns:
-        Network with updated load time series for the specified year.
-
-    Raises:
-        ValueError: If no load growth file is provided or if data is invalid.
-    """
-    load_growth_node = load_load_forecast(load_mode, load_growth_forecast)
-    load_growth_forecast = config["load"]["load_growth_forecast"]
-    years = config["year_settings"]["investment_period"]
-    load_mode = LoadProfile[config["load"]["load_mode"].upper()]
-
-    loads_t_p_set_ref_df = load_df.copy()
-
-    if loads_t_p_set_ref_df.shape[0] > 8760:
-        buffer_df = load_df.iloc[0:8760, :].copy()
-    else:
-        buffer_df = load_df.copy()
-    n = years.index(year)
-    # Apply growth per load if file is present
-    if load_growth_node is not None:
-        for i, year_after in enumerate(
-            np.asarray(load_growth_node.columns.astype(int))
-        ):
-            if year > year_after:
-                continue
-            elif year == year_after:
-                map_dict = load_growth_node[str(year)]
-                break
-            elif year < year_after:
-                year_before = np.asarray(load_growth_node.columns.astype(int))[i - 1]
-                map_dict_before = load_growth_node[str(year_before)]
-                map_dict_after = load_growth_node[str(year_after)]
-                map_dict = map_dict_before + (map_dict_after - map_dict_before) * (
-                    year - year_before
-                ) / (year_after - year_before)
-                break
-
-        for key, value in map_dict.items():
-            buffer_df.loc[:, key] = buffer_df[key] * value
-        network.loads_t.p_set.loc[(year)] = buffer_df.astype(float).values
-        network.loads_t.p_set.iloc[8760 * n : (8760) * (n + 1)] = buffer_df.astype(
-            float
-        ).values
-    else:
-        raise Exception(
-            "No Load Growth file has been"
-            "associated in the load_profile option (Full name of "
-            "file within that model folder with extension)."
-        )
-
-    return network
 
 
 def main():
