@@ -1,3 +1,9 @@
+## 0.2.13 (2026-06-02)
+
+### Bug Fixes
+
+- [#2087] Add load growth forecast option
+
 ## 0.2.12 (2026-05-26)
 
 ### Bug Fixes
