@@ -86,12 +86,15 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 
         # Stop production constraint
         if stop_production_cfg["enable"]:
-            logging.info(
-                f"Adding stop production constraint for {stop_production_cfg[period]}"
-            )
-            add_stop_prod_constraint(
-                network, period_snapshots, stop_production_cfg[period]
-            )
+            for stop_year in stop_production_cfg:
+                if isinstance(stop_year, int):
+                    if period >= stop_year:
+                        logging.info(
+                            f"Adding stop production constraint for {stop_production_cfg[stop_year]} in {period}"
+                        )
+                        add_stop_prod_constraint(
+                            network, period_snapshots, stop_production_cfg[stop_year]
+                        )
 
         # CER constraint for planning
         if CER_constraint_cfg["enable"]:
@@ -152,6 +155,9 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
         component_capacity_expansion_constraint(
             network, custom_constraints_cfg["custom_constraint_filepath"]
         )
+
+    print("Display constraints")
+    print(network.model.constraints)
 
 
 def main():

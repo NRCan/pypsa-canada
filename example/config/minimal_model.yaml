@@ -81,16 +81,18 @@ extra_loads:
 
 planning:
   constraints:
-    add_spilling_variable: true
-    add_stop_production_constraint:
+    add_stop_production:
+      enable: true
       2030: ["coal"]
     planning_reserve_margin:
+      enable: true
       capacity_values_placeholder_filepath: "data/constraints/capacity_values_placeholder.csv"
       provinces_list:
         "BC": 1.2
         "ON": 1.2
         "QC": 1.2
     CER_constraint:
+      enable: true
       # aggregation levels: provincial, group, individual
       aggregation: 'provincial'
       # year that constraint becomes active
@@ -114,13 +116,18 @@ dispatch:
   overlap: 48 #48
   investment_period: [] #If empty, it will take the planning investment periods
   constraints:
-    # add_spilling_variable: true
-    add_stop_production_constraint:
+    # add_spilling_variable:
+    #   enable: true
+    add_stop_production:
+      enable: true
       2030: ["coal"]
     # add_bidirection_link_constraint: {}
+    #   enable: false
     # add_prevent_spill_if_not_fully_charged_constraint:
+    #   enable: false
     #   maximum_soc_storage_value: 2000
     CER_constraint:
+      enable: true
       # modes = hourly, emissions
       mode: 'emissions'
       # aggregation levels: provincial, group, individual

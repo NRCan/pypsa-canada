@@ -101,8 +101,6 @@ def add_CER_constraint_planning(network, snapshots, constraint, groups, CER_gens
         # print(f"CER_constraint_{group}_{unit}_{year}")
         # print(lhs)
         # print(rhs)
-    print("Display constraints")
-    print(network.model.constraints)
     return 0
 
 
