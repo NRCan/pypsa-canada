@@ -1167,14 +1167,32 @@ def build_corridor_map(
     skipped_coords = skipped_flow = drawn_lines = drawn_no_data = 0
     summary = []
 
+    # In provincial mode, track total capacity per province-pair to match
+    # the provincial aggregate flows (which sum across all bus-pairs between provinces)
+    province_pair_capacity = defaultdict(float)
+    for (bus_a, bus_b), rows in corridors.items():
+        if bus_a not in bus_ll or bus_b not in bus_ll:
+            continue
+        # Get province codes for this corridor
+        prov_a = bus_to_province.get(bus_a, bus_a)
+        prov_b = bus_to_province.get(bus_b, bus_b)
+        if prov_a != prov_b:  # Only count inter-provincial connections
+            prov_pair = canonical_pair(prov_a, prov_b)
+            corridor_capacity = sum(float(r["s_nom"]) for r in rows)
+            province_pair_capacity[prov_pair] += corridor_capacity
+
     for (bus_a, bus_b), rows in corridors.items():
         if bus_a not in bus_ll or bus_b not in bus_ll:
             skipped_coords += 1
             continue
 
-        base_capacity_mw = sum(float(r["s_nom"]) for r in rows)
-        added_capacity_mw = get_corridor_added_capacity(bus_a, bus_b, final_added)
-        final_capacity_mw = base_capacity_mw + added_capacity_mw
+        # Calculate capacity: s_nom already includes s_nom_opt for new lines
+        # so we don't need to add planning expansion separately (would be double-counting)
+        corridor_capacity_mw = sum(float(r["s_nom"]) for r in rows)
+
+        # For display purposes, separate base (existing) vs added (new) capacity
+        base_capacity_mw = sum(float(r["s_nom"]) for r in rows if not r.get("is_new", False))
+        added_capacity_mw = sum(float(r["s_nom"]) for r in rows if r.get("is_new", False))
 
         kv_label = voltage_mix_label([line_voltage_kv(r["name"]) for r in rows])
         sorted_lines = sorted(rows, key=lambda line: str(line["name"]))
@@ -1187,6 +1205,27 @@ def build_corridor_map(
         bus0, bus1, timestamps, flow_mw = resolve_corridor_flow(
             rows, nodal_index, bus_to_province
         )
+
+        # Determine effective capacity for utilization calculation
+        # In provincial mode, use province-pair aggregate capacity if flow is provincial
+        prov_a = bus_to_province.get(bus_a, bus_a)
+        prov_b = bus_to_province.get(bus_b, bus_b)
+        is_interprovincial = (prov_a != prov_b)
+
+        # Check if we're using provincial flow data (vs direct link flows)
+        using_provincial_flow = (
+            timestamps is not None
+            and bus0 is not None
+            and _bus_index_key(bus0, bus_to_province, nodal_index) in nodal_index
+        )
+
+        if is_interprovincial and using_provincial_flow:
+            # Provincial mode: use aggregate province-pair capacity
+            prov_pair = canonical_pair(prov_a, prov_b)
+            final_capacity_mw = province_pair_capacity[prov_pair]
+        else:
+            # Nodal mode or intra-provincial: use corridor-specific capacity
+            final_capacity_mw = corridor_capacity_mw
         # Fallback to direct link/line flow (covers intra-provincial corridors
         # whose buses share a province and so produce no inter-province column
         # in the hourly energy-balance CSVs).
@@ -1205,6 +1244,9 @@ def build_corridor_map(
                 )
                 timestamps = link_flows_ts
                 bus0, bus1 = bus_a, bus_b
+                # Fallback uses direct per-line flows, so use corridor capacity
+                using_provincial_flow = False
+                final_capacity_mw = corridor_capacity_mw
 
         missing_flow = timestamps is None
         if missing_flow:
@@ -1228,15 +1270,20 @@ def build_corridor_map(
             len(sorted_lines), base_offset_m=CURVE_OFFSET_M, step_m=adj_step_m
         )
 
-        expansion_text = get_corridor_expansion_text(bus_a, bus_b, expansion_detail)
-
         if missing_flow:
+            capacity_note = ""
+            if is_interprovincial and corridor_capacity_mw != final_capacity_mw:
+                capacity_note = f"""
+            <div style="margin-top:6px; color:#0066cc;"><i>Note: Corridor capacity ({corridor_capacity_mw:.1f} MW) differs from displayed total ({final_capacity_mw:.1f} MW) which aggregates all {prov_a}-{prov_b} connections for provincial flow comparison.</i></div>
+            """
             info_html = f"""
             <div><b>Corridor:</b> {bus_a} &hArr; {bus_b}</div>
+            <div><b>Provinces:</b> {prov_a} &hArr; {prov_b}</div>
             <div><b>Voltage mix:</b> {kv_label}</div>
-            <div><b>Base capacity:</b> {base_capacity_mw:.1f} MW</div>
-            <div><b>Added capacity (planning):</b> {added_capacity_mw:.1f} MW</div>
-            <div><b>Final capacity:</b> {final_capacity_mw:.1f} MW</div>
+            <div><b>Base capacity (existing lines):</b> {base_capacity_mw:.1f} MW</div>
+            <div><b>Added capacity (new lines from planning):</b> {added_capacity_mw:.1f} MW</div>
+            <div><b>Corridor total:</b> {corridor_capacity_mw:.1f} MW</div>
+            {capacity_note}
             <div style="margin-top:6px; color:#888;"><i>No flow data available for this corridor.</i></div>
             <div style="margin-top:6px;"><b>Included lines:</b><br>{lines_html}</div>
             """
@@ -1246,26 +1293,47 @@ def build_corridor_map(
             )
         else:
             corridor_title = f"{bus_a} <-> {bus_b} ({kv_label}) | {map_label}"
+
+            # Build capacity note for provincial aggregation
+            capacity_mode = "corridor-specific"
+            if is_interprovincial and using_provincial_flow and corridor_capacity_mw != final_capacity_mw:
+                capacity_mode = f"provincial aggregate ({prov_a}↔{prov_b})"
+
             subtitle = (
-                f"Final planning year {last_year} | "
-                f"base={base_capacity_mw:.1f} + added={added_capacity_mw:.1f} = "
-                f"{final_capacity_mw:.1f} MW | flow: {bus0} -> {bus1}"
+                f"Capacity: {final_capacity_mw:.1f} MW ({capacity_mode}) | "
+                f"flow: {bus0} -> {bus1}"
             )
             plot_html, metrics = build_util_plot_html(
                 timestamps, flow_mw, final_capacity_mw, corridor_title, subtitle
             )
+
+            # Build detailed capacity explanation
+            if is_interprovincial and using_provincial_flow and corridor_capacity_mw != final_capacity_mw:
+                capacity_explanation = f"""
+            <div style="margin-top:6px;"><b>Capacity calculation (provincial mode):</b></div>
+            <div><b>This corridor:</b> {corridor_capacity_mw:.1f} MW (existing: {base_capacity_mw:.1f} + new: {added_capacity_mw:.1f})</div>
+            <div><b>Total {prov_a}↔{prov_b}:</b> {final_capacity_mw:.1f} MW (aggregates all inter-provincial corridors)</div>
+            <div style="margin-top:4px; color:#0066cc; font-size:12px;"><i>Note: Provincial flow data aggregates across all {prov_a}-{prov_b} connections, so utilization is calculated using the total provincial capacity.</i></div>
+            """
+            else:
+                capacity_explanation = f"""
+            <div style="margin-top:6px;"><b>Capacity calculation:</b></div>
+            <div>Existing lines (base s_nom) = {base_capacity_mw:.1f} MW</div>
+            <div>New lines from planning (s_nom_opt) = {added_capacity_mw:.1f} MW</div>
+            <div><b>Total corridor capacity = {final_capacity_mw:.1f} MW</b></div>
+            """
+
             info_html = f"""
             <div><b>Case:</b> {map_label}</div>
             <div><b>Corridor:</b> {bus_a} &hArr; {bus_b}</div>
+            <div><b>Provinces:</b> {prov_a} &hArr; {prov_b}</div>
             <div><b>Voltage mix:</b> {kv_label}</div>
             <div><b>Final planning year:</b> {last_year}</div>
             <div><b>Flow orientation:</b> {bus0} -> {bus1}</div>
-            <div style="margin-top:6px;"><b>Capacity calculation:</b></div>
-            <div>Base s_nom from lines.csv = {base_capacity_mw:.1f} MW</div>
-            <div>Final cumulative added capacity = {added_capacity_mw:.1f} MW</div>
-            <div><b>Final effective capacity = {final_capacity_mw:.1f} MW</b></div>
-            <div style="margin-top:6px;"><b>Cumulative planning expansion:</b><br>{expansion_text}</div>
+            {capacity_explanation}
             <div style="margin-top:6px;"><b>Utilization:</b> |flow| / {final_capacity_mw:.1f} MW</div>
+            <div><b>Max utilization:</b> {metrics["max_utilization"]:.3f} p.u.</div>
+            <div><b>Avg utilization:</b> {metrics["avg_utilization"]:.3f} p.u.</div>
             <div><b>Hours ≥ 0.8 p.u.:</b> {metrics["hours_ge_0_8"]}</div>
             <div><b>Hours ≥ 1.0 p.u.:</b> {metrics["hours_ge_1_0"]}</div>
             <div style="margin-top:6px;"><b>Physical lines:</b><br>{lines_html}</div>
@@ -1281,16 +1349,20 @@ def build_corridor_map(
 
             # Add to summary
             a_sorted, b_sorted = sorted([bus_a, bus_b])
+            prov_a_sorted, prov_b_sorted = sorted([prov_a, prov_b])
             summary.append(
                 {
                     "case": map_label,
                     "corridor": f"{a_sorted}__to__{b_sorted}",
                     "busA": a_sorted,
                     "busB": b_sorted,
-                    "final_planning_year_for_capacity": last_year,
-                    "base_s_nom_mw": base_capacity_mw,
-                    "final_cumulative_added_capacity_mw": added_capacity_mw,
-                    "final_effective_capacity_mw": final_capacity_mw,
+                    "provinceA": prov_a_sorted,
+                    "provinceB": prov_b_sorted,
+                    "corridor_capacity_mw": corridor_capacity_mw,
+                    "capacity_for_utilization_mw": final_capacity_mw,
+                    "existing_lines_capacity_mw": base_capacity_mw,
+                    "new_lines_capacity_mw": added_capacity_mw,
+                    "provincial_aggregation_used": is_interprovincial and using_provincial_flow and corridor_capacity_mw != final_capacity_mw,
                     "max_utilization": metrics["max_utilization"],
                     "avg_utilization": metrics["avg_utilization"],
                     "hours_ge_0_8": metrics["hours_ge_0_8"],
