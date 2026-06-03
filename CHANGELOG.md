@@ -1,3 +1,10 @@
+## 0.2.14 (2026-06-03)
+
+### Bug Fixes
+
+- Fix stop_production constraint to be applied on every year equal or superior to the year in parameter
+- Fix stop_production constraint to be applied on every year equal or superior to the year in parameter
+
 ## 0.2.13 (2026-06-02)
 
 ### Bug Fixes
