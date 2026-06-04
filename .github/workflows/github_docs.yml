@@ -27,11 +27,11 @@ jobs:
 
       - name: Build Sphinx Documentation
         run: |
-          # Compiles rst files into an HTML build directory
-          sphinx-build -b html docs/ docs/_build/html
+          # Compiles rst files into the docs/ publish root
+          sphinx-build -b html docs/source docs/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/_build/html
+          publish_dir: ./docs

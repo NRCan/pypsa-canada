@@ -5,4 +5,3 @@ representative_days.temporal_clustering_class
    :members:
    :show-inheritance:
    :no-index:
-============================================================================

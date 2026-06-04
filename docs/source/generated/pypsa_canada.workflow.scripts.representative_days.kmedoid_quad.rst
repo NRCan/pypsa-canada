@@ -5,5 +5,3 @@ representative_days.kmedoid_quad
    :members:
    :show-inheritance:
    :no-index:
-
-===============================================================
