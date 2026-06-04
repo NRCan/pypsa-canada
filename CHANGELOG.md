@@ -1,3 +1,10 @@
+## 0.2.15 (2026-06-04)
+
+### Bug Fixes
+
+- documentation pipeline
+- documentation pipeline
+
 ## 0.2.14 (2026-06-03)
 
 ### Bug Fixes
