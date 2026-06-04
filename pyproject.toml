@@ -50,6 +50,10 @@ dev = [
     "pre-commit",
     "pytest",
 ]
+docs = [
+    "sphinx>=7.0",
+    "sphinx-rtd-theme>=2.0",
+]
 
 [project.scripts]
 pypsa_canada = "pypsa_canada.cli.pypsa_canada:cli"
