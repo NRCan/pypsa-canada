@@ -115,6 +115,12 @@ Pre-commit hooks are used within this project. The pre-commit hooks will be enfo
 (pypsa-canada_py312)  >> pre-commit run --all-files --hook-stage manual
 ```
 
+## Documentation
+To build the documentation:
+```bash
+sphinx-build -b html docs/source docs/_build/html
+```
+
 ## Licence
 PyPSA MIT License : https://github.com/PyPSA/PyPSA/blob/master/LICENSE.txt
 pypsa-eur License: https://github.com/PyPSA/pypsa-eur/tree/master/LICENSES
@@ -140,4 +146,4 @@ Copyright CanmetENERGY - Varennes, NRCan, Goverment of Canada
 * Serban Ivanescu (serban.ivanescu@nrcan-rncan.gc.ca)
 
 ## Getting Further Information
-https://pypsa.readthedocs.io/en/latest/index.html
+https://docs.pypsa.org/latest/
