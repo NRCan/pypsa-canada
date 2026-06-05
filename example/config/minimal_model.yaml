@@ -83,7 +83,8 @@ planning:
   constraints:
     add_stop_production:
       enable: true
-      2030: ["coal"]
+      years:
+        2030: ["coal"]
     planning_reserve_margin:
       enable: true
       capacity_values_placeholder_filepath: "data/constraints/capacity_values_placeholder.csv"
@@ -115,12 +116,14 @@ dispatch:
   horizon: 336 #336 #2 weeks in hours
   overlap: 48 #48
   investment_period: [] #If empty, it will take the planning investment periods
+
   constraints:
     # add_spilling_variable:
     #   enable: true
     add_stop_production:
       enable: true
-      2030: ["coal"]
+      years:
+        2030: ["coal"]
     # add_bidirection_link_constraint: {}
     #   enable: false
     # add_prevent_spill_if_not_fully_charged_constraint:

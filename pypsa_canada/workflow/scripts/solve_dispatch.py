@@ -73,15 +73,14 @@ def add_all_dispatch_constraints(network: pypsa.Network, snapshots: pd.DatetimeI
     # Stop production constraint
     if stop_production_cfg["enable"]:
         logging.debug(f"Stop_production_dictionary = {stop_production_cfg}")
-        for stop_year in stop_production_cfg:
-            if isinstance(stop_year, int):
-                if period >= stop_year:
-                    logging.info(
-                        f"Adding stop production constraint for {stop_production_cfg[stop_year]} in {period}"
-                    )
-                    add_stop_prod_constraint(
-                        network, snapshots, stop_production_cfg[stop_year]
-                    )
+        for stop_year in stop_production_cfg["years"]:
+            if period >= stop_year:
+                logging.info(
+                    f"Adding stop production constraint for {stop_production_cfg['years'][stop_year]} in {period}"
+                )
+                add_stop_prod_constraint(
+                    network, snapshots, stop_production_cfg["years"][stop_year]
+                )
 
     # Add binary spilling variable (1: spilling, 0: not spilling) to Linopy model
     # if spilling_variable_cfg["enable"]:

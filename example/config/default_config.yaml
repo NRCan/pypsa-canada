@@ -173,6 +173,8 @@ planning:
       enable: false
     add_stop_production:
       enable: false
+      years:
+        # 2030: ["coal"]
     CER_constraint:
       enable: false
       # aggregation levels: provincial, group, individual
@@ -217,7 +219,8 @@ dispatch:
   constraints:
     add_stop_production:
       enable: false
-      "2030": ["coal"]
+      years:
+        # 2030: ["coal"]
     add_spilling_variable:
       enable: false
     add_bidirection_link:
