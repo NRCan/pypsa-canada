@@ -88,7 +88,7 @@ planning:
       enable: true
       capacity_values_placeholder_filepath: "data/constraints/capacity_values_placeholder.csv"
       provinces_list:
-        "BC": 1.2
+        "NB": 1.2
         "ON": 1.2
         "QC": 1.2
     CER_constraint:
