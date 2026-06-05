@@ -1,3 +1,10 @@
+## 0.2.18 (2026-06-05)
+
+### Bug Fixes
+
+- Update minimal example
+- Update minimal example
+
 ## 0.2.17 (2026-06-04)
 
 ### Bug Fixes
