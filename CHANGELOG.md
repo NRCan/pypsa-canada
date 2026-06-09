@@ -1,3 +1,10 @@
+## 0.2.19 (2026-06-09)
+
+### Bug Fixes
+
+- applied E.Sahraie modification to plot corridor map
+- applied E.Sahraie modification to plot corridor map
+
 ## 0.2.18 (2026-06-05)
 
 ### Bug Fixes
