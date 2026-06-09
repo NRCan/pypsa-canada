@@ -1191,8 +1191,12 @@ def build_corridor_map(
         corridor_capacity_mw = sum(float(r["s_nom"]) for r in rows)
 
         # For display purposes, separate base (existing) vs added (new) capacity
-        base_capacity_mw = sum(float(r["s_nom"]) for r in rows if not r.get("is_new", False))
-        added_capacity_mw = sum(float(r["s_nom"]) for r in rows if r.get("is_new", False))
+        base_capacity_mw = sum(
+            float(r["s_nom"]) for r in rows if not r.get("is_new", False)
+        )
+        added_capacity_mw = sum(
+            float(r["s_nom"]) for r in rows if r.get("is_new", False)
+        )
 
         kv_label = voltage_mix_label([line_voltage_kv(r["name"]) for r in rows])
         sorted_lines = sorted(rows, key=lambda line: str(line["name"]))
@@ -1210,7 +1214,7 @@ def build_corridor_map(
         # In provincial mode, use province-pair aggregate capacity if flow is provincial
         prov_a = bus_to_province.get(bus_a, bus_a)
         prov_b = bus_to_province.get(bus_b, bus_b)
-        is_interprovincial = (prov_a != prov_b)
+        is_interprovincial = prov_a != prov_b
 
         # Check if we're using provincial flow data (vs direct link flows)
         using_provincial_flow = (
@@ -1296,7 +1300,11 @@ def build_corridor_map(
 
             # Build capacity note for provincial aggregation
             capacity_mode = "corridor-specific"
-            if is_interprovincial and using_provincial_flow and corridor_capacity_mw != final_capacity_mw:
+            if (
+                is_interprovincial
+                and using_provincial_flow
+                and corridor_capacity_mw != final_capacity_mw
+            ):
                 capacity_mode = f"provincial aggregate ({prov_a}↔{prov_b})"
 
             subtitle = (
@@ -1308,7 +1316,11 @@ def build_corridor_map(
             )
 
             # Build detailed capacity explanation
-            if is_interprovincial and using_provincial_flow and corridor_capacity_mw != final_capacity_mw:
+            if (
+                is_interprovincial
+                and using_provincial_flow
+                and corridor_capacity_mw != final_capacity_mw
+            ):
                 capacity_explanation = f"""
             <div style="margin-top:6px;"><b>Capacity calculation (provincial mode):</b></div>
             <div><b>This corridor:</b> {corridor_capacity_mw:.1f} MW (existing: {base_capacity_mw:.1f} + new: {added_capacity_mw:.1f})</div>
@@ -1362,7 +1374,9 @@ def build_corridor_map(
                     "capacity_for_utilization_mw": final_capacity_mw,
                     "existing_lines_capacity_mw": base_capacity_mw,
                     "new_lines_capacity_mw": added_capacity_mw,
-                    "provincial_aggregation_used": is_interprovincial and using_provincial_flow and corridor_capacity_mw != final_capacity_mw,
+                    "provincial_aggregation_used": is_interprovincial
+                    and using_provincial_flow
+                    and corridor_capacity_mw != final_capacity_mw,
                     "max_utilization": metrics["max_utilization"],
                     "avg_utilization": metrics["avg_utilization"],
                     "hours_ge_0_8": metrics["hours_ge_0_8"],
