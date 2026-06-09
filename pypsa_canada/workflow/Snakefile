@@ -87,7 +87,7 @@ include: "rules/solve_dispatch.smk"
 # Post-processing rules
 include: "rules/post_process_planning.smk"
 include: "rules/post_process_dispatch.smk"
-# include: "rules/plot_corridor_map.smk"
+include: "rules/plot_corridor_map.smk"
 include: "rules/create_summary.smk"
 include: "rules/export_idea.smk"
 include: "rules/finalize.smk"
@@ -101,6 +101,7 @@ def get_all_targets():
         *rules.solve_dispatch.output,
         *rules.post_process_planning.output,
         *rules.post_process_dispatch.output,
+        *rules.plot_corridor_map.output,
         *rules.compare_results.output,
         *rules.copy_config.output,
         *rules.collect_logs.output

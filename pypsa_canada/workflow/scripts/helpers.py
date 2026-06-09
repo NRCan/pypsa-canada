@@ -110,6 +110,7 @@ def setup_script_logging(log_path, level=logging.DEBUG):
 
     logging.basicConfig(
         level=level,
+        force=True,
         handlers=[logging.StreamHandler(sys.stdout)],
         format="%(asctime)s %(levelname)s %(message)s",
     )
