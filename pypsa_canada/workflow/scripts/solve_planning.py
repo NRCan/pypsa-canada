@@ -86,15 +86,16 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 
         # Stop production constraint
         if stop_production_cfg["enable"]:
-            for stop_year in stop_production_cfg:
-                if isinstance(stop_year, int):
-                    if period >= stop_year:
-                        logging.info(
-                            f"Adding stop production constraint for {stop_production_cfg[stop_year]} in {period}"
-                        )
-                        add_stop_prod_constraint(
-                            network, period_snapshots, stop_production_cfg[stop_year]
-                        )
+            for stop_year in stop_production_cfg["years"]:
+                if period >= stop_year:
+                    logging.info(
+                        f"Adding stop production constraint for {stop_production_cfg['years'][stop_year]} in {period}"
+                    )
+                    add_stop_prod_constraint(
+                        network,
+                        period_snapshots,
+                        stop_production_cfg["years"][stop_year],
+                    )
 
         # CER constraint for planning
         if CER_constraint_cfg["enable"]:

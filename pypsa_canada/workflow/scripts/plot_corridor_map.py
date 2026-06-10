@@ -57,6 +57,10 @@ BUS_JITTER_MODE = "suffix_voltage"  # "suffix_voltage" | "v_nom" | "name_only"
 
 POST_PROCESS_FILE_GLOB = "**/*_hourly*.csv"  # e.g., AB_hourly.csv
 
+# Utilization thresholds
+CONGESTION_THRESHOLD = 0.8  # p.u.
+FULL_CAPACITY_LINE = 1.0  # p.u.
+
 LINE_COLOR_WITH_DATA = "#3388ff"  # Blue for existing lines with flow data
 LINE_COLOR_NO_DATA = "#888888"  # Grey for existing lines without flow data
 _NEW_LINE_BADGE = '<span style="color:#22bb44"><b>[NEW]</b></span> '
@@ -548,6 +552,147 @@ def parallel_offsets(n: int, base_offset_m: float, step_m: float):
 
 
 # =============================================================================
+# PLANNING CAPACITY EXPANSION
+# =============================================================================
+def load_final_planning_capacity_additions(unit_summary_csv: str):
+    """
+    Load cumulative transmission capacity additions from unit_summary_planning.csv.
+
+    Reads the planning unit summary CSV and extracts rows where:
+      Parameter == New_Transmission_Capacity
+
+    Treats A->B and B->A as the same corridor.
+    For duplicate corridor/year rows, uses max(Value), not sum(Value),
+    to avoid double-counting repeated directions.
+
+    Parameters
+    ----------
+    unit_summary_csv : str
+        Path to unit_summary_planning.csv.
+
+    Returns
+    -------
+    final_added : dict
+        ``{corridor_key: cumulative_capacity_mw}`` for the final planning year.
+    last_year : int or None
+        The final planning year.
+    expansion_detail : dict
+        ``{corridor_key: DataFrame}`` with year-by-year expansion details.
+    """
+    if not os.path.exists(unit_summary_csv):
+        logging.warning(f"Unit summary CSV not found: {unit_summary_csv}")
+        return {}, None, {}
+
+    df = read_csv_flex(unit_summary_csv)
+
+    required = {"Region", "Parameter", "Time", "Value"}
+    missing = required - set(df.columns)
+    if missing:
+        logging.error(f"Missing columns in {unit_summary_csv}: {missing}")
+        return {}, None, {}
+
+    df["Region"] = df["Region"].astype(str).str.strip()
+    df["Parameter"] = df["Parameter"].astype(str).str.strip()
+    df["Time"] = pd.to_numeric(df["Time"], errors="coerce")
+    df["Value"] = pd.to_numeric(df["Value"], errors="coerce").fillna(0.0)
+
+    df = df[df["Parameter"] == "New_Transmission_Capacity"].copy()
+    df = df.dropna(subset=["Time"])
+
+    if df.empty:
+        logging.info("No New_Transmission_Capacity entries found")
+        return {}, None, {}
+
+    df["Time"] = df["Time"].astype(int)
+    last_year = int(df["Time"].max())
+
+    df = df[df["Time"] <= last_year].copy()
+
+    # Normalize corridor names: treat A->B and B->A the same
+    def canonical_region_name(region):
+        region = str(region).strip()
+        if "->" not in region:
+            return region
+        a, b = [x.strip() for x in region.split("->", 1)]
+        a, b = sorted([a, b])
+        return f"{a}__to__{b}"
+
+    df["corridor_key"] = df["Region"].apply(canonical_region_name)
+
+    grouped = (
+        df.groupby(["corridor_key", "Time"], as_index=False)["Value"]
+        .max()
+        .sort_values(["corridor_key", "Time"])
+    )
+
+    final_added = grouped.groupby("corridor_key")["Value"].sum().to_dict()
+
+    expansion_detail = {}
+    for key, g in grouped.groupby("corridor_key"):
+        g = g.sort_values("Time").copy()
+        g["Cumulative_Value"] = g["Value"].cumsum()
+        expansion_detail[key] = g
+
+    return final_added, last_year, expansion_detail
+
+
+def get_corridor_added_capacity(bus0: str, bus1: str, final_added: dict):
+    """
+    Look up the cumulative added capacity for a corridor.
+
+    Parameters
+    ----------
+    bus0, bus1 : str
+        Bus names defining the corridor.
+    final_added : dict
+        Dictionary from :func:`load_final_planning_capacity_additions`.
+
+    Returns
+    -------
+    float
+        Cumulative added capacity in MW.
+    """
+    a, b = sorted([str(bus0).strip(), str(bus1).strip()])
+    key = f"{a}__to__{b}"
+    return float(final_added.get(key, 0.0))
+
+
+def get_corridor_expansion_text(bus0: str, bus1: str, expansion_detail: dict):
+    """
+    Format a human-readable expansion timeline for a corridor.
+
+    Parameters
+    ----------
+    bus0, bus1 : str
+        Bus names defining the corridor.
+    expansion_detail : dict
+        Dictionary from :func:`load_final_planning_capacity_additions`.
+
+    Returns
+    -------
+    str
+        HTML-formatted timeline string.
+    """
+    a, b = sorted([str(bus0).strip(), str(bus1).strip()])
+    key = f"{a}__to__{b}"
+
+    if key not in expansion_detail:
+        return "No planning expansion"
+
+    g = expansion_detail[key]
+
+    parts = []
+    for _, row in g.iterrows():
+        parts.append(
+            f"{int(row['Time'])}: "
+            f"+{row['Value']:.1f} MW, "
+            f"cumulative +{row['Cumulative_Value']:.1f} MW"
+        )
+
+    return "<br>".join(parts)
+
+
+# =============================================================================
 # PLOT: utilization-only + clean layout
 # =============================================================================
 def build_util_plot_html(time_index, flow_signed, cap_sum, title, subtitle):
@@ -578,37 +723,63 @@ def build_util_plot_html(time_index, flow_signed, cap_sum, title, subtitle):
     else:
         util = np.full_like(flow_signed, np.nan, dtype=float)
 
+    # Calculate metrics
+    max_util = float(np.nanmax(util)) if len(util) > 0 else 0.0
+    avg_util = float(np.nanmean(util)) if len(util) > 0 else 0.0
+    hours_ge_08 = int(np.sum(util >= CONGESTION_THRESHOLD))
+    hours_ge_10 = int(np.sum(util >= FULL_CAPACITY_LINE))
+
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(
             x=time_index,
             y=util,
             mode="lines",
-            name="Utilization |flow|/sum(s_nom) (p.u.)",
+            name="Utilization |flow|/capacity (p.u.)",
         )
     )
+    # Add 0.8 threshold line
     fig.add_trace(
         go.Scatter(
             x=[time_index.min(), time_index.max()],
-            y=[1.0, 1.0],
+            y=[CONGESTION_THRESHOLD, CONGESTION_THRESHOLD],
             mode="lines",
-            name="1.0 p.u. (corridor rating)",
-            line=dict(dash="dash"),
+            name="0.8 p.u. threshold",
+            line=dict(dash="dash", color="orange"),
+        )
+    )
+    # Add 1.0 capacity line
+    fig.add_trace(
+        go.Scatter(
+            x=[time_index.min(), time_index.max()],
+            y=[FULL_CAPACITY_LINE, FULL_CAPACITY_LINE],
+            mode="lines",
+            name="1.0 p.u. full capacity",
+            line=dict(dash="dot", color="red"),
         )
     )
     fig.update_layout(
         title=dict(
-            text=f"{title}<br><span style='font-size:12px'>{subtitle}</span>",
+            text=(
+                f"{title}<br><span style='font-size:12px'>{subtitle}<br>"
+                f"Max={max_util:.3f} p.u. | Avg={avg_util:.3f} p.u. | "
+                f"Hours ≥0.8={hours_ge_08} | Hours ≥1.0={hours_ge_10}</span>"
+            ),
             x=0.01,
             xanchor="left",
         ),
-        height=380,
-        margin=dict(l=50, r=30, t=95, b=45),
+        height=410,
+        margin=dict(l=55, r=30, t=120, b=45),
         legend=dict(orientation="h", yanchor="top", y=-0.18, xanchor="left", x=0.0),
         xaxis=dict(title="Time"),
         yaxis=dict(title="Utilization (p.u.)", rangemode="tozero"),
     )
-    return fig.to_html(full_html=False, include_plotlyjs="cdn")
+    return fig.to_html(full_html=False, include_plotlyjs="cdn"), {
+        "max_utilization": max_util,
+        "avg_utilization": avg_util,
+        "hours_ge_0_8": hours_ge_08,
+        "hours_ge_1_0": hours_ge_10,
+    }
 
 
 def build_popup_html(info_html: str, plot_html: str):
@@ -940,7 +1111,11 @@ def build_corridor_map(
     link_flows_ts,
     link_flows_df,
     out_html,
+    out_csv,
     map_label,
+    final_added,
+    last_year,
+    expansion_detail,
 ):
     """
     Build and save a corridor utilization Folium map.
@@ -961,9 +1136,17 @@ def build_corridor_map(
         Hourly flow DataFrame keyed by component name.
     out_html : str
         Output HTML path.
+    out_csv : str
+        Output CSV path for corridor summary.
     map_label : str
         Label shown in the chart trace name (e.g. ``"Planning"`` or
         ``"Dispatch"``).
+    final_added : dict
+        Cumulative added capacity by corridor from planning.
+    last_year : int or None
+        Final planning year.
+    expansion_detail : dict
+        Year-by-year expansion details by corridor.
     """
     # Reset the hourly-CSV cache so this map always reads from its own
     # nodal_index files instead of reusing data cached by a previous map build.
@@ -982,13 +1165,39 @@ def build_corridor_map(
     no_data_layer.add_to(fmap)
 
     skipped_coords = skipped_flow = drawn_lines = drawn_no_data = 0
+    summary = []
+
+    # In provincial mode, track total capacity per province-pair to match
+    # the provincial aggregate flows (which sum across all bus-pairs between provinces)
+    province_pair_capacity = defaultdict(float)
+    for (bus_a, bus_b), rows in corridors.items():
+        if bus_a not in bus_ll or bus_b not in bus_ll:
+            continue
+        # Get province codes for this corridor
+        prov_a = bus_to_province.get(bus_a, bus_a)
+        prov_b = bus_to_province.get(bus_b, bus_b)
+        if prov_a != prov_b:  # Only count inter-provincial connections
+            prov_pair = canonical_pair(prov_a, prov_b)
+            corridor_capacity = sum(float(r["s_nom"]) for r in rows)
+            province_pair_capacity[prov_pair] += corridor_capacity
 
     for (bus_a, bus_b), rows in corridors.items():
         if bus_a not in bus_ll or bus_b not in bus_ll:
             skipped_coords += 1
             continue
 
-        capacity_mw = sum(float(r["s_nom"]) for r in rows)
+        # Calculate capacity: s_nom already includes s_nom_opt for new lines
+        # so we don't need to add planning expansion separately (would be double-counting)
+        corridor_capacity_mw = sum(float(r["s_nom"]) for r in rows)
+
+        # For display purposes, separate base (existing) vs added (new) capacity
+        base_capacity_mw = sum(
+            float(r["s_nom"]) for r in rows if not r.get("is_new", False)
+        )
+        added_capacity_mw = sum(
+            float(r["s_nom"]) for r in rows if r.get("is_new", False)
+        )
+
         kv_label = voltage_mix_label([line_voltage_kv(r["name"]) for r in rows])
         sorted_lines = sorted(rows, key=lambda line: str(line["name"]))
         lines_html = "<br>".join(
@@ -1000,6 +1209,27 @@ def build_corridor_map(
         bus0, bus1, timestamps, flow_mw = resolve_corridor_flow(
             rows, nodal_index, bus_to_province
         )
+
+        # Determine effective capacity for utilization calculation
+        # In provincial mode, use province-pair aggregate capacity if flow is provincial
+        prov_a = bus_to_province.get(bus_a, bus_a)
+        prov_b = bus_to_province.get(bus_b, bus_b)
+        is_interprovincial = prov_a != prov_b
+
+        # Check if we're using provincial flow data (vs direct link flows)
+        using_provincial_flow = (
+            timestamps is not None
+            and bus0 is not None
+            and _bus_index_key(bus0, bus_to_province, nodal_index) in nodal_index
+        )
+
+        if is_interprovincial and using_provincial_flow:
+            # Provincial mode: use aggregate province-pair capacity
+            prov_pair = canonical_pair(prov_a, prov_b)
+            final_capacity_mw = province_pair_capacity[prov_pair]
+        else:
+            # Nodal mode or intra-provincial: use corridor-specific capacity
+            final_capacity_mw = corridor_capacity_mw
         # Fallback to direct link/line flow (covers intra-provincial corridors
         # whose buses share a province and so produce no inter-province column
         # in the hourly energy-balance CSVs).
@@ -1018,6 +1248,9 @@ def build_corridor_map(
                 )
                 timestamps = link_flows_ts
                 bus0, bus1 = bus_a, bus_b
+                # Fallback uses direct per-line flows, so use corridor capacity
+                using_provincial_flow = False
+                final_capacity_mw = corridor_capacity_mw
 
         missing_flow = timestamps is None
         if missing_flow:
@@ -1042,30 +1275,80 @@ def build_corridor_map(
         )
 
         if missing_flow:
+            capacity_note = ""
+            if is_interprovincial and corridor_capacity_mw != final_capacity_mw:
+                capacity_note = f"""
+            <div style="margin-top:6px; color:#0066cc;"><i>Note: Corridor capacity ({corridor_capacity_mw:.1f} MW) differs from displayed total ({final_capacity_mw:.1f} MW) which aggregates all {prov_a}-{prov_b} connections for provincial flow comparison.</i></div>
+            """
             info_html = f"""
             <div><b>Corridor:</b> {bus_a} &hArr; {bus_b}</div>
+            <div><b>Provinces:</b> {prov_a} &hArr; {prov_b}</div>
             <div><b>Voltage mix:</b> {kv_label}</div>
-            <div><b>sum(s_nom):</b> {capacity_mw:.1f}</div>
+            <div><b>Base capacity (existing lines):</b> {base_capacity_mw:.1f} MW</div>
+            <div><b>Added capacity (new lines from planning):</b> {added_capacity_mw:.1f} MW</div>
+            <div><b>Corridor total:</b> {corridor_capacity_mw:.1f} MW</div>
+            {capacity_note}
             <div style="margin-top:6px; color:#888;"><i>No flow data available for this corridor.</i></div>
             <div style="margin-top:6px;"><b>Included lines:</b><br>{lines_html}</div>
             """
             popup = folium.Popup(
-                folium.IFrame(html=info_html, width=420, height=200),
+                folium.IFrame(html=info_html, width=420, height=240),
                 max_width=500,
             )
         else:
-            corridor_title = f"{bus_a} <-> {bus_b} ({kv_label})"
+            corridor_title = f"{bus_a} <-> {bus_b} ({kv_label}) | {map_label}"
+
+            # Build capacity note for provincial aggregation
+            capacity_mode = "corridor-specific"
+            if (
+                is_interprovincial
+                and using_provincial_flow
+                and corridor_capacity_mw != final_capacity_mw
+            ):
+                capacity_mode = f"provincial aggregate ({prov_a}↔{prov_b})"
+
             subtitle = (
-                f"{map_label} | sum(s_nom)={capacity_mw:.1f} | flow: {bus0} -> {bus1}"
+                f"Capacity: {final_capacity_mw:.1f} MW ({capacity_mode}) | "
+                f"flow: {bus0} -> {bus1}"
             )
-            plot_html = build_util_plot_html(
-                timestamps, flow_mw, capacity_mw, corridor_title, subtitle
+            plot_html, metrics = build_util_plot_html(
+                timestamps, flow_mw, final_capacity_mw, corridor_title, subtitle
             )
+
+            # Build detailed capacity explanation
+            if (
+                is_interprovincial
+                and using_provincial_flow
+                and corridor_capacity_mw != final_capacity_mw
+            ):
+                capacity_explanation = f"""
+            <div style="margin-top:6px;"><b>Capacity calculation (provincial mode):</b></div>
+            <div><b>This corridor:</b> {corridor_capacity_mw:.1f} MW (existing: {base_capacity_mw:.1f} + new: {added_capacity_mw:.1f})</div>
+            <div><b>Total {prov_a}↔{prov_b}:</b> {final_capacity_mw:.1f} MW (aggregates all inter-provincial corridors)</div>
+            <div style="margin-top:4px; color:#0066cc; font-size:12px;"><i>Note: Provincial flow data aggregates across all {prov_a}-{prov_b} connections, so utilization is calculated using the total provincial capacity.</i></div>
+            """
+            else:
+                capacity_explanation = f"""
+            <div style="margin-top:6px;"><b>Capacity calculation:</b></div>
+            <div>Existing lines (base s_nom) = {base_capacity_mw:.1f} MW</div>
+            <div>New lines from planning (s_nom_opt) = {added_capacity_mw:.1f} MW</div>
+            <div><b>Total corridor capacity = {final_capacity_mw:.1f} MW</b></div>
+            """
+
             info_html = f"""
+            <div><b>Case:</b> {map_label}</div>
             <div><b>Corridor:</b> {bus_a} &hArr; {bus_b}</div>
+            <div><b>Provinces:</b> {prov_a} &hArr; {prov_b}</div>
             <div><b>Voltage mix:</b> {kv_label}</div>
-            <div><b>sum(s_nom):</b> {capacity_mw:.1f}</div>
-            <div style="margin-top:6px;"><b>Included lines (drawn separately):</b><br>{lines_html}</div>
+            <div><b>Final planning year:</b> {last_year}</div>
+            <div><b>Flow orientation:</b> {bus0} -> {bus1}</div>
+            {capacity_explanation}
+            <div style="margin-top:6px;"><b>Utilization:</b> |flow| / {final_capacity_mw:.1f} MW</div>
+            <div><b>Max utilization:</b> {metrics["max_utilization"]:.3f} p.u.</div>
+            <div><b>Avg utilization:</b> {metrics["avg_utilization"]:.3f} p.u.</div>
+            <div><b>Hours ≥ 0.8 p.u.:</b> {metrics["hours_ge_0_8"]}</div>
+            <div><b>Hours ≥ 1.0 p.u.:</b> {metrics["hours_ge_1_0"]}</div>
+            <div style="margin-top:6px;"><b>Physical lines:</b><br>{lines_html}</div>
             """
             popup = folium.Popup(
                 folium.IFrame(
@@ -1074,6 +1357,32 @@ def build_corridor_map(
                     height=POPUP_HEIGHT,
                 ),
                 max_width=POPUP_WIDTH + 80,
+            )
+
+            # Add to summary
+            a_sorted, b_sorted = sorted([bus_a, bus_b])
+            prov_a_sorted, prov_b_sorted = sorted([prov_a, prov_b])
+            summary.append(
+                {
+                    "case": map_label,
+                    "corridor": f"{a_sorted}__to__{b_sorted}",
+                    "busA": a_sorted,
+                    "busB": b_sorted,
+                    "provinceA": prov_a_sorted,
+                    "provinceB": prov_b_sorted,
+                    "corridor_capacity_mw": corridor_capacity_mw,
+                    "capacity_for_utilization_mw": final_capacity_mw,
+                    "existing_lines_capacity_mw": base_capacity_mw,
+                    "new_lines_capacity_mw": added_capacity_mw,
+                    "provincial_aggregation_used": is_interprovincial
+                    and using_provincial_flow
+                    and corridor_capacity_mw != final_capacity_mw,
+                    "max_utilization": metrics["max_utilization"],
+                    "avg_utilization": metrics["avg_utilization"],
+                    "hours_ge_0_8": metrics["hours_ge_0_8"],
+                    "hours_ge_1_0": metrics["hours_ge_1_0"],
+                    "flow_orientation": f"{bus0} -> {bus1}",
+                }
             )
 
         is_self_loop = abs(lat1 - lat2) < 1e-9 and abs(lon1 - lon2) < 1e-9
@@ -1114,7 +1423,17 @@ def build_corridor_map(
     folium.LayerControl(collapsed=False).add_to(fmap)
     fmap.save(out_html)
 
-    logging.info(f"[{map_label}] Saved: {out_html}")
+    # Save CSV summary
+    if summary:
+        summary_df = pd.DataFrame(summary)
+        summary_df = summary_df.sort_values(
+            ["hours_ge_0_8", "max_utilization"],
+            ascending=[False, False],
+        )
+        summary_df.to_csv(out_csv, index=False, encoding="utf-8-sig")
+        logging.info(f"[{map_label}] Saved CSV: {out_csv}")
+
+    logging.info(f"[{map_label}] Saved HTML: {out_html}")
     logging.info(f"[{map_label}] Corridors total: {len(corridors)}")
     logging.info(f"[{map_label}] Drawn physical lines: {drawn_lines}")
     logging.info(f"[{map_label}] Drawn (no flow data, grey): {drawn_no_data}")
@@ -1140,6 +1459,20 @@ def main():
     dispatch_post_process_folder = str(snakemake.input.post_process_dispatch)
     planning_out_html = str(snakemake.output.planning_corridor_map)
     dispatch_out_html = str(snakemake.output.dispatch_corridor_map)
+    planning_out_csv = str(snakemake.output.planning_corridor_summary)
+    dispatch_out_csv = str(snakemake.output.dispatch_corridor_summary)
+
+    # Load capacity expansion data from planning unit summary
+    unit_summary_path = os.path.join(
+        planning_post_process_folder, "unit_summary_planning.csv"
+    )
+    final_added, last_year, expansion_detail = load_final_planning_capacity_additions(
+        unit_summary_path
+    )
+
+    if last_year is None:
+        logging.warning("No planning year data found; using base capacities only")
+        last_year = "N/A"
 
     # Topology (buses, lines, corridors) always comes from the planning network,
     # which contains the full set of physical lines including newly built ones.
@@ -1169,7 +1502,11 @@ def main():
         link_flows_ts,
         link_flows_df,
         planning_out_html,
+        planning_out_csv,
         "Planning",
+        final_added,
+        last_year,
+        expansion_detail,
     )
 
     dispatch_nodal_index = index_nodal_files(
@@ -1186,7 +1523,11 @@ def main():
         dispatch_link_flows_ts,
         dispatch_link_flows_df,
         dispatch_out_html,
+        dispatch_out_csv,
         "Dispatch",
+        final_added,
+        last_year,
+        expansion_detail,
     )
 
 
