@@ -1,6 +1,7 @@
 """CLI command to execute the IDEA export script against an existing run directory."""
 
 import builtins
+import sys
 import types
 from pathlib import Path
 
@@ -41,9 +42,16 @@ def run_export_idea(run_dir, config_path, result_type=None, log_file=None):
 
     script = Path(__file__).parent.parent / "workflow" / "scripts" / "export_idea.py"
     script_globals = {"__builtins__": __builtins__, "snakemake": snakemake}
-    exec(
-        compile(script.read_text(encoding="utf-8"), str(script), "exec"), script_globals
-    )
+    script_path = str(script.parent)
+    sys.path.insert(0, script_path)
+    try:
+        exec(
+            compile(script.read_text(encoding="utf-8"), str(script), "exec"),
+            script_globals,
+        )
+    finally:
+        if sys.path and sys.path[0] == script_path:
+            sys.path.pop(0)
 
 
 @click.command("export-idea")
