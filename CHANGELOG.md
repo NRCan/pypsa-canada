@@ -1,3 +1,10 @@
+## 0.2.20 (2026-06-10)
+
+### Bug Fixes
+
+- Removed deprecated postprocessing cli call
+- Corrected the CLI command for postprocessing manually
+
 ## 0.2.19 (2026-06-09)
 
 ### Bug Fixes
