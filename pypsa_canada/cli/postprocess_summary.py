@@ -1,5 +1,5 @@
 """
-CLI command to test compare_results script against existing run outputs.
+CLI command to test create_summary script against existing run outputs.
 
 Usage:
     pypsa-canada test-compare --run-dir results/minimal_model-2021-2050/run_2026-05-06_17-33 --config config/minimal_model.yaml

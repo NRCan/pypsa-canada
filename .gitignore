@@ -148,3 +148,5 @@ savescheck_csv.txt
 
 example/model/Canada-National/*
 example/config/Canada-National*
+
+example/*.pdf

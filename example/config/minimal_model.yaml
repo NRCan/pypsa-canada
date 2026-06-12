@@ -111,6 +111,25 @@ planning:
       enable: true
       custom_constraint_filepath: "data/constraints/custom_constraints.csv"
 
+  modify_components:
+    links:
+      # 'OPT_QCNB_HVDC':
+      #   p_nom_extendable: False
+      #   efficiency: 0.55
+      #   p_nom: 3455
+
+      # 'EelRiver_QCa': Delete
+    generators:
+      'BUS_1 Coal':
+        p_nom_extendable: False
+        efficiency: 0.55
+        p_nom: 3455
+
+      # 'EelRiver_QCa': Delete
+    storage_units:
+    lines:
+    stores:
+
 dispatch:
   #Snapshots related
   horizon: 336 #336 #2 weeks in hours

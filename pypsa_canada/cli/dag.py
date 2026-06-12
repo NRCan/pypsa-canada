@@ -53,6 +53,12 @@ os.environ.pop("SNAKEMAKE_OUTPUT_CACHE", None)  # no cache location => cache unu
     multiple=True,
 )
 @click.option(
+    "--omit-from",
+    # "omit_from",
+    help="Exclude a rule branch from the DAG by omitting it and its downstream dependencies",
+    multiple=True,
+)
+@click.option(
     "--debug",
     is_flag=True,
     default=False,
@@ -65,6 +71,7 @@ def dag(
     rulegraph: bool,
     data_folder: str | None = None,
     targets: tuple = (),
+    omit_from: tuple = (),
     debug: bool = False,
 ):
     """Generate DAG visualization for the Snakemake workflow."""
@@ -102,8 +109,11 @@ def dag(
     output_file = f"{output}.{format}"
     print(f"Output: {output_file}\n")
 
-    # Build the Snakemake command
+    # Build the Snakemake command.
+    # Snakemake expects the graph format immediately after --dag/--rulegraph,
+    # so put the format token before any target names.
     graph_type = "--rulegraph" if rulegraph else "--dag"
+    graph_format = "dot"
 
     cmd = [
         "snakemake",
@@ -114,11 +124,16 @@ def dag(
         "-d",
         str(workdir),
         graph_type,
+        graph_format,
     ]
 
     # Add targets if specified
     if targets:
         cmd.extend(targets)
+
+    # Exclude rule branches if specified
+    if omit_from:
+        cmd.extend(["--omit-from", *omit_from])
 
     if debug:
         print(f"Running command: {' '.join(cmd)}\n")

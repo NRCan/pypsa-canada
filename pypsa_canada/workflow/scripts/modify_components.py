@@ -16,13 +16,22 @@ setup_script_logging(LOG_PATH)
 config = snakemake.config
 
 
-def modify_component(self, component, name, col=None, value=None, action="Modify"):
+def modify_component(
+    n: Network,
+    component: str,
+    name: str,
+    col: str = None,
+    value: str | int | float = None,
+    action: str = "Modify",
+):
     """
     Modify or delete a PyPSA component, and if the name contains 'OPT',
     apply the same action to all components with the same base name and a year suffix.
 
     Parameters
     ----------
+    n : Network
+        The PyPSA Network object to modify.
     component : str
         PyPSA component type (Generator, StorageUnit, Line, Link).
     name : str
@@ -34,12 +43,12 @@ def modify_component(self, component, name, col=None, value=None, action="Modify
     action : str, optional
         Either "Delete" or "Modify", default is "Modify".
     """
-    if name not in self.network.df(component).index:
+    if name not in n.c[component].static.index:
         raise ValueError(
             f"Component {component} with name {name} to {action} does not exist in the network."
         )
 
-    df = self.network.df(component)
+    df = n.c[component].static
 
     # List of component names to process
     names_to_process = [name]
@@ -48,23 +57,15 @@ def modify_component(self, component, name, col=None, value=None, action="Modify
         suffix_matches = df.index[df.index.str.startswith(name + "-20")]
         names_to_process.extend(suffix_matches)
 
-    if action == "Modify":
+    if action.lower() == "modify":
         if col is None or value is None:
             raise ValueError(
                 "For modification, 'column' and 'value' must be specified."
             )
-        df.loc[names_to_process, col] = value
-        if component == "Generator":
-            self.network.generators = df
-        elif component == "StorageUnit":
-            self.network.storage_units = df
-        elif component == "Line":
-            self.network.lines = df
-        elif component == "Link":
-            self.network.links = df
+        n.c[component].static.loc[names_to_process, col] = value
 
-    elif action == "Delete":
-        self.network.mremove(component, names_to_process)
+    elif action.lower() == "delete":
+        n.remove(component, names_to_process)
 
     else:
         print(f"Invalid action '{action}' for component {component}: {name}")
@@ -73,35 +74,33 @@ def modify_component(self, component, name, col=None, value=None, action="Modify
 def main():
     network = Network(snakemake.input.input_data)
 
-    # Components modification
-    modify_components = {
-        "Link": {},
-        "Generator": {},
-        "StorageUnit": {},
-        "Line": {},
-    }
+    modify_components = config.get("planning").get("modify_components", {})
 
     for component, components_dict in modify_components.items():
         if components_dict is not None:
             for component_name, component_dict in components_dict.items():
                 if isinstance(component_dict, dict):
-                    for col, value in component_dict.items():
-                        network = modify_component(
+                    action = component_dict.pop("action", "Modify")
+                    if action.lower() == "modify":
+                        for col, value in component_dict.items():
+                            modify_component(
+                                n=network,
+                                component=component,
+                                name=component_name,
+                                col=col,
+                                value=value,
+                                action="Modify",
+                            )
+                    elif action.lower() == "delete":
+                        modify_component(
+                            n=network,
                             component=component,
                             name=component_name,
-                            col=col,
-                            value=value,
-                            action="Modify",
+                            action="Delete",
                         )
-                elif component_dict == "Delete":
-                    network = modify_component(
-                        component=component, name=component_name, action="Delete"
-                    )
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
-
-    return
 
 
 if __name__ == "__main__":

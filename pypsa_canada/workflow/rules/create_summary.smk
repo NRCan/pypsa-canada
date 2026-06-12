@@ -1,5 +1,5 @@
 
-rule compare_results:
+rule create_summary:
     input:
         planning_dir=f"{RUN_OUTPUT_DIR}/post_process_planning",
         dispatch_dir=f"{RUN_OUTPUT_DIR}/post_process_dispatch"

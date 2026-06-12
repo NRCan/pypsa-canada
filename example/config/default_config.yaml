@@ -210,6 +210,28 @@ planning:
       enable: false
       # custom_constraint_filepath: ""
 
+  modify_components:
+    links:
+      # 'OPT_QCNB_HVDC':
+      #   action: "Modify"
+      #   efficiency: 0.55
+
+      # 'EelRiver_QCa':
+      #   action: "Delete"
+    generators:
+      # 'Generator 1':
+      #   action: "Modify"
+      #   p_nom_extendable: False
+      #   efficiency: 0.55
+      #   p_nom: 3455
+
+      # 'Generator 2':
+      #   action: "Delete"
+    storage_units:
+    lines:
+    stores:
+
+
 dispatch:
   #Snapshots related
   horizon: 336 #336 #2 weeks in hours

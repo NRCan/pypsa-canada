@@ -14,7 +14,7 @@ def get_log_inputs(wildcards=None):
         *rules.solve_dispatch.log,
         *rules.post_process_planning.log,
         *rules.post_process_dispatch.log,
-        *rules.compare_results.log,
+        *rules.create_summary.log,
         *rules.copy_config.log,
         *rules.collect_logs.log
     ]
