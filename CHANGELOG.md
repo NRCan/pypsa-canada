@@ -1,3 +1,10 @@
+## 0.2.21 (2026-06-12)
+
+### Bug Fixes
+
+- Fixed Update components rule
+- Renamed compare_results to create_summary
+
 ## 0.2.20 (2026-06-10)
 
 ### Bug Fixes
