@@ -118,14 +118,16 @@ planning:
       #   efficiency: 0.55
       #   p_nom: 3455
 
-      # 'EelRiver_QCa': Delete
+      # 'EelRiver_QCa':
+      #   action: "Delete"
     generators:
       'BUS_1 Coal':
         p_nom_extendable: False
         efficiency: 0.55
         p_nom: 3455
 
-      # 'EelRiver_QCa': Delete
+      # 'BUS_3 Gas 2':
+      #   action: "Delete"
     storage_units:
     lines:
     stores:
