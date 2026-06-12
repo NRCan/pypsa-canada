@@ -1,3 +1,10 @@
+## 0.2.22 (2026-06-12)
+
+### Bug Fixes
+
+- Modify folder path for corridor utilization maps
+- Modify folder path for corridor utilization maps
+
 ## 0.2.21 (2026-06-12)
 
 ### Bug Fixes
