@@ -8,10 +8,10 @@ rule plot_corridor_map:
         post_process_planning=f"{RUN_OUTPUT_DIR}/post_process_planning",
         post_process_dispatch=f"{RUN_OUTPUT_DIR}/post_process_dispatch"
     output:
-        planning_corridor_map=f"{RUN_OUTPUT_DIR}/planning_corridor_utilization_map.html",
-        dispatch_corridor_map=f"{RUN_OUTPUT_DIR}/dispatch_corridor_utilization_map.html",
-        planning_corridor_summary=f"{RUN_OUTPUT_DIR}/planning_corridor_utilization_map_summary.csv",
-        dispatch_corridor_summary=f"{RUN_OUTPUT_DIR}/dispatch_corridor_utilization_map_summary.csv"
+        planning_corridor_map=f"{RUN_OUTPUT_DIR}/post_process_maps/planning_corridor_utilization_map.html",
+        dispatch_corridor_map=f"{RUN_OUTPUT_DIR}/post_process_maps/dispatch_corridor_utilization_map.html",
+        planning_corridor_summary=f"{RUN_OUTPUT_DIR}/post_process_maps/planning_corridor_utilization_map_summary.csv",
+        dispatch_corridor_summary=f"{RUN_OUTPUT_DIR}/post_process_maps/dispatch_corridor_utilization_map_summary.csv"
     log:
         f"{RUN_LOG_DIR}/plot_corridor_map_{TIMESTAMP}.log"
     script:
