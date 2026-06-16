@@ -344,7 +344,6 @@ def main():
     # TODO Verify if we put 1,1,1 or something
     network.snapshot_weightings.loc[:, ["objective", "stores", "generators"]] = 1
 
-
     # Set Optimal Capacity to all Components
     network.optimize.fix_optimal_capacities()
     remove_zero_capacity_components(network)
