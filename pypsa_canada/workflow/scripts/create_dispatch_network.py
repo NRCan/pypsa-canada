@@ -344,16 +344,6 @@ def main():
     # TODO Verify if we put 1,1,1 or something
     network.snapshot_weightings.loc[:, ["objective", "stores", "generators"]] = 1
 
-    # TODO move this to a function
-    # Set all committables components to True
-    if not network.generators.empty:
-        network.generators.loc[
-            network.generators.carrier.isin(["coal", "gas", "nuclear"]), "committable"
-        ] = True
-    # TODO Validate if all links should be committable?
-    if not network.links.empty:
-        network.links.loc[:, "committable"] = True
-
     # Set Optimal Capacity to all Components
     network.optimize.fix_optimal_capacities()
     remove_zero_capacity_components(network)
