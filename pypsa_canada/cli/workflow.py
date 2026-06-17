@@ -25,6 +25,44 @@ from snakemake.settings.types import (
 os.environ.pop("SNAKEMAKE_OUTPUT_CACHE", None)  # no cache location => cache unused
 
 
+# def _benchmark_memory_fields(fieldnames: list[str]) -> list[str]:
+#     memory_tokens = ("mem", "rss", "uss", "pss", "vms")
+#     memory_fields = [
+#         field
+#         for field in fieldnames
+#         if any(token in field.lower() for token in memory_tokens)
+#     ]
+#     return memory_fields or fieldnames
+
+
+# def _benchmark_report_lines(benchmark_file: Path, workdir: Path) -> list[str]:
+#     report_lines = [f"- {benchmark_file.relative_to(workdir)}"]
+#     try:
+#         raw_text = benchmark_file.read_text(encoding="utf-8")
+#     except UnicodeDecodeError:
+#         return report_lines + ["  [binary or non-UTF-8 benchmark file]", ""]
+
+#     reader = csv.DictReader(raw_text.splitlines(), delimiter="\t")
+#     if not reader.fieldnames:
+#         return report_lines + ["  [empty benchmark file]", ""]
+
+#     selected_fields = _benchmark_memory_fields(reader.fieldnames)
+#     report_lines.append("  memory fields: " + ", ".join(selected_fields))
+
+#     rows = list(reader)
+#     if not rows:
+#         report_lines.append("  [no benchmark rows found]")
+#         return report_lines + [""]
+
+#     for row_index, row in enumerate(rows, start=1):
+#         values = ", ".join(
+#             f"{field}={row.get(field, '')}" for field in selected_fields if field in row
+#         )
+#         report_lines.append(f"  row {row_index}: {values}")
+
+#     return report_lines + [""]
+
+
 @click.option(
     "-f",
     "--file",
@@ -162,7 +200,9 @@ def run(
 
     # Initialize and run the workflow
     try:
-        with SnakemakeApi(OutputSettings(verbose=False, show_failed_logs=True)) as api:
+        with SnakemakeApi(
+            OutputSettings(verbose=False, show_failed_logs=True, benchmark_extended=True)
+        ) as api:
             config_settings = None
             if configfile.exists():
                 config_settings = ConfigSettings(configfiles=[configfile])
@@ -194,12 +234,15 @@ def run(
             )
 
             # Create DAG settings
-            dag_settings = DAGSettings(targets=targets, forceall=not keep_network)
+            dag_settings = DAGSettings(
+                targets=targets,
+                forceall=not keep_network,
+            )
 
             # Create DAG
             dag_api = workflow_api.dag(dag_settings=dag_settings)
 
-            # Check if we should unlock instead of execute
+            # ld unlock instead of execute
             if unlock:
                 print("Unlocking workflow directory...")
                 dag_api.unlock()
@@ -213,6 +256,7 @@ def run(
                 # Report results
                 print("Displaying result of simulation: \n")
                 print(result)
+
                 print("\nWorkflow completed successfully!")
 
     except Exception as e:

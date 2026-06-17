@@ -3,6 +3,8 @@
 rule solve_planning:
     input:
         planning_unsolved_network=f"{RUN_NET_DIR}/planning_base_network.nc"
+    benchmark:
+        f"{RUN_OUTPUT_DIR}/solve_planning_benchmark.log"
     output:
         solved_network_csv=directory(f"{RUN_OUTPUT_DIR}/planning_solved_network")
     log:

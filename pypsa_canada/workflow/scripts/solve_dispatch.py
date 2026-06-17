@@ -2,6 +2,7 @@ import logging
 import math
 import os
 import sys
+import time
 import traceback
 
 # from typing import Optional, Dict, Any, Union
@@ -19,13 +20,16 @@ from constraints.generic_constraints import (
     add_stop_prod_constraint,
     prevent_spill_if_not_fully_charged,
 )
+from _benchmarks import write_benchmark_file
 from helpers import setup_script_logging
 
 from pypsa_canada.workflow.scripts.common import drop_inactive_assets
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
+snakemake = globals().get("snakemake")
 LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/solve_dispatch.log"
+BENCHMARK_PATH = getattr(snakemake, "benchmark", None)
 
 
 setup_script_logging(LOG_PATH)
@@ -356,6 +360,7 @@ def optimize_uc_period(
 
 
 def main():
+    start_time = time.perf_counter()
     network = pypsa.Network(snakemake.input.unsolved_dispatch_network)
 
     logging.info("Running Dispatch Solve")
@@ -435,6 +440,11 @@ def main():
         if not os.path.exists(out_path):
             os.makedirs(out_path)
         period_network.export_to_csv_folder(period_network_path)
+
+    if BENCHMARK_PATH:
+        elapsed_seconds = time.perf_counter() - start_time
+        benchmark_path = write_benchmark_file(BENCHMARK_PATH, elapsed_seconds)
+        logging.info("Benchmark written to %s", benchmark_path)
 
 
 if __name__ == "__main__":

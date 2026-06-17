@@ -3,6 +3,8 @@
 rule solve_dispatch:
     input:
         unsolved_dispatch_network=f"{RUN_NET_DIR}/dispatch_planning_unsolved_network.nc",
+    benchmark:
+        f"{RUN_OUTPUT_DIR}/solve_dispatch_benchmark.log"
     output:
         dispatch_output_file_csv=directory(f"{RUN_OUTPUT_DIR}/dispatch_solved_network"),
         #solved_dispatch_network_nc=config["dispatch_output_file_nc"]

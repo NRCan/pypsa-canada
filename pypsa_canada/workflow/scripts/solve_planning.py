@@ -2,6 +2,7 @@
 import logging
 import os
 import sys
+import time
 import traceback
 from typing import TYPE_CHECKING
 
@@ -18,6 +19,7 @@ from constraints.planning_constraints import (
     add_planning_reserve_margin,
     component_capacity_expansion_constraint,
 )
+from _benchmarks import write_benchmark_file
 from helpers import setup_script_logging
 
 if TYPE_CHECKING:
@@ -25,8 +27,9 @@ if TYPE_CHECKING:
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
+snakemake = globals().get("snakemake")
 LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/solve_planning.log"
-
+BENCHMARK_PATH = getattr(snakemake, "benchmark", None)
 
 setup_script_logging(LOG_PATH)
 
@@ -162,6 +165,9 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 
 
 def main():
+    logging.info(f"Logging benchmark to: {BENCHMARK_PATH}")
+
+    start_time = time.perf_counter()
     network = pypsa.Network(snakemake.input.planning_unsolved_network)
     disable_committable_for_OPT(network)
 
@@ -228,9 +234,13 @@ def main():
         # Update the network to only include those snapshots
         network.set_snapshots(valid_snapshots)
 
+    logging.info(f"Logging benchmark to: {BENCHMARK_PATH}")
+    logging.info(f"TESTEST")
+
     if linearized_unit_commitment:
         linearized_uc_ena = True
         logging.info("Linearized Unit Commitment Flag has been enabled")
+
     else:
         linearized_uc_ena = False
         logging.info("Linearized Unit Commitment Flag has been disabled")
@@ -273,6 +283,11 @@ def main():
     out_path = str(snakemake.output.solved_network_csv)
 
     network.export_to_csv_folder(out_path)
+
+    if BENCHMARK_PATH:
+        elapsed_seconds = time.perf_counter() - start_time
+        benchmark_path = write_benchmark_file(BENCHMARK_PATH, elapsed_seconds)
+        logging.info("Benchmark written to %s", benchmark_path)
 
 
 if __name__ == "__main__":
