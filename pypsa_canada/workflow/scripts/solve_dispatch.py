@@ -10,6 +10,7 @@ from itertools import chain, groupby
 
 import pandas as pd
 import pypsa
+from _benchmarks import write_benchmark_file
 from constraints.dispatch_constraints import (
     add_CER_constraint_dispatch,
     distribute_CER_hours_dispatch,
@@ -20,7 +21,6 @@ from constraints.generic_constraints import (
     add_stop_prod_constraint,
     prevent_spill_if_not_fully_charged,
 )
-from _benchmarks import write_benchmark_file
 from helpers import setup_script_logging
 
 from pypsa_canada.workflow.scripts.common import drop_inactive_assets

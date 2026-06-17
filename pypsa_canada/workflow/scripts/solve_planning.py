@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 import pypsa
+from _benchmarks import write_benchmark_file
 from constraints.generic_constraints import (
     CER_generator_grouping,
     add_bidirection_link_constraint,
@@ -19,7 +20,6 @@ from constraints.planning_constraints import (
     add_planning_reserve_margin,
     component_capacity_expansion_constraint,
 )
-from _benchmarks import write_benchmark_file
 from helpers import setup_script_logging
 
 if TYPE_CHECKING:
@@ -235,7 +235,7 @@ def main():
         network.set_snapshots(valid_snapshots)
 
     logging.info(f"Logging benchmark to: {BENCHMARK_PATH}")
-    logging.info(f"TESTEST")
+    logging.info("TESTEST")
 
     if linearized_unit_commitment:
         linearized_uc_ena = True

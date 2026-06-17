@@ -201,7 +201,9 @@ def run(
     # Initialize and run the workflow
     try:
         with SnakemakeApi(
-            OutputSettings(verbose=False, show_failed_logs=True, benchmark_extended=True)
+            OutputSettings(
+                verbose=False, show_failed_logs=True, benchmark_extended=True
+            )
         ) as api:
             config_settings = None
             if configfile.exists():
