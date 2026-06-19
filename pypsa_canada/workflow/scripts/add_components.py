@@ -7,17 +7,25 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from _benchmarks import (
+    finish_benchmark_tracker,
+    result_benchmark_csv_path,
+    start_benchmark_tracker,
+)
 from helpers import setup_script_logging
 from pypsa import Network
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
-LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/temp.log"
+snakemake = globals().get("snakemake")
+LOG_PATH = (
+    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/temp.log"
+)
 
 
 setup_script_logging(LOG_PATH)
 
-config = snakemake.config
+config = snakemake.config if snakemake is not None else None
 
 
 def preprocess_carriers(network: Network, comp_config: dict[str, Any]) -> Network:
@@ -546,6 +554,11 @@ def preprocess_components(
 
 
 def main() -> None:
+    if snakemake is None:
+        raise RuntimeError("add_components.py must be executed by Snakemake")
+
+    benchmark_timer, benchmark_memory = start_benchmark_tracker()
+
     network: Network = Network(snakemake.input.input_data)
     comp_config: dict[str, Any] = config["components"]
 
@@ -556,6 +569,13 @@ def main() -> None:
         network.export_to_csv_folder(
             f"{snakemake.output.planning_unsolved_network[:-3]}_csv"
         )
+
+    finish_benchmark_tracker(
+        result_benchmark_csv_path(snakemake.output.planning_unsolved_network),
+        "add_components",
+        benchmark_timer,
+        benchmark_memory,
+    )
 
 
 if __name__ == "__main__":

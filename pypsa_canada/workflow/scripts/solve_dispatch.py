@@ -2,7 +2,6 @@ import logging
 import math
 import os
 import sys
-import time
 import traceback
 
 # from typing import Optional, Dict, Any, Union
@@ -10,7 +9,11 @@ from itertools import chain, groupby
 
 import pandas as pd
 import pypsa
-from _benchmarks import write_benchmark_file
+from pypsa_canada.workflow.scripts._benchmarks import (
+    finish_benchmark_tracker,
+    start_benchmark_tracker,
+    result_benchmark_csv_path,
+)
 from constraints.dispatch_constraints import (
     add_CER_constraint_dispatch,
     distribute_CER_hours_dispatch,
@@ -28,13 +31,19 @@ from pypsa_canada.workflow.scripts.common import drop_inactive_assets
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
 snakemake = globals().get("snakemake")
-LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/solve_dispatch.log"
-BENCHMARK_PATH = getattr(snakemake, "benchmark", None)
+LOG_PATH = (
+    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/solve_dispatch.log"
+)
+BENCHMARK_CSV_PATH = (
+    result_benchmark_csv_path(snakemake.output.dispatch_output_file_csv)
+    if snakemake is not None
+    else None
+)
 
 
 setup_script_logging(LOG_PATH)
 
-config = snakemake.config
+config = snakemake.config if snakemake is not None else None
 
 
 # Note: Local implementations removed - now using imported functions from constraints module
@@ -360,7 +369,10 @@ def optimize_uc_period(
 
 
 def main():
-    start_time = time.perf_counter()
+    if snakemake is None:
+        raise RuntimeError("solve_dispatch.py must be executed by Snakemake")
+
+    benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.unsolved_dispatch_network)
 
     logging.info("Running Dispatch Solve")
@@ -441,10 +453,13 @@ def main():
             os.makedirs(out_path)
         period_network.export_to_csv_folder(period_network_path)
 
-    if BENCHMARK_PATH:
-        elapsed_seconds = time.perf_counter() - start_time
-        benchmark_path = write_benchmark_file(BENCHMARK_PATH, elapsed_seconds)
-        logging.info("Benchmark written to %s", benchmark_path)
+    if BENCHMARK_CSV_PATH is not None:
+        finish_benchmark_tracker(
+            BENCHMARK_CSV_PATH,
+            "solve_dispatch",
+            benchmark_timer,
+            benchmark_memory,
+        )
 
 
 if __name__ == "__main__":

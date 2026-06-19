@@ -12,6 +12,11 @@ import time
 
 import pandas as pd
 import pypsa
+from _benchmarks import (
+    finish_benchmark_tracker,
+    result_benchmark_csv_path,
+    start_benchmark_tracker,
+)
 from postprocess_helpers import (
     calc_annual,
     calc_energy_balance,
@@ -25,7 +30,10 @@ from postprocess_helpers import (
 )
 
 # ── Snakemake wiring ──
-LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/post_process_planning.log"
+snakemake = globals().get("snakemake")
+LOG_PATH = (
+    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/post_process_planning.log"
+)
 os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -36,9 +44,11 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(message)s",
 )
 
-config = snakemake.config
-solved_network_path = str(snakemake.input.solved_planning_network)
-output_dir = str(snakemake.output.planning_postprocess)
+config = snakemake.config if snakemake is not None else {}
+solved_network_path = (
+    str(snakemake.input.solved_planning_network) if snakemake is not None else None
+)
+output_dir = str(snakemake.output.planning_postprocess) if snakemake is not None else None
 
 
 # ── Configuration ──
@@ -472,6 +482,11 @@ def calc_misc_params(n, years, weightings):
 
 
 def main():
+    if snakemake is None:
+        raise RuntimeError("post_process_planning.py must be executed by Snakemake")
+
+    benchmark_timer, benchmark_memory = start_benchmark_tracker()
+
     logging.info("===== PLANNING POST-PROCESS =====")
     start_time = time.perf_counter()
 
@@ -622,9 +637,15 @@ def main():
         f"Planning post-process complete ({round(time.perf_counter() - start_time, 3)} s)"
     )
 
+    finish_benchmark_tracker(
+        result_benchmark_csv_path(output_dir),
+        "post_process_planning",
+        benchmark_timer,
+        benchmark_memory,
+    )
+
 
 if __name__ == "__main__":
     main()
-else:
-    # When called via Snakemake `script:` directive
+elif snakemake is not None:
     main()

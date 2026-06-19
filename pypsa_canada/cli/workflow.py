@@ -25,44 +25,6 @@ from snakemake.settings.types import (
 os.environ.pop("SNAKEMAKE_OUTPUT_CACHE", None)  # no cache location => cache unused
 
 
-# def _benchmark_memory_fields(fieldnames: list[str]) -> list[str]:
-#     memory_tokens = ("mem", "rss", "uss", "pss", "vms")
-#     memory_fields = [
-#         field
-#         for field in fieldnames
-#         if any(token in field.lower() for token in memory_tokens)
-#     ]
-#     return memory_fields or fieldnames
-
-
-# def _benchmark_report_lines(benchmark_file: Path, workdir: Path) -> list[str]:
-#     report_lines = [f"- {benchmark_file.relative_to(workdir)}"]
-#     try:
-#         raw_text = benchmark_file.read_text(encoding="utf-8")
-#     except UnicodeDecodeError:
-#         return report_lines + ["  [binary or non-UTF-8 benchmark file]", ""]
-
-#     reader = csv.DictReader(raw_text.splitlines(), delimiter="\t")
-#     if not reader.fieldnames:
-#         return report_lines + ["  [empty benchmark file]", ""]
-
-#     selected_fields = _benchmark_memory_fields(reader.fieldnames)
-#     report_lines.append("  memory fields: " + ", ".join(selected_fields))
-
-#     rows = list(reader)
-#     if not rows:
-#         report_lines.append("  [no benchmark rows found]")
-#         return report_lines + [""]
-
-#     for row_index, row in enumerate(rows, start=1):
-#         values = ", ".join(
-#             f"{field}={row.get(field, '')}" for field in selected_fields if field in row
-#         )
-#         report_lines.append(f"  row {row_index}: {values}")
-
-#     return report_lines + [""]
-
-
 @click.option(
     "-f",
     "--file",
@@ -123,6 +85,13 @@ os.environ.pop("SNAKEMAKE_OUTPUT_CACHE", None)  # no cache location => cache unu
     show_default=False,
     help="Keep existing network outputs and only rerun modified rules (sets forceall=False)",
 )
+# @click.option(
+#     "--rerun-code",
+#     is_flag=True,
+#     default=False,
+#     show_default=False,
+#     help="Rerun rules when their code changes (sets rerun_triggers=['code'])",
+# )
 @click.command()
 def run(
     file: str,
@@ -133,6 +102,7 @@ def run(
     cores: int | None = None,
     unlock: bool = False,
     keep_network: bool = False,
+    rerun_code: bool = True,
 ):
     # Configure logging level
     log_level = logging.DEBUG if debug else logging.INFO
@@ -236,9 +206,11 @@ def run(
             )
 
             # Create DAG settings
+            rerun_triggers = ["code"] if rerun_code else []
             dag_settings = DAGSettings(
                 targets=targets,
                 forceall=not keep_network,
+                rerun_triggers=rerun_triggers,
             )
 
             # Create DAG

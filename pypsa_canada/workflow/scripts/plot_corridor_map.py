@@ -26,11 +26,19 @@ import folium
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from _benchmarks import (
+    finish_benchmark_tracker,
+    result_benchmark_csv_path,
+    start_benchmark_tracker,
+)
 from helpers import setup_script_logging
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
-LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/plot_corridor_map.log"
+snakemake = globals().get("snakemake")
+LOG_PATH = (
+    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/plot_corridor_map.log"
+)
 
 setup_script_logging(LOG_PATH)
 
@@ -1453,6 +1461,11 @@ def build_corridor_map(
 
 
 def main():
+    if snakemake is None:
+        raise RuntimeError("plot_corridor_map.py must be executed by Snakemake")
+
+    benchmark_timer, benchmark_memory = start_benchmark_tracker()
+
     planning_res_folder = str(snakemake.input.planning_solved_network)
     dispatch_res_folder = str(snakemake.input.dispatch_solved_network)
     planning_post_process_folder = str(snakemake.input.post_process_planning)
@@ -1507,6 +1520,13 @@ def main():
         final_added,
         last_year,
         expansion_detail,
+    )
+
+    finish_benchmark_tracker(
+        result_benchmark_csv_path(planning_out_csv),
+        "plot_corridor_map",
+        benchmark_timer,
+        benchmark_memory,
     )
 
     dispatch_nodal_index = index_nodal_files(

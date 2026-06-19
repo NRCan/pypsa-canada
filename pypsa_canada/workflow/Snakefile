@@ -56,6 +56,8 @@ else:
 RUN_OUTPUT_DIR = f"{RUN_RES_DIR}/run_{TIMESTAMP}"
 Path(RUN_OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
+config.setdefault("run", {})["benchmark_results_file"] = f"{RUN_OUTPUT_DIR}/results_benchmarks.csv"
+
 # shadow_config = get_shadow(run)
 
 # shared_resources = run["shared_resources"]["policy"]

@@ -2,13 +2,16 @@
 import logging
 import os
 import sys
-import time
 import traceback
 from typing import TYPE_CHECKING
 
 import pandas as pd
 import pypsa
-from _benchmarks import write_benchmark_file
+from pypsa_canada.workflow.scripts._benchmarks import (
+    finish_benchmark_tracker,
+    start_benchmark_tracker,
+    result_benchmark_csv_path,
+)
 from constraints.generic_constraints import (
     CER_generator_grouping,
     add_bidirection_link_constraint,
@@ -28,12 +31,18 @@ if TYPE_CHECKING:
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
 snakemake = globals().get("snakemake")
-LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/solve_planning.log"
-BENCHMARK_PATH = getattr(snakemake, "benchmark", None)
+LOG_PATH = (
+    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/solve_planning.log"
+)
+BENCHMARK_CSV_PATH = (
+    result_benchmark_csv_path(snakemake.output.solved_network_csv)
+    if snakemake is not None
+    else None
+)
 
 setup_script_logging(LOG_PATH)
 
-config = snakemake.config
+config = snakemake.config if snakemake is not None else None
 
 
 def disable_committable_for_OPT(network: pypsa.Network):
@@ -165,9 +174,10 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 
 
 def main():
-    logging.info(f"Logging benchmark to: {BENCHMARK_PATH}")
+    if snakemake is None:
+        raise RuntimeError("solve_planning.py must be executed by Snakemake")
 
-    start_time = time.perf_counter()
+    benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.planning_unsolved_network)
     disable_committable_for_OPT(network)
 
@@ -234,9 +244,6 @@ def main():
         # Update the network to only include those snapshots
         network.set_snapshots(valid_snapshots)
 
-    logging.info(f"Logging benchmark to: {BENCHMARK_PATH}")
-    logging.info("TESTEST")
-
     if linearized_unit_commitment:
         linearized_uc_ena = True
         logging.info("Linearized Unit Commitment Flag has been enabled")
@@ -284,10 +291,13 @@ def main():
 
     network.export_to_csv_folder(out_path)
 
-    if BENCHMARK_PATH:
-        elapsed_seconds = time.perf_counter() - start_time
-        benchmark_path = write_benchmark_file(BENCHMARK_PATH, elapsed_seconds)
-        logging.info("Benchmark written to %s", benchmark_path)
+    if BENCHMARK_CSV_PATH is not None:
+        finish_benchmark_tracker(
+            BENCHMARK_CSV_PATH,
+            "solve_planning",
+            benchmark_timer,
+            benchmark_memory,
+        )
 
 
 if __name__ == "__main__":

@@ -12,9 +12,17 @@ import os
 import sys
 
 import pandas as pd
+from _benchmarks import (
+    finish_benchmark_tracker,
+    result_benchmark_csv_path,
+    start_benchmark_tracker,
+)
 
 # ── Snakemake wiring ──
-LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/export_idea.log"
+snakemake = globals().get("snakemake")
+LOG_PATH = (
+    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/export_idea.log"
+)
 os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -25,15 +33,19 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(message)s",
 )
 
-config = snakemake.config
-result_type = snakemake.params.result_type
-planning_csv = os.path.join(
-    str(snakemake.input.planning_dir), f"{result_type}_summary_planning.csv"
+config = snakemake.config if snakemake is not None else None
+result_type = snakemake.params.result_type if snakemake is not None else None
+planning_csv = (
+    os.path.join(str(snakemake.input.planning_dir), f"{result_type}_summary_planning.csv")
+    if snakemake is not None
+    else None
 )
-dispatch_csv = os.path.join(
-    str(snakemake.input.dispatch_dir), f"{result_type}_summary_dispatch.csv"
+dispatch_csv = (
+    os.path.join(str(snakemake.input.dispatch_dir), f"{result_type}_summary_dispatch.csv")
+    if snakemake is not None
+    else None
 )
-output_dir = str(snakemake.output.idea_output)
+output_dir = str(snakemake.output.idea_output) if snakemake is not None else None
 
 # ────────────────────────────────────────────
 # IDEA Variable Mapping Dictionaries
@@ -354,6 +366,11 @@ def export_as_idea(output_folder):
 
 
 def main():
+    if snakemake is None:
+        raise RuntimeError("export_idea.py must be executed by Snakemake")
+
+    benchmark_timer, benchmark_memory = start_benchmark_tracker()
+
     logging.info("===== IDEA FORMAT EXPORT =====")
     root_path = os.path.dirname(output_dir)
     # output_folder = os.path.join(root_path, "idea_output")
@@ -366,8 +383,15 @@ def main():
 
     logging.info("IDEA export complete")
 
+    finish_benchmark_tracker(
+        result_benchmark_csv_path(output_dir),
+        "export_idea",
+        benchmark_timer,
+        benchmark_memory,
+    )
+
 
 if __name__ == "__main__":
     main()
-else:
+elif snakemake is not None:
     main()

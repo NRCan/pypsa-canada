@@ -4,6 +4,8 @@
 
 
 import logging
+import csv
+import inspect
 import os
 import signal
 import sys
@@ -11,9 +13,23 @@ import time
 from datetime import timedelta
 from pathlib import Path
 
-from memory_profiler import _get_memory, choose_backend
+try:
+    from memory_profiler import _get_memory, choose_backend
+except ImportError:  # pragma: no cover - optional dependency for memory logging only
+    _get_memory = None
+    choose_backend = None
 
 logger = logging.getLogger(__name__)
+
+BENCHMARK_COLUMNS = [
+    "rule_name",
+    "elapsed_seconds",
+    "h:m:s",
+    "max_memory",
+    "memory_measurements",
+]
+
+BENCHMARK_RESULTS_FILENAME = "results_benchmarks.csv"
 
 # TODO: provide alternative when multiprocessing is not available
 try:
@@ -252,6 +268,134 @@ def write_benchmark_file(path, elapsed_seconds: float) -> Path:
         encoding="utf-8",
     )
     return benchmark_path
+
+
+def result_benchmark_csv_path(output_path) -> Path | None:
+    """Return the consolidated CSV path next to a rule output directory."""
+    caller_frame = inspect.currentframe().f_back if inspect.currentframe() else None
+    if caller_frame is not None:
+        caller_snakemake = caller_frame.f_globals.get("snakemake")
+        caller_config = getattr(caller_snakemake, "config", None)
+        if caller_config:
+            configured_path = caller_config.get("run", {}).get("benchmark_results_file")
+            if configured_path:
+                return Path(configured_path)
+
+    if not output_path:
+        return None
+    output_path = Path(output_path)
+    if output_path.suffix:
+        return output_path.parent / BENCHMARK_RESULTS_FILENAME
+    return output_path / BENCHMARK_RESULTS_FILENAME
+
+
+def append_benchmark_row(result_path, row: dict[str, object]) -> Path:
+    """Append one row to a CSV file, creating it if needed."""
+    result_path = Path(result_path)
+    result_path.parent.mkdir(parents=True, exist_ok=True)
+
+    normalized_row = {
+        column: str(row.get(column, "NA")) for column in BENCHMARK_COLUMNS
+    }
+    extra_columns = [key for key in row.keys() if key not in BENCHMARK_COLUMNS]
+    for column in extra_columns:
+        normalized_row[column] = str(row[column])
+
+    existing_rows: list[dict[str, str]] = []
+    existing_fields: list[str] = []
+
+    if result_path.exists():
+        with result_path.open("r", encoding="utf-8", newline="") as result_stream:
+            reader = csv.DictReader(result_stream)
+            existing_fields = list(reader.fieldnames or [])
+            existing_rows = [dict(existing_row) for existing_row in reader]
+
+    merged_fields: list[str] = []
+    for field in BENCHMARK_COLUMNS + existing_fields + list(normalized_row.keys()):
+        if field and field not in merged_fields:
+            merged_fields.append(field)
+
+    with result_path.open("w", encoding="utf-8", newline="") as result_stream:
+        writer = csv.DictWriter(result_stream, fieldnames=merged_fields)
+        writer.writeheader()
+        for existing_row in existing_rows:
+            writer.writerow(existing_row)
+        writer.writerow(normalized_row)
+
+    return result_path
+
+
+def start_benchmark_tracker():
+    """Start timing and optional memory tracking for a script run."""
+    benchmark_timer = timer(verbose=False)
+    benchmark_timer.__enter__()
+
+    benchmark_memory = None
+    if choose_backend is not None:
+        benchmark_memory = memory_logger(max_usage=False, timestamps=False)
+        benchmark_memory.__enter__()
+
+    return benchmark_timer, benchmark_memory
+
+
+def finish_benchmark_tracker(result_path, rule_name: str, benchmark_timer, benchmark_memory):
+    """Stop the tracker and append a benchmark row to result_path."""
+    if benchmark_memory is not None:
+        benchmark_memory.__exit__(None, None, None)
+    benchmark_timer.__exit__(None, None, None)
+
+    elapsed_seconds = benchmark_timer.usec / 1e6
+    max_memory = "NA"
+    memory_measurements = "NA"
+    if benchmark_memory is not None and getattr(benchmark_memory, "mem_usage", None):
+        max_memory = max(benchmark_memory.mem_usage)
+        memory_measurements = getattr(benchmark_memory, "n_measurements", "NA")
+
+    row = {
+        "rule_name": rule_name,
+        "elapsed_seconds": f"{elapsed_seconds:.4f}",
+        "h:m:s": str(timedelta(seconds=elapsed_seconds)),
+        "max_memory": max_memory,
+        "memory_measurements": memory_measurements,
+    }
+    return append_benchmark_row(result_path, row)
+
+
+def append_benchmark_csv(result_path, benchmark_path) -> Path:
+    """Append one Snakemake benchmark TSV file into a consolidated CSV file."""
+    benchmark_path = Path(benchmark_path)
+    result_path = Path(result_path)
+    result_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with benchmark_path.open("r", encoding="utf-8") as benchmark_stream:
+        reader = csv.DictReader(benchmark_stream, delimiter="\t")
+        benchmark_rows = [dict(row) for row in reader]
+        benchmark_fields = list(reader.fieldnames or [])
+
+    if not benchmark_rows:
+        return result_path
+
+    existing_rows = []
+    existing_fields = []
+    if result_path.exists():
+        with result_path.open("r", encoding="utf-8", newline="") as result_stream:
+            reader = csv.DictReader(result_stream)
+            existing_fields = list(reader.fieldnames or [])
+            existing_rows = [dict(row) for row in reader]
+
+    merged_fields = []
+    for field in existing_fields + benchmark_fields:
+        if field and field not in merged_fields:
+            merged_fields.append(field)
+
+    merged_rows = existing_rows + benchmark_rows
+
+    with result_path.open("w", encoding="utf-8", newline="") as result_stream:
+        writer = csv.DictWriter(result_stream, fieldnames=merged_fields)
+        writer.writeheader()
+        writer.writerows(merged_rows)
+
+    return result_path
 
 
 class optional:

@@ -3,17 +3,25 @@ import logging
 import sys
 import traceback
 
+from _benchmarks import (
+    finish_benchmark_tracker,
+    result_benchmark_csv_path,
+    start_benchmark_tracker,
+)
 from helpers import setup_script_logging
 from pypsa import Network
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
-LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/temp.log"
+snakemake = globals().get("snakemake")
+LOG_PATH = (
+    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/temp.log"
+)
 
 
 setup_script_logging(LOG_PATH)
 
-config = snakemake.config
+config = snakemake.config if snakemake is not None else None
 
 
 def modify_component(
@@ -72,6 +80,11 @@ def modify_component(
 
 
 def main():
+    if snakemake is None:
+        raise RuntimeError("modify_components.py must be executed by Snakemake")
+
+    benchmark_timer, benchmark_memory = start_benchmark_tracker()
+
     network = Network(snakemake.input.input_data)
 
     modify_components = config.get("planning").get("modify_components", {})
@@ -101,6 +114,13 @@ def main():
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
+
+    finish_benchmark_tracker(
+        result_benchmark_csv_path(snakemake.output.planning_unsolved_network),
+        "modify_components",
+        benchmark_timer,
+        benchmark_memory,
+    )
 
 
 if __name__ == "__main__":
