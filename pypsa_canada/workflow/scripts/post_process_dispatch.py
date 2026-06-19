@@ -30,7 +30,9 @@ from postprocess_helpers import (
 # ── Snakemake wiring ──
 snakemake = globals().get("snakemake")
 LOG_PATH = (
-    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/post_process_dispatch.log"
+    str(snakemake.log[0])
+    if snakemake is not None and snakemake.log
+    else "logs/post_process_dispatch.log"
 )
 os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 logging.basicConfig(
@@ -46,7 +48,9 @@ config = snakemake.config if snakemake is not None else {}
 solved_dispatch_path = (
     str(snakemake.input.solved_dispatch_network) if snakemake is not None else None
 )
-output_dir = str(snakemake.output.dispatch_postprocess) if snakemake is not None else None
+output_dir = (
+    str(snakemake.output.dispatch_postprocess) if snakemake is not None else None
+)
 
 # ── Configuration ──
 result_type = config.get("postprocess", {}).get("result_type", "Provincial")

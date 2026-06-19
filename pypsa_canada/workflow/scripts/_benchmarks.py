@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 
-import logging
 import csv
 import inspect
+import logging
 import os
 import signal
 import sys
@@ -338,7 +338,9 @@ def start_benchmark_tracker():
     return benchmark_timer, benchmark_memory
 
 
-def finish_benchmark_tracker(result_path, rule_name: str, benchmark_timer, benchmark_memory):
+def finish_benchmark_tracker(
+    result_path, rule_name: str, benchmark_timer, benchmark_memory
+):
     """Stop the tracker and append a benchmark row to result_path."""
     if benchmark_memory is not None:
         benchmark_memory.__exit__(None, None, None)

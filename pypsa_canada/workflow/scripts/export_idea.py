@@ -21,7 +21,9 @@ from _benchmarks import (
 # ── Snakemake wiring ──
 snakemake = globals().get("snakemake")
 LOG_PATH = (
-    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/export_idea.log"
+    str(snakemake.log[0])
+    if snakemake is not None and snakemake.log
+    else "logs/export_idea.log"
 )
 os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 logging.basicConfig(
@@ -36,12 +38,16 @@ logging.basicConfig(
 config = snakemake.config if snakemake is not None else None
 result_type = snakemake.params.result_type if snakemake is not None else None
 planning_csv = (
-    os.path.join(str(snakemake.input.planning_dir), f"{result_type}_summary_planning.csv")
+    os.path.join(
+        str(snakemake.input.planning_dir), f"{result_type}_summary_planning.csv"
+    )
     if snakemake is not None
     else None
 )
 dispatch_csv = (
-    os.path.join(str(snakemake.input.dispatch_dir), f"{result_type}_summary_dispatch.csv")
+    os.path.join(
+        str(snakemake.input.dispatch_dir), f"{result_type}_summary_dispatch.csv"
+    )
     if snakemake is not None
     else None
 )

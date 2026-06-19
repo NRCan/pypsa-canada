@@ -32,7 +32,9 @@ from postprocess_helpers import (
 # ── Snakemake wiring ──
 snakemake = globals().get("snakemake")
 LOG_PATH = (
-    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/post_process_planning.log"
+    str(snakemake.log[0])
+    if snakemake is not None and snakemake.log
+    else "logs/post_process_planning.log"
 )
 os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 logging.basicConfig(
@@ -48,7 +50,9 @@ config = snakemake.config if snakemake is not None else {}
 solved_network_path = (
     str(snakemake.input.solved_planning_network) if snakemake is not None else None
 )
-output_dir = str(snakemake.output.planning_postprocess) if snakemake is not None else None
+output_dir = (
+    str(snakemake.output.planning_postprocess) if snakemake is not None else None
+)
 
 
 # ── Configuration ──

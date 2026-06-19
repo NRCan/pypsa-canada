@@ -20,7 +20,9 @@ from _benchmarks import (
 # ── Snakemake wiring ──
 snakemake = globals().get("snakemake")
 LOG_PATH = (
-    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/create_summary.log"
+    str(snakemake.log[0])
+    if snakemake is not None and snakemake.log
+    else "logs/create_summary.log"
 )
 os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 logging.basicConfig(
@@ -35,17 +37,23 @@ logging.basicConfig(
 config = snakemake.config if snakemake is not None else {}
 result_type = snakemake.params.result_type if snakemake is not None else None
 planning_csv = (
-    os.path.join(str(snakemake.input.planning_dir), f"{result_type}_summary_planning.csv")
+    os.path.join(
+        str(snakemake.input.planning_dir), f"{result_type}_summary_planning.csv"
+    )
     if snakemake is not None
     else None
 )
 dispatch_csv = (
-    os.path.join(str(snakemake.input.dispatch_dir), f"{result_type}_summary_dispatch.csv")
+    os.path.join(
+        str(snakemake.input.dispatch_dir), f"{result_type}_summary_dispatch.csv"
+    )
     if snakemake is not None
     else None
 )
 # output_dir = str(snakemake.output.summary_output)
-summary_filepath = str(snakemake.output.summary_output) if snakemake is not None else None
+summary_filepath = (
+    str(snakemake.output.summary_output) if snakemake is not None else None
+)
 
 reference_scenario = config.get("postprocess", {}).get("reference_scenario", 0)
 
@@ -410,7 +418,9 @@ def main():
     # Build comparison matrices
     logging.info("Combining planning and dispatch results")
     result_frames = [frame for frame in [results, planning_results] if not frame.empty]
-    all_results = pd.concat(result_frames, ignore_index=True) if result_frames else pd.DataFrame()
+    all_results = (
+        pd.concat(result_frames, ignore_index=True) if result_frames else pd.DataFrame()
+    )
     # scenarios = all_results.Scenario.unique()
 
     # compare_table = (

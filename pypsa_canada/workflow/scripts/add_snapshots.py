@@ -20,7 +20,9 @@ from pypsa import Network
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
 snakemake = globals().get("snakemake")
 LOG_PATH = (
-    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/temp.log"
+    str(snakemake.log[0])
+    if snakemake is not None and snakemake.log
+    else "logs/temp.log"
 )
 
 

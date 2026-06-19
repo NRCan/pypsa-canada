@@ -9,11 +9,6 @@ from itertools import chain, groupby
 
 import pandas as pd
 import pypsa
-from pypsa_canada.workflow.scripts._benchmarks import (
-    finish_benchmark_tracker,
-    start_benchmark_tracker,
-    result_benchmark_csv_path,
-)
 from constraints.dispatch_constraints import (
     add_CER_constraint_dispatch,
     distribute_CER_hours_dispatch,
@@ -26,13 +21,20 @@ from constraints.generic_constraints import (
 )
 from helpers import setup_script_logging
 
+from pypsa_canada.workflow.scripts._benchmarks import (
+    finish_benchmark_tracker,
+    result_benchmark_csv_path,
+    start_benchmark_tracker,
+)
 from pypsa_canada.workflow.scripts.common import drop_inactive_assets
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
 snakemake = globals().get("snakemake")
 LOG_PATH = (
-    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/solve_dispatch.log"
+    str(snakemake.log[0])
+    if snakemake is not None and snakemake.log
+    else "logs/solve_dispatch.log"
 )
 BENCHMARK_CSV_PATH = (
     result_benchmark_csv_path(snakemake.output.dispatch_output_file_csv)
