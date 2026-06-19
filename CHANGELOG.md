@@ -1,3 +1,16 @@
+## 0.2.24 (2026-06-19)
+
+### Bug Fixes
+
+- resync gh
+
+## 0.2.23 (2026-06-16)
+
+### Bug Fixes
+
+- Removed hardcoding committable generators for dispatch
+- Removed hardcoding committable generators for dispatch
+
 ## 0.2.22 (2026-06-12)
 
 ### Bug Fixes
