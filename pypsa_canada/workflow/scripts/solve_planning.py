@@ -7,11 +7,6 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 import pypsa
-from pypsa_canada.workflow.scripts._benchmarks import (
-    finish_benchmark_tracker,
-    start_benchmark_tracker,
-    result_benchmark_csv_path,
-)
 from constraints.generic_constraints import (
     CER_generator_grouping,
     add_bidirection_link_constraint,
@@ -25,6 +20,12 @@ from constraints.planning_constraints import (
 )
 from helpers import setup_script_logging
 
+from pypsa_canada.workflow.scripts._benchmarks import (
+    finish_benchmark_tracker,
+    result_benchmark_csv_path,
+    start_benchmark_tracker,
+)
+
 if TYPE_CHECKING:
     import pandas as pd
 
@@ -32,7 +33,9 @@ if TYPE_CHECKING:
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
 snakemake = globals().get("snakemake")
 LOG_PATH = (
-    str(snakemake.log[0]) if snakemake is not None and snakemake.log else "logs/solve_planning.log"
+    str(snakemake.log[0])
+    if snakemake is not None and snakemake.log
+    else "logs/solve_planning.log"
 )
 BENCHMARK_CSV_PATH = (
     result_benchmark_csv_path(snakemake.output.solved_network_csv)
