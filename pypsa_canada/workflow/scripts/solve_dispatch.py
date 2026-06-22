@@ -21,16 +21,31 @@ from constraints.generic_constraints import (
 )
 from helpers import setup_script_logging
 
+from pypsa_canada.workflow.scripts._benchmarks import (
+    finish_benchmark_tracker,
+    result_benchmark_csv_path,
+    start_benchmark_tracker,
+)
 from pypsa_canada.workflow.scripts.common import drop_inactive_assets
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
-LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/solve_dispatch.log"
+snakemake = globals().get("snakemake")
+LOG_PATH = (
+    str(snakemake.log[0])
+    if snakemake is not None and snakemake.log
+    else "logs/solve_dispatch.log"
+)
+BENCHMARK_CSV_PATH = (
+    result_benchmark_csv_path(snakemake.output.dispatch_output_file_csv)
+    if snakemake is not None
+    else None
+)
 
 
 setup_script_logging(LOG_PATH)
 
-config = snakemake.config
+config = snakemake.config if snakemake is not None else None
 
 
 # Note: Local implementations removed - now using imported functions from constraints module
@@ -356,6 +371,10 @@ def optimize_uc_period(
 
 
 def main():
+    if snakemake is None:
+        raise RuntimeError("solve_dispatch.py must be executed by Snakemake")
+
+    benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.unsolved_dispatch_network)
 
     logging.info("Running Dispatch Solve")
@@ -435,6 +454,14 @@ def main():
         if not os.path.exists(out_path):
             os.makedirs(out_path)
         period_network.export_to_csv_folder(period_network_path)
+
+    if BENCHMARK_CSV_PATH is not None:
+        finish_benchmark_tracker(
+            BENCHMARK_CSV_PATH,
+            "solve_dispatch",
+            benchmark_timer,
+            benchmark_memory,
+        )
 
 
 if __name__ == "__main__":

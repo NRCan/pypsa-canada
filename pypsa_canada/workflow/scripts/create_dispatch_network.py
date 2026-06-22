@@ -6,16 +6,26 @@ import traceback
 import numpy as np
 import pandas as pd
 import pypsa
+from _benchmarks import (
+    finish_benchmark_tracker,
+    result_benchmark_csv_path,
+    start_benchmark_tracker,
+)
 from helpers import setup_script_logging
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
-LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/solve_dispatch.log"
+snakemake = globals().get("snakemake")
+LOG_PATH = (
+    str(snakemake.log[0])
+    if snakemake is not None and snakemake.log
+    else "logs/solve_dispatch.log"
+)
 
 
 setup_script_logging(LOG_PATH)
 
-config = snakemake.config
+config = snakemake.config if snakemake is not None else None
 
 
 def extract_investment_periods(network: pypsa.Network) -> list:
@@ -309,6 +319,11 @@ def remove_zero_capacity_components(network: pypsa.Network) -> None:
 
 
 def main():
+    if snakemake is None:
+        raise RuntimeError("create_dispatch_network.py must be executed by Snakemake")
+
+    benchmark_timer, benchmark_memory = start_benchmark_tracker()
+
     solved_planning_network = pypsa.Network(snakemake.input.planning_solved_network)
     network = pypsa.Network(snakemake.input.planning_unsolved_network_unfiltered)
 
@@ -354,6 +369,15 @@ def main():
     )
     dispatch_network.export_to_csv_folder(
         snakemake.output.dispatch_planning_unsolved_network_csv
+    )
+
+    finish_benchmark_tracker(
+        result_benchmark_csv_path(
+            snakemake.output.dispatch_planning_unsolved_network_nc
+        ),
+        "create_dispatch_network",
+        benchmark_timer,
+        benchmark_memory,
     )
 
 

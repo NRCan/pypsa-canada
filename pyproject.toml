@@ -43,6 +43,7 @@ dependencies = [
     "scikit-learn",
     "scikit-learn-extra@git+https://github.com/TimotheeMathieu/scikit-learn-extra", #Fork of scikit learn extra with numpy v2 fix
     "folium",
+    "memory_profiler",
 ]
 
 [project.optional-dependencies]

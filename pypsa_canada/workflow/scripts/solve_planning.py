@@ -20,17 +20,32 @@ from constraints.planning_constraints import (
 )
 from helpers import setup_script_logging
 
+from pypsa_canada.workflow.scripts._benchmarks import (
+    finish_benchmark_tracker,
+    result_benchmark_csv_path,
+    start_benchmark_tracker,
+)
+
 if TYPE_CHECKING:
     import pandas as pd
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
-LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/solve_planning.log"
-
+snakemake = globals().get("snakemake")
+LOG_PATH = (
+    str(snakemake.log[0])
+    if snakemake is not None and snakemake.log
+    else "logs/solve_planning.log"
+)
+BENCHMARK_CSV_PATH = (
+    result_benchmark_csv_path(snakemake.output.solved_network_csv)
+    if snakemake is not None
+    else None
+)
 
 setup_script_logging(LOG_PATH)
 
-config = snakemake.config
+config = snakemake.config if snakemake is not None else None
 
 
 def disable_committable_for_OPT(network: pypsa.Network):
@@ -162,6 +177,10 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
 
 
 def main():
+    if snakemake is None:
+        raise RuntimeError("solve_planning.py must be executed by Snakemake")
+
+    benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.planning_unsolved_network)
     disable_committable_for_OPT(network)
 
@@ -231,6 +250,7 @@ def main():
     if linearized_unit_commitment:
         linearized_uc_ena = True
         logging.info("Linearized Unit Commitment Flag has been enabled")
+
     else:
         linearized_uc_ena = False
         logging.info("Linearized Unit Commitment Flag has been disabled")
@@ -273,6 +293,14 @@ def main():
     out_path = str(snakemake.output.solved_network_csv)
 
     network.export_to_csv_folder(out_path)
+
+    if BENCHMARK_CSV_PATH is not None:
+        finish_benchmark_tracker(
+            BENCHMARK_CSV_PATH,
+            "solve_planning",
+            benchmark_timer,
+            benchmark_memory,
+        )
 
 
 if __name__ == "__main__":

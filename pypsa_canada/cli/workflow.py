@@ -85,6 +85,13 @@ os.environ.pop("SNAKEMAKE_OUTPUT_CACHE", None)  # no cache location => cache unu
     show_default=False,
     help="Keep existing network outputs and only rerun modified rules (sets forceall=False)",
 )
+# @click.option(
+#     "--rerun-code",
+#     is_flag=True,
+#     default=False,
+#     show_default=False,
+#     help="Rerun rules when their code changes (sets rerun_triggers=['code'])",
+# )
 @click.command()
 def run(
     file: str,
@@ -95,6 +102,7 @@ def run(
     cores: int | None = None,
     unlock: bool = False,
     keep_network: bool = False,
+    rerun_code: bool = True,
 ):
     # Configure logging level
     log_level = logging.DEBUG if debug else logging.INFO
@@ -162,7 +170,11 @@ def run(
 
     # Initialize and run the workflow
     try:
-        with SnakemakeApi(OutputSettings(verbose=False, show_failed_logs=True)) as api:
+        with SnakemakeApi(
+            OutputSettings(
+                verbose=False, show_failed_logs=True, benchmark_extended=True
+            )
+        ) as api:
             config_settings = None
             if configfile.exists():
                 config_settings = ConfigSettings(configfiles=[configfile])
@@ -194,12 +206,17 @@ def run(
             )
 
             # Create DAG settings
-            dag_settings = DAGSettings(targets=targets, forceall=not keep_network)
+            rerun_triggers = ["code"] if rerun_code else []
+            dag_settings = DAGSettings(
+                targets=targets,
+                forceall=not keep_network,
+                rerun_triggers=rerun_triggers,
+            )
 
             # Create DAG
             dag_api = workflow_api.dag(dag_settings=dag_settings)
 
-            # Check if we should unlock instead of execute
+            # ld unlock instead of execute
             if unlock:
                 print("Unlocking workflow directory...")
                 dag_api.unlock()
@@ -213,6 +230,7 @@ def run(
                 # Report results
                 print("Displaying result of simulation: \n")
                 print(result)
+
                 print("\nWorkflow completed successfully!")
 
     except Exception as e:

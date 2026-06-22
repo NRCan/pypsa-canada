@@ -11,9 +11,19 @@ import re
 import sys
 
 import pandas as pd
+from _benchmarks import (
+    finish_benchmark_tracker,
+    result_benchmark_csv_path,
+    start_benchmark_tracker,
+)
 
 # ── Snakemake wiring ──
-LOG_PATH = str(snakemake.log[0]) if snakemake.log else "logs/compare_results.log"
+snakemake = globals().get("snakemake")
+LOG_PATH = (
+    str(snakemake.log[0])
+    if snakemake is not None and snakemake.log
+    else "logs/create_summary.log"
+)
 os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -24,16 +34,26 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(message)s",
 )
 
-config = snakemake.config
-result_type = snakemake.params.result_type
-planning_csv = os.path.join(
-    str(snakemake.input.planning_dir), f"{result_type}_summary_planning.csv"
+config = snakemake.config if snakemake is not None else {}
+result_type = snakemake.params.result_type if snakemake is not None else None
+planning_csv = (
+    os.path.join(
+        str(snakemake.input.planning_dir), f"{result_type}_summary_planning.csv"
+    )
+    if snakemake is not None
+    else None
 )
-dispatch_csv = os.path.join(
-    str(snakemake.input.dispatch_dir), f"{result_type}_summary_dispatch.csv"
+dispatch_csv = (
+    os.path.join(
+        str(snakemake.input.dispatch_dir), f"{result_type}_summary_dispatch.csv"
+    )
+    if snakemake is not None
+    else None
 )
 # output_dir = str(snakemake.output.summary_output)
-summary_filepath = str(snakemake.output.summary_output)
+summary_filepath = (
+    str(snakemake.output.summary_output) if snakemake is not None else None
+)
 
 reference_scenario = config.get("postprocess", {}).get("reference_scenario", 0)
 
@@ -335,7 +355,13 @@ def run_all_metrics(
 
 
 def main():
+    if snakemake is None:
+        raise RuntimeError("create_summary.py must be executed by Snakemake")
+
+    benchmark_timer, benchmark_memory = start_benchmark_tracker()
+
     logging.info("===== RESULT COMPARISON =====")
+    logging.info("Loading summary inputs")
 
     # Load results
     results = (
@@ -348,16 +374,24 @@ def main():
     if results.empty and planning_results.empty:
         logging.warning("No results found for comparison")
         # os.makedirs(output_dir, exist_ok=True)
+        finish_benchmark_tracker(
+            result_benchmark_csv_path(summary_filepath),
+            "create_summary",
+            benchmark_timer,
+            benchmark_memory,
+        )
         return
 
     # Aggregate
     if not results.empty:
+        logging.info("Aggregating dispatch results")
         results = (
             results.groupby(["Scenario", "Parameter", "Variable", "Region", "Time"])
             .sum()
             .reset_index()
         )
     if not planning_results.empty:
+        logging.info("Aggregating planning results")
         planning_results = (
             planning_results.groupby(
                 ["Scenario", "Parameter", "Variable", "Region", "Time"]
@@ -370,6 +404,7 @@ def main():
     # os.makedirs(output_dir, exist_ok=True)
 
     # Determine reference scenario
+    logging.info("Selecting reference scenario")
     ref = reference_scenario
     if ref == 0 and not results.empty:
         rep_days = results[results.Parameter == "Representative_Days"]
@@ -381,7 +416,11 @@ def main():
         ref = planning_results.Scenario.iloc[0]
 
     # Build comparison matrices
-    all_results = pd.concat([results, planning_results])
+    logging.info("Combining planning and dispatch results")
+    result_frames = [frame for frame in [results, planning_results] if not frame.empty]
+    all_results = (
+        pd.concat(result_frames, ignore_index=True) if result_frames else pd.DataFrame()
+    )
     # scenarios = all_results.Scenario.unique()
 
     # compare_table = (
@@ -394,6 +433,7 @@ def main():
     # )
 
     # Save intermediate files
+    logging.info("Writing summary CSV")
     all_results = all_results[
         [
             "Model",
@@ -408,6 +448,7 @@ def main():
     ]
 
     all_results.to_csv(summary_filepath, index=False)
+    logging.info("Summary CSV written")
     # if not compare_table.empty:
     #     compare_table.to_csv(os.path.join(output_dir, "comparison_matrix.csv"))
     # if not compare_table_planning.empty:
@@ -428,6 +469,14 @@ def main():
     #         path,
     #     )
     #     metrics.to_csv(os.path.join(output_dir, "metrics.csv"))
+
+    finish_benchmark_tracker(
+        result_benchmark_csv_path(summary_filepath),
+        "create_summary",
+        benchmark_timer,
+        benchmark_memory,
+    )
+    logging.info("Create summary complete")
     #     logging.info(f"Metrics:\n{metrics}")
 
     # logging.info("Result comparison complete")
@@ -435,5 +484,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-else:
+elif snakemake is not None:
     main()
