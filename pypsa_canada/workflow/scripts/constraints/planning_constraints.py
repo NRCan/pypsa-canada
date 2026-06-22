@@ -91,7 +91,7 @@ def add_CER_constraint_planning(network, snapshots, constraint, groups, CER_gens
 
         lhs = emissions_extendable + emissions_existing - emission_cap_extendable
         rhs = emission_cap_existing
-        print(gens.index)
+        print(f"{group} generators included in CER constraint in {year}:", gens.index)
         m.add_constraints(
             lhs,
             "<=",
