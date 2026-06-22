@@ -1,3 +1,10 @@
+## 0.2.25 (2026-06-22)
+
+### Bug Fixes
+
+- Added benmark solve_time
+- Added benchmark solve_time
+
 ## 0.2.24 (2026-06-19)
 
 ### Bug Fixes
