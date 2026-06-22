@@ -7,8 +7,10 @@ for temporal aggregation in energy system optimization models.
 
 from enum import Enum
 
+import pandas as pd
 from pypsa import Network
 
+from representative_days.all_days import all_days_method
 from representative_days.avg_peak import avg_peak_method
 from representative_days.carpe_diem import carpe_diem_method
 from representative_days.kmedoid_quad import kmedoid_quad_method
@@ -18,6 +20,9 @@ from representative_days.opt_quad import opt_quad_method
 # from representative_days.vre_vector import vre_method
 
 
+
+
+
 class SnapshotProfile(Enum):
     """Available snapshot selection methods."""
 
@@ -25,6 +30,7 @@ class SnapshotProfile(Enum):
     DEFAULT = (
         0  # Use the snapshot file already in the input network (no selection applied)
     )
+    ALL_DAYS = 1  # Keep all snapshots and assign a weighting of 1
     # KMEDOID_VRE = 1  # Does not complete
     KMEDOID_VRE_HYDRO = 2  # Functional
     # OPT_VRE = 3  # Does not complete
@@ -77,6 +83,9 @@ def snapshots_selection(
     match snapshot_method:
         case SnapshotProfile.DEFAULT:
             print("Using current snapshot file already in input")
+
+        case SnapshotProfile.ALL_DAYS:
+            network.snapshot_weightings = all_days_method(network)
 
         # case SnapshotProfile.KMEDOID_VRE:
         #     network.snapshot_weightings = vre_method(
