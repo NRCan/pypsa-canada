@@ -77,16 +77,25 @@ def CER_generator_grouping(network, CER_constraint, year: int, mode: str):
         )
         if not CER_generators_existing.empty:
             CER_generators_existing = CER_generators_existing[
-                (CER_generators_existing.build_year >= 2025)
-                | (
-                    (CER_generators_existing.carrier == "gas")
-                    & (CER_generators_existing.build_year + 25 < year)
+                (
+                    (
+                        CER_generators_existing.build_year
+                        + CER_generators_existing.lifetime
+                    )
+                    > year
                 )
-                | (
-                    (CER_generators_existing.carrier != "gas")
-                    & (
-                        (CER_generators_existing.build_year + 25 < year)
-                        | (year >= active_cer_year)
+                & (
+                    (CER_generators_existing.build_year >= 2025)
+                    | (
+                        (CER_generators_existing.carrier == "gas")
+                        & (CER_generators_existing.build_year + 25 < year)
+                    )
+                    | (
+                        (CER_generators_existing.carrier != "gas")
+                        & (
+                            (CER_generators_existing.build_year + 25 < year)
+                            | (year >= active_cer_year)
+                        )
                     )
                 )
             ]
