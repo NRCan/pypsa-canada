@@ -61,11 +61,24 @@ scenario_name = run_name
 
 def network_map(n, year, output_path):
     """Save an interactive HTML map of the network."""
+
     try:
-        n.explore().save(os.path.join(output_path, f"network_map_{year}.html"))
-        logging.info(f"Saved network map for {year}")
+        map_object = n.explore()
+        map_path = os.path.join(output_path, f"network_map_{year}.html")
+
+        if hasattr(map_object, "save"):
+            map_object.save(map_path)
+        elif hasattr(map_object, "to_html"):
+            map_object.to_html(map_path)
+        else:
+            raise TypeError(
+                f"Unsupported map object type: {type(map_object).__name__}"
+            )
+
+        logging.info(f"Saved network map for {year}: {map_path}")
+
     except Exception as e:
-        logging.warning(f"Could not save network map: {e}")
+        logging.warning(f"Could not save network map for {year}: {e}")
 
 
 def main():
