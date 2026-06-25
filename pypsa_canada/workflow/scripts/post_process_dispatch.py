@@ -59,13 +59,19 @@ model_name = f"PyPSA-Canada_{run_name}"
 scenario_name = run_name
 
 
-def network_map(n, year, output_path):
+def network_map(n: pypsa.Network, year: int, output_path: str):
     """Save an interactive HTML map of the network."""
+
     try:
-        n.explore().save(os.path.join(output_path, f"network_map_{year}.html"))
-        logging.info(f"Saved network map for {year}")
+        map_object = n.explore()
+        map_path = os.path.join(output_path, f"network_map_{year}.html")
+        # to_html should be the only correct save of the map object
+        map_object.to_html(map_path)
+
+        logging.info(f"Saved network map for {year}: {map_path}")
+
     except Exception as e:
-        logging.warning(f"Could not save network map: {e}")
+        logging.warning(f"Could not save network map for {year}: {e}")
 
 
 def main():
