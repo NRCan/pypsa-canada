@@ -1,3 +1,9 @@
+## 0.2.26 (2026-06-25)
+
+### Bug Fixes
+
+- Fix incorrect network map export method AB#2187
+
 ## 0.2.25 (2026-06-22)
 
 ### Bug Fixes
