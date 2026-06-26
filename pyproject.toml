@@ -45,7 +45,6 @@ dependencies = [
     "folium",
     "memory_profiler",
     "openpyxl",
-    "pyarrow",
     "igraph",
     "leidenalg",
     "rasterio",
