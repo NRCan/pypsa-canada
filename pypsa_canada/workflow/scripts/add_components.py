@@ -195,13 +195,13 @@ def create_extendable_components(
         if component == "Generator" or component == "StorageUnit":
             data.at[comp, "capital_cost"] = total_costs.at[
                 data.loc[comp]["model"], tech_year
-            ]
+            ].round(2)
             data.at[comp, "cap_cost"] = capital_costs.at[
                 data.loc[comp]["model"], tech_year
-            ]
+            ].round(2)
             data.at[comp, "fixed_om"] = fixed_costs.at[
                 data.loc[comp]["model"], tech_year
-            ]
+            ].round(2)
 
         # For each year after the build year, create a new component with the same data
         years = [i for i in years if i > data.loc[comp]["build_year"]]
@@ -218,13 +218,13 @@ def create_extendable_components(
             if component == "Generator" or component == "StorageUnit":
                 data.at[name, "capital_cost"] = total_costs.loc[
                     data.loc[comp]["model"]
-                ][tech_year]
+                ][tech_year].round(2)
                 data.at[name, "cap_cost"] = capital_costs.loc[data.loc[comp]["model"]][
                     tech_year
-                ]
+                ].round(2)
                 data.at[name, "fixed_om"] = fixed_costs.loc[data.loc[comp]["model"]][
                     tech_year
-                ]
+                ].round(2)
 
     # Save the modified data back to the network
     if component == "Generator":
@@ -393,10 +393,10 @@ def create_marginal_costs(
         fuel_cost_result = pd.concat([fuel_cost_result, gen_fuel_cost])
         variable_cost_result = pd.concat([variable_cost_result, gen_variable_costs])
 
-    network.generators_t.marginal_cost = marginal_costs_result
-    network.generators_t.carbon_cost = carbon_cost_result
-    network.generators_t.fuel_cost = fuel_cost_result
-    network.generators_t.variable_cost = variable_cost_result
+    network.generators_t.marginal_cost = marginal_costs_result.round(2)
+    network.generators_t.carbon_cost = carbon_cost_result.round(2)
+    network.generators_t.fuel_cost = fuel_cost_result.round(2)
+    network.generators_t.variable_cost = variable_cost_result.round(2)
 
     return (
         marginal_costs_result,
