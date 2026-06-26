@@ -90,7 +90,7 @@ def create_generic_components(
 def create_p_min_max(network: Network, comp_config: dict[str, Any]) -> Network:
     """Create p_max_pu and p_min_pu time series for extendable generators."""
     network = create_p_max_pu(network, comp_config)
-    #network = create_p_min_pu(network)
+    # network = create_p_min_pu(network)
     return network
 
 
