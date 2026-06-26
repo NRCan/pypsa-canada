@@ -16,7 +16,7 @@ repos:
         description: Remove all trailing whitespace from the code
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.19
+    rev: v0.15.20
     hooks:
     -   id: ruff
         args:

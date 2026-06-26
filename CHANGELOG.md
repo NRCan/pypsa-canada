@@ -1,3 +1,10 @@
+## 0.2.27 (2026-06-26)
+
+### Bug Fixes
+
+- Add environment packages to run PyPSA-Canada-National documentation
+- Add environment packages to run PyPSA-Canada-National documentation:
+
 ## 0.2.26 (2026-06-25)
 
 ### Bug Fixes
