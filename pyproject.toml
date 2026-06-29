@@ -36,7 +36,7 @@ classifiers=[
 
 dependencies = [
     "snakemake",
-    "pypsa>=1.2.0",
+    "pypsa>=1.2.4",
     "fiona",
     "pint",
     "pytz",
