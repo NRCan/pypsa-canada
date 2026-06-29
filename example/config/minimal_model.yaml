@@ -54,7 +54,7 @@ components:
     "2050": 170
 
 snapshots:
-  #method: "OPT_VRE_HYDRO", "KMEDOID_VRE_HYDRO", "CARPE_DIEM" or "AVG_PEAK"
+  #method: "OPT_VRE_HYDRO", "KMEDOID_VRE_HYDRO", "CARPE_DIEM", "AVG_PEAK" or "ALL_DAYS"
   method: "OPT_VRE_HYDRO"
   load_mode: *load_mode
   folder_name: "model/minimal_model"
