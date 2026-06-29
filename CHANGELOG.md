@@ -1,3 +1,10 @@
+## 0.2.28 (2026-06-29)
+
+### Bug Fixes
+
+- Added ALL_DAYS snapshot option
+- Added all_days snapshot method
+
 ## 0.2.27 (2026-06-26)
 
 ### Bug Fixes
