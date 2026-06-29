@@ -1,11 +1,12 @@
-import numpy as np
 import pandas as pd
 import pypsa
 
 
 def all_days_method(network: pypsa.Network) -> pd.DataFrame:
     """Return a unit-weighting dataframe for all existing snapshots."""
-    print(f"Applying ALL_DAYS snapshot selection method: keeping all snapshots with unit weightings.")
+    print(
+        "Applying ALL_DAYS snapshot selection method: keeping all snapshots with unit weightings."
+    )
     snap_df = network.snapshot_weightings.copy()
     # periods = np.unique(snap_df.index.get_level_values("period"))
 

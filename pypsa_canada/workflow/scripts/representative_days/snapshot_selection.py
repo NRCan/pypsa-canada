@@ -7,7 +7,6 @@ for temporal aggregation in energy system optimization models.
 
 from enum import Enum
 
-import pandas as pd
 from pypsa import Network
 
 from representative_days.all_days import all_days_method
@@ -18,9 +17,6 @@ from representative_days.opt_quad import opt_quad_method
 
 # from representative_days.opt_triple import opt3_method
 # from representative_days.vre_vector import vre_method
-
-
-
 
 
 class SnapshotProfile(Enum):
