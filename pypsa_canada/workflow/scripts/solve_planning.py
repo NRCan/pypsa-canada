@@ -17,6 +17,7 @@ from constraints.planning_constraints import (
     add_emission_constraint_planning,
     add_planning_reserve_margin,
     component_capacity_expansion_constraint,
+    add_bidirection_link_constraint_OPT
 )
 from helpers import setup_script_logging
 
@@ -81,6 +82,16 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
     # The snapshots must only contain one unique year
     period_list = network.snapshots.get_level_values(0).unique()
     logging.info(f"Period list = {period_list}")
+
+    # Add bi-directional capacity constraint to extendable DC transmission lines
+    OPT_transmission = network.links[(network.links.carrier == 'DC') & (network.links.p_nom_extendable)]
+    if not OPT_transmission.empty:
+        logging.info(
+            f"Adding OPT bidirectional link capacity constraint: {OPT_transmission.index}"
+        )
+        add_bidirection_link_constraint_OPT(
+            network, OPT_transmission
+        )
 
     # Add bidirectional link constraint (applies to all periods)
     if bidirectional_link_constraint_cfg["enable"]:
