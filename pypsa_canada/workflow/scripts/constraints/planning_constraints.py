@@ -436,6 +436,7 @@ def component_capacity_expansion_constraint(network, constraints_csv_filepath: s
         )
     return 0
 
+
 def add_bidirection_link_constraint_OPT(network: "pypsa.Network", links: pd.DataFrame):
     """
     Function to add a constraint for extendable transmission lines such that the capacity is equal in both directions
@@ -448,13 +449,12 @@ def add_bidirection_link_constraint_OPT(network: "pypsa.Network", links: pd.Data
         The pypsa network class sent as an object
     """
     m = network.model
-    
-    unique_links = (
-        links.assign(
-            pair=links.apply(lambda r: tuple(sorted([r.bus0, r.bus1, str(r.build_year)])), axis=1)
+
+    unique_links = links.assign(
+        pair=links.apply(
+            lambda r: tuple(sorted([r.bus0, r.bus1, str(r.build_year)])), axis=1
         )
-        .drop_duplicates("pair")
-    )
+    ).drop_duplicates("pair")
     print(unique_links)
 
     pairs = []

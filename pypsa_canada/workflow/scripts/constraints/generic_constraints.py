@@ -248,7 +248,7 @@ def add_bidirection_link_constraint(network: "pypsa.Network", links_dict: dict):
             if (not network.links.loc[links[0]].p_nom_extendable) or (
                 not network.links.loc[links[1]].p_nom_extendable
             ):
-            # Bidirection for not extendable links (can't do it for extendable ones cause not commitable and no variable "status")
+                # Bidirection for not extendable links (can't do it for extendable ones cause not commitable and no variable "status")
                 if (network.links.loc[links[0]].p_nom != 0) or (
                     network.links.loc[links[0]].p_nom != 0
                 ):
