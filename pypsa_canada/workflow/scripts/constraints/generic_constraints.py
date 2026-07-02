@@ -244,26 +244,14 @@ def add_bidirection_link_constraint(network: "pypsa.Network", links_dict: dict):
     m = network.model
     for intertie, links in links_dict.items():
         if (links[0] in network.links.index) and (links[1] in network.links.index):
-            # P_nom equality for extendable links in planning mode
-            if (not network.links.loc[links[0]].p_nom_extendable) or (
+            # Only fixed transmission are treaten here
+            if (not network.links.loc[links[0]].p_nom_extendable) and (
                 not network.links.loc[links[1]].p_nom_extendable
             ):
                 # Bidirection for not extendable links (can't do it for extendable ones cause not commitable and no variable "status")
                 if (network.links.loc[links[0]].p_nom != 0) or (
                     network.links.loc[links[0]].p_nom != 0
                 ):
-                    print(
-                        links[0],
-                        network.links.loc[links[0]].p_nom,
-                        "and",
-                        network.links.loc[links[0]].p_nom_extendable,
-                    )
-                    print(
-                        links[1],
-                        network.links.loc[links[1]].p_nom,
-                        "and",
-                        network.links.loc[links[1]].p_nom_extendable,
-                    )
                     link0_status = m.variables["Link-status"].sel(
                         {"Link-com": links[0]}
                     )
