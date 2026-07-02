@@ -471,7 +471,7 @@ def add_bidirection_link_constraint_OPT(network: "pypsa.Network", links: pd.Data
         pairs,
         columns=["fwd", "bck"],
     )
-    
+
     if not pairs.empty:
         lhs = m["Link-p_nom"].loc[pairs["fwd"].values]
         rhs = m["Link-p_nom"].loc[pairs["bck"].values]
