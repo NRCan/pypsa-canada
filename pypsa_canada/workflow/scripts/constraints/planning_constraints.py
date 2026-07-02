@@ -471,15 +471,16 @@ def add_bidirection_link_constraint_OPT(network: "pypsa.Network", links: pd.Data
         pairs,
         columns=["fwd", "bck"],
     )
+    
+    if not pairs.empty:
+        lhs = m["Link-p_nom"].loc[pairs["fwd"].values]
+        rhs = m["Link-p_nom"].loc[pairs["bck"].values]
+        exp = lhs - rhs
 
-    lhs = m["Link-p_nom"].loc[pairs["fwd"].values]
-    rhs = m["Link-p_nom"].loc[pairs["bck"].values]
-    exp = lhs - rhs
-
-    m.add_constraints(
-        exp == 0,
-        name="OPT_link_pnom_equality",
-    )
+        m.add_constraints(
+            exp == 0,
+            name="OPT_link_pnom_equality",
+        )
 
     # for link_fwd, data in unique_links.iterrows():
     #     link_bck = links[(links.bus0 == data.bus1) & (links.bus1 == data.bus0) & (links.build_year == data.build_year)]
