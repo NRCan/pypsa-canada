@@ -47,7 +47,11 @@ def _build_crash_dirs(workdir: Path, run_name: str, crashes: bool) -> list[Path]
         results_dir = workdir / "results" / run_name
         if results_dir.exists():
             # Find all crash_* directories
-            crash_dirs = [d for d in results_dir.iterdir() if d.is_dir() and d.name.startswith("crash_")]
+            crash_dirs = [
+                d
+                for d in results_dir.iterdir()
+                if d.is_dir() and d.name.startswith("crash_")
+            ]
             targets.extend(crash_dirs)
     return targets
 
@@ -172,7 +176,9 @@ def clean(
     all_existing = existing_crashes + existing_dirs + existing_metadata
 
     if not all_existing:
-        print(f"Nothing to clean for run '{run_name}' — no crash directories or metadata found.")
+        print(
+            f"Nothing to clean for run '{run_name}' — no crash directories or metadata found."
+        )
         return
 
     print(f"Run: {run_name}")
