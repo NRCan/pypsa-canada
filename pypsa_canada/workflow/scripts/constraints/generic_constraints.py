@@ -244,24 +244,27 @@ def add_bidirection_link_constraint(network: "pypsa.Network", links_dict: dict):
     m = network.model
     for intertie, links in links_dict.items():
         if (links[0] in network.links.index) and (links[1] in network.links.index):
-            # Only fixed transmission are treaten here
+            # Only fixed and committable transmission are treaten here
             if (not network.links.loc[links[0]].p_nom_extendable) and (
                 not network.links.loc[links[1]].p_nom_extendable
             ):
-                # Bidirection for not extendable links (can't do it for extendable ones cause not commitable and no variable "status")
-                if (network.links.loc[links[0]].p_nom != 0) or (
-                    network.links.loc[links[0]].p_nom != 0
+                if (network.links.loc[links[0]].committable) and (
+                    network.links.loc[links[1]].committable
                 ):
-                    link0_status = m.variables["Link-status"].sel(
-                        {"Link-com": links[0]}
-                    )
-                    link1_status = m.variables["Link-status"].sel(
-                        {"Link-com": links[1]}
-                    )
-                    m.add_constraints(
-                        link0_status + link1_status <= 1,
-                        name=f"Bidirectionnality_of_{intertie}",
-                    )
+                    # Bidirection for commitable and not extendable links (can't do it for others cause no variable "status")
+                    if (network.links.loc[links[0]].p_nom != 0) or (
+                        network.links.loc[links[1]].p_nom != 0
+                    ):
+                        link0_status = m.variables["Link-status"].sel(
+                            {"name": links[0]}
+                        )
+                        link1_status = m.variables["Link-status"].sel(
+                            {"name": links[1]}
+                        )
+                        m.add_constraints(
+                            link0_status + link1_status <= 1,
+                            name=f"Bidirectionnality_of_{intertie}",
+                        )
 
 
 @deprecated(

@@ -168,7 +168,8 @@ def network_with_links(minimal_planning_network):
         bus0="test_bus",
         bus1="test_bus_2",
         p_nom=50,
-        p_nom_extendable=True,
+        p_nom_extendable=False,
+        committable=True,
     )
     network.add(
         "Link",
@@ -176,7 +177,8 @@ def network_with_links(minimal_planning_network):
         bus0="test_bus_2",
         bus1="test_bus",
         p_nom=50,
-        p_nom_extendable=True,
+        p_nom_extendable=False,
+        committable=True,
     )
     return network
 
