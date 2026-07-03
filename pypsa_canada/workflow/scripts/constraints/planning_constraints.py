@@ -435,3 +435,63 @@ def component_capacity_expansion_constraint(network, constraints_csv_filepath: s
             name=f"{data.component_type}_cap_const-{constraint}",
         )
     return 0
+
+
+def add_bidirection_link_constraint_OPT(network: "pypsa.Network", links: pd.DataFrame):
+    """
+    Function to add a constraint for extendable transmission lines such that the capacity is equal in both directions
+
+    Parameters
+    ----------
+    links : pd.DataFrame
+        dataframe containing the OPT transmission links
+    network : pypsa.Network
+        The pypsa network class sent as an object
+    """
+    m = network.model
+
+    unique_links = links.assign(
+        pair=links.apply(
+            lambda r: tuple(sorted([r.bus0, r.bus1, str(r.build_year)])), axis=1
+        )
+    ).drop_duplicates("pair")
+    print(unique_links)
+
+    pairs = []
+    for link_fwd, data in unique_links.iterrows():
+        link_bck = links[
+            (links.bus0 == data.bus1)
+            & (links.bus1 == data.bus0)
+            & (links.build_year == data.build_year)
+        ]
+        if not link_bck.empty:
+            pairs.append((link_fwd, link_bck.index[0]))
+
+    pairs = pd.DataFrame(
+        pairs,
+        columns=["fwd", "bck"],
+    )
+
+    if not pairs.empty:
+        lhs = m["Link-p_nom"].loc[pairs["fwd"].values]
+        rhs = m["Link-p_nom"].loc[pairs["bck"].values]
+        exp = lhs - rhs
+
+        m.add_constraints(
+            exp == 0,
+            name="OPT_link_pnom_equality",
+        )
+
+    # for link_fwd, data in unique_links.iterrows():
+    #     link_bck = links[(links.bus0 == data.bus1) & (links.bus1 == data.bus0) & (links.build_year == data.build_year)]
+    #     if not link_bck.empty:
+    #         link_bck = link_bck.iloc[0].name
+    #         # P_nom equality for extendable links in planning mode
+    #         link0_p_nom = m["Link-p_nom"].loc[link_fwd]
+    #         link1_p_nom = m["Link-p_nom"].loc[link_bck]
+    #         m.add_constraints(
+    #             link0_p_nom,
+    #             "==",
+    #             link1_p_nom,
+    #             name=f"Pnom_equality_of_{link_fwd}_{link_bck}_{data.build_year}_links",
+    #         )

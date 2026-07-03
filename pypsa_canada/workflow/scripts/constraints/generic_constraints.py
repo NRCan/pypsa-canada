@@ -233,7 +233,6 @@ def add_bidirection_link_constraint(network: "pypsa.Network", links_dict: dict):
     Function to add a constraint for connexion represented
     by 2 unidirectional links (necessary to consider a marginal cost)
     to avoid energy transfer in both directions at the same time
-    OR if EXTENDABLE links in planning mode:force their nominal power to be equal
 
     Parameters
     ----------
@@ -245,45 +244,27 @@ def add_bidirection_link_constraint(network: "pypsa.Network", links_dict: dict):
     m = network.model
     for intertie, links in links_dict.items():
         if (links[0] in network.links.index) and (links[1] in network.links.index):
-            # P_nom equality for extendable links in planning mode
-            if (network.links.loc[links[0]].p_nom_extendable) or (
-                network.links.loc[links[1]].p_nom_extendable
+            # Only fixed and committable transmission are treaten here
+            if (not network.links.loc[links[0]].p_nom_extendable) and (
+                not network.links.loc[links[1]].p_nom_extendable
             ):
-                link0_p_nom = m["Link-p_nom"].loc[links[0]]
-                link1_p_nom = m["Link-p_nom"].loc[links[1]]
-                m.add_constraints(
-                    link0_p_nom,
-                    "==",
-                    link1_p_nom,
-                    name=f"Pnom_equality_of_{intertie}_links",
-                )
-            # Bidirection for not extendable links (can't do it for extendable ones cause not commitable and no variable "status")
-            else:
-                if (network.links.loc[links[0]].p_nom != 0) or (
-                    network.links.loc[links[0]].p_nom != 0
+                if (network.links.loc[links[0]].committable) and (
+                    network.links.loc[links[1]].committable
                 ):
-                    print(
-                        links[0],
-                        network.links.loc[links[0]].p_nom,
-                        "and",
-                        network.links.loc[links[0]].p_nom_extendable,
-                    )
-                    print(
-                        links[1],
-                        network.links.loc[links[1]].p_nom,
-                        "and",
-                        network.links.loc[links[1]].p_nom_extendable,
-                    )
-                    link0_status = m.variables["Link-status"].sel(
-                        {"Link-com": links[0]}
-                    )
-                    link1_status = m.variables["Link-status"].sel(
-                        {"Link-com": links[1]}
-                    )
-                    m.add_constraints(
-                        link0_status + link1_status <= 1,
-                        name=f"Bidirectionnality_of_{intertie}",
-                    )
+                    # Bidirection for commitable and not extendable links (can't do it for others cause no variable "status")
+                    if (network.links.loc[links[0]].p_nom != 0) or (
+                        network.links.loc[links[1]].p_nom != 0
+                    ):
+                        link0_status = m.variables["Link-status"].sel(
+                            {"name": links[0]}
+                        )
+                        link1_status = m.variables["Link-status"].sel(
+                            {"name": links[1]}
+                        )
+                        m.add_constraints(
+                            link0_status + link1_status <= 1,
+                            name=f"Bidirectionnality_of_{intertie}",
+                        )
 
 
 @deprecated(
