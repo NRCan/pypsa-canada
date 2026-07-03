@@ -41,6 +41,36 @@ def _build_target_dirs(
     return targets
 
 
+def _build_crash_dirs(workdir: Path, run_name: str, crashes: bool) -> list[Path]:
+    targets = []
+    if crashes:
+        results_dir = workdir / "results" / run_name
+        if results_dir.exists():
+            # Find all crash_* directories
+            crash_dirs = [
+                d
+                for d in results_dir.iterdir()
+                if d.is_dir() and d.name.startswith("crash_")
+            ]
+            targets.extend(crash_dirs)
+    return targets
+
+
+def _build_metadata_targets(
+    workdir: Path, snakemake: bool, timestamps: bool
+) -> list[Path]:
+    targets = []
+    if snakemake:
+        snakemake_dir = workdir / ".snakemake"
+        if snakemake_dir.exists():
+            targets.append(snakemake_dir)
+    if timestamps:
+        # Find all .timestamp files in the workflow directory
+        timestamp_files = list(workdir.glob("**/.run_timestamp"))
+        targets.extend(timestamp_files)
+    return targets
+
+
 @click.command()
 @click.option(
     "-f",
@@ -49,22 +79,40 @@ def _build_target_dirs(
     help="Pre-configured simulation config file",
 )
 @click.option(
-    "--results/--no-results",
+    "--crashes/--no-crashes",
     default=True,
     show_default=True,
-    help="Clean results directory",
+    help="Clean crash directories (default behavior)",
+)
+@click.option(
+    "--results/--no-results",
+    default=False,
+    show_default=True,
+    help="Clean entire results directory (including successful runs)",
 )
 @click.option(
     "--resources/--no-resources",
     default=True,
     show_default=True,
-    help="Clean resources directory (built networks)",
+    help="Clean resources directory (built networks) (default behavior)",
 )
 @click.option(
     "--logs/--no-logs",
     default=True,
     show_default=True,
-    help="Clean logs directory",
+    help="Clean logs directory (default behavior)",
+)
+@click.option(
+    "--snakemake/--no-snakemake",
+    default=True,
+    show_default=True,
+    help="Clean .snakemake metadata directory (default behavior)",
+)
+@click.option(
+    "--timestamps/--no-timestamps",
+    default=True,
+    show_default=True,
+    help="Clean .timestamp metadata files (default behavior)",
 )
 @click.option(
     "--dry-run",
@@ -81,13 +129,21 @@ def _build_target_dirs(
 )
 def clean(
     file: str,
+    crashes: bool,
     results: bool,
     resources: bool,
     logs: bool,
+    snakemake: bool,
+    timestamps: bool,
     dry_run: bool,
     yes: bool,
 ):
-    """Clean output directories (results, resources, logs) for a run."""
+    """
+    Clean output directories (results, resources, logs) for a run.
+
+    By default, cleans crash directories, resources, logs, and metadata.
+    Successful run results are preserved unless --results is explicitly provided.
+    """
 
     logging.basicConfig(
         level=logging.INFO,
@@ -109,17 +165,37 @@ def clean(
         print("Error: could not determine run name from config (run.name is empty)")
         sys.exit(1)
 
+    crash_dirs = _build_crash_dirs(workdir, run_name, crashes)
     target_dirs = _build_target_dirs(workdir, run_name, results, resources, logs)
-    existing = [d for d in target_dirs if d.exists()]
+    metadata_targets = _build_metadata_targets(workdir, snakemake, timestamps)
 
-    if not existing:
-        print(f"Nothing to clean for run '{run_name}' — no output directories found.")
+    existing_crashes = [d for d in crash_dirs if d.exists()]
+    existing_dirs = [d for d in target_dirs if d.exists()]
+    existing_metadata = [m for m in metadata_targets if m.exists()]
+
+    all_existing = existing_crashes + existing_dirs + existing_metadata
+
+    if not all_existing:
+        print(
+            f"Nothing to clean for run '{run_name}' — no crash directories or metadata found."
+        )
         return
 
     print(f"Run: {run_name}")
-    print("Directories to remove:")
-    for d in existing:
-        print(f"  {d}")
+    if existing_crashes:
+        print("Crash directories to remove:")
+        for d in existing_crashes:
+            print(f"  {d}")
+
+    if existing_dirs:
+        print("Directories to remove:")
+        for d in existing_dirs:
+            print(f"  {d}")
+
+    if existing_metadata:
+        print("Metadata to remove:")
+        for m in existing_metadata:
+            print(f"  {m}")
 
     if dry_run:
         print("\n[Dry run] No files were deleted.")
@@ -128,8 +204,20 @@ def clean(
     if not yes:
         click.confirm("\nProceed with deletion?", abort=True)
 
-    for d in existing:
+    for d in existing_crashes:
+        shutil.rmtree(d)
+        print(f"Removed crash: {d}")
+
+    for d in existing_dirs:
         shutil.rmtree(d)
         print(f"Removed: {d}")
+
+    for m in existing_metadata:
+        if m.is_dir():
+            shutil.rmtree(m)
+            print(f"Removed directory: {m}")
+        else:
+            m.unlink()
+            print(f"Removed file: {m}")
 
     print("\nClean complete.")
