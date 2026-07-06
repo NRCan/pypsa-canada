@@ -33,7 +33,7 @@ The typical workflow involves:
 ### Command-Line Interface
 Run a scenario with:
 ```bash
-pypsa_canada run -f config/[your-scenario].yaml
+(env)  >> pypsa_canada run -f config/[your-scenario].yaml
 ```
 
 Available example scenarios in the `example/scenarios/` directory:
@@ -68,17 +68,18 @@ For NRCAN internal users:
 $ git clone https://nrcan-eets-cev-renouvelable-devops@dev.azure.com/nrcan-eets-cev-renouvelable-devops/Canadian_Scenarios_Analysis/_git/pypsa_canada
 ```
 
-1. Create the virtual environment with either Conda or Python with Python 3.11
+1. Create the virtual environment with either Conda or Python with Python 3.12. Feel free to choose the name of your environment.
 
 1-a) **For Anaconda/Miniconda users only, create a virtual environment with the following command:
 ```bash
-$(base) conda create --name pypsa_cad_p312 python=3.12.10
+$(base) conda create --name pypsa_canada_p312 python=3.12.10
 ```
 
 1-b) **For Python users only, assuming you have a Python 3.12 installed, execute the following command to create a new virtual environment:
 ```bash
-$(base) python -m venv pypsa_cad_p312
+$(base) python -m venv pypsa_canada_p312
 ```
+
 1-b) Proceed to activate the environment
 
 2. Go into the project folder
@@ -88,7 +89,7 @@ $(base) python -m venv pypsa_cad_p312
 3. Install the package/library:
 
 ```bash
-(pypsa-cad_py312)  >> pip install -e .[dev]
+(env)  >> pip install -e .[dev]
 ```
 
 Following these steps, most dependencies should be installed and you should be able to use pypsa_canada
@@ -101,12 +102,12 @@ Following these steps, most dependencies should be installed and you should be a
 
 2. To execute an example
 ```bash
-(pypsa-cad_py312)  >> pypsa_canada run -f scenarios\Canada-National-no-CER.yaml
+(env)  >> pypsa_canada run -f config\minimal_model.yaml
 ```
 
 3. If the process is stale, you will need to unlock it with the following command
 ```bash
-(pypsa-cad_py312)  >> pypsa_canada run -f scenarios\Canada-National-no-CER.yaml --unlock
+(env)  >> pypsa_canada run -f sconfig\minimal_model.yaml --unlock
 ```
 
 ## Developers
