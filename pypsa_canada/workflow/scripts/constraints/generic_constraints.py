@@ -1,4 +1,6 @@
+import importlib.util
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -12,6 +14,33 @@ if TYPE_CHECKING:
     import pypsa
 
 logger = logging.getLogger(__name__)
+
+
+def load_custom_constraint_module(module_path):
+    if not module_path:
+        return None
+
+    module_path = Path(module_path).resolve()
+
+    if not module_path.is_file():
+        raise FileNotFoundError(
+            f"Custom constraint module not found: {module_path}"
+        )
+
+    spec = importlib.util.spec_from_file_location(
+        "pypsa_canada_custom_constraints",
+        module_path,
+    )
+
+    if spec is None or spec.loader is None:
+        raise ImportError(
+            f"Unable to load custom constraint module: {module_path}"
+        )
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    return module
 
 
 def CER_generator_grouping(network, CER_constraint, year: int, mode: str):

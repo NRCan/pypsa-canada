@@ -125,6 +125,10 @@ solving:
     "cbc-default": {}
     "glpk-default": {}
 
+custom_constraints:
+  enabled: false
+  module_path: null
+
 load:
   load_mode: &load_mode "custom"
   # load_growth_forecast: "model/Canada-National/loads_forecast.csv"

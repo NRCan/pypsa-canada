@@ -11,6 +11,7 @@ from constraints.generic_constraints import (
     CER_generator_grouping,
     add_bidirection_link_constraint,
     add_stop_prod_constraint,
+    load_custom_constraint_module,
 )
 from constraints.planning_constraints import (
     add_bidirection_link_constraint_OPT,
@@ -182,6 +183,27 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
         component_capacity_expansion_constraint(
             network, custom_constraints_cfg["custom_constraint_filepath"]
         )
+
+    custom_config = config.get("custom_constraints", {})
+
+    if custom_config.get("enabled", False):
+        custom_module = load_custom_constraint_module(
+            custom_config.get("module_path")
+        )
+
+        if custom_module is not None and hasattr(
+            custom_module, "add_planning_constraints"
+        ):
+            for period in period_list:
+                period_snapshots = network.snapshots[
+                    network.snapshots.get_level_values(0) == period
+                ]
+                custom_module.add_planning_constraints(
+                    network=network,
+                    snapshots=period_snapshots,
+                    config=custom_config,
+                    year=period,
+                )
 
     print("Display constraints")
     print(network.model.constraints)

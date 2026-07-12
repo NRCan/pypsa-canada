@@ -17,6 +17,7 @@ from constraints.generic_constraints import (
     CER_generator_grouping,
     add_bidirection_link_constraint,
     add_stop_prod_constraint,
+    load_custom_constraint_module,
     prevent_spill_if_not_fully_charged,
 )
 from helpers import setup_script_logging
@@ -187,6 +188,24 @@ def optimize_uc_period(
 
     hours_per_yr = 8760
 
+    def _add_custom_dispatch_constraints(n, sns):
+        custom_config = config.get("custom_constraints", {})
+
+        if custom_config.get("enabled", False):
+            custom_module = load_custom_constraint_module(
+                custom_config.get("module_path")
+            )
+
+            if custom_module is not None and hasattr(
+                custom_module, "add_dispatch_constraints"
+            ):
+                custom_module.add_dispatch_constraints(
+                    network=n,
+                    snapshots=sns,
+                    config=custom_config,
+                    year=period_year,
+                )
+
     for uc_period in range(nb_uc_period):
         starttime = pd.Timestamp.now()
         a = uc_period * horizon
@@ -297,8 +316,11 @@ def optimize_uc_period(
                 logging.info(
                     f"CER budget after UC {_uc}:\n{CER_group_budget.to_string()}"
                 )
+                _add_custom_dispatch_constraints(n, sns)
         else:
-            _extra_func = add_all_dispatch_constraints
+            def _extra_func(n, sns):
+                add_all_dispatch_constraints(n, sns)
+                _add_custom_dispatch_constraints(n, sns)
 
         status, condition = network.optimize(
             snapshots=snapshots,
