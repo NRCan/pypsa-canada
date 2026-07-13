@@ -103,7 +103,8 @@ def get_all_targets():
         *rules.solve_dispatch.output,
         *rules.post_process_planning.output,
         *rules.post_process_dispatch.output,
-        *rules.plot_corridor_map.output,
+        *rules.plot_planning_corridor_map.output,
+        *rules.plot_dispatch_corridor_map.output,
         *rules.create_summary.output,
         *rules.copy_config.output,
         *rules.collect_logs.output
