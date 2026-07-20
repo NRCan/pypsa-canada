@@ -715,10 +715,14 @@ def calc_energy_balance(n, year, planning=False):
         comp += ["Link"]
     if comp:
         bus0_trans = stats.transmission(
-            comps=comp, groupby=["bus0", "bus1"], aggregate_time=False
+            comps=comp, groupby=["bus0", "bus1"], at_port='bus0', aggregate_time=False
+        )
+        bus1_trans = stats.transmission(
+            comps=comp, groupby=["bus0", "bus1"], at_port='bus1', aggregate_time=False
         )
         if planning:
             bus0_trans = bus0_trans.T.loc[year].T
+            bus1_trans = bus1_trans.T.loc[year].T
         if not bus0_trans.empty:
             bus0_trans = bus0_trans.reset_index()
             bus0_trans = (
@@ -728,7 +732,16 @@ def calc_energy_balance(n, year, planning=False):
                 .fillna(0)
             )
             bus0_trans *= -1
-            bus1_trans = bus0_trans * -1
+
+            bus1_trans = bus1_trans.reset_index()
+            bus1_trans = (
+                bus1_trans.rename({"bus0": "province", "bus1": "carrier"}, axis=1)
+                .set_index(["province", "carrier"])
+                .drop("component", axis=1)
+                .fillna(0)
+            )
+            bus1_trans = bus1_trans * -1
+            
             bus1_trans = bus1_trans.reset_index()
             bus1_trans[["province", "carrier"]] = bus1_trans[["carrier", "province"]]
             bus0_trans = bus0_trans.reset_index().set_index("carrier")
@@ -755,11 +768,21 @@ def calc_energy_balance(n, year, planning=False):
                     [bus_to_key.get(c, c) for c in transmission.index],
                     name=transmission.index.name,
                 )
+                internal_tx = transmission[
+                    transmission.index == transmission['province']
+                ]
                 transmission = transmission[
                     transmission.index != transmission["province"]
                 ]
+            
+            # Internal transmission losses
+            if not internal_tx.empty:
+                internal_tx = internal_tx.groupby('province').sum()
+                internal_tx['province'] = internal_tx.index
+                internal_tx.index += '_internal_transmission_losses'
+
             transmission.index += "_transmission_flow"
-            result = pd.concat([result, transmission])
+            result = pd.concat([result, transmission, internal_tx])
 
     # Loads
     loads = n.loads[["province"]]
