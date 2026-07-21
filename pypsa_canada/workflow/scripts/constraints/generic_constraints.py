@@ -1,7 +1,8 @@
 import importlib.util
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
+from types import ModuleType
+from typing import TYPE_CHECKING, Iterable
 
 import numpy as np
 import pandas as pd
@@ -16,31 +17,77 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def load_custom_constraint_module(module_path):
-    if not module_path:
-        return None
+def _load_single_custom_constraint_module(
+    module_path: str | Path,
+    module_index: int,
+) -> ModuleType:
+    """
+    Load one custom-constraint module from a Python file.
+    """
+    path = Path(module_path).resolve()
 
-    module_path = Path(module_path).resolve()
-
-    if not module_path.is_file():
+    if not path.is_file():
         raise FileNotFoundError(
-            f"Custom constraint module not found: {module_path}"
+            f"Custom constraint module not found: {path}"
         )
 
+    module_name = (
+        f"pypsa_canada_custom_constraints_"
+        f"{module_index}_{path.stem}"
+    )
+
     spec = importlib.util.spec_from_file_location(
-        "pypsa_canada_custom_constraints",
-        module_path,
+        module_name,
+        path,
     )
 
     if spec is None or spec.loader is None:
         raise ImportError(
-            f"Unable to load custom constraint module: {module_path}"
+            f"Unable to load custom constraint module: {path}"
         )
 
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
     return module
+
+
+def load_custom_constraint_modules(
+    module_paths: str | Path | Iterable[str | Path] | None,
+) -> list[ModuleType]:
+    """
+    Load one or more custom-constraint modules.
+
+    Supports both:
+        module_path: "constraint.py"
+
+    and:
+        module_paths:
+          - "constraint_1.py"
+          - "constraint_2.py"
+    """
+    if not module_paths:
+        return []
+
+    if isinstance(module_paths, (str, Path)):
+        paths = [module_paths]
+    else:
+        paths = list(module_paths)
+
+    modules = []
+
+    for module_index, module_path in enumerate(
+        paths,
+        start=1,
+    ):
+        modules.append(
+            _load_single_custom_constraint_module(
+                module_path=module_path,
+                module_index=module_index,
+            )
+        )
+
+    return modules
 
 
 def CER_generator_grouping(network, CER_constraint, year: int, mode: str):
@@ -371,4 +418,3 @@ def prevent_spill_if_not_fully_charged(
             "<=",
             rhs2,
             name=f"GlobalConstraint-Storage_unit_{unit}_spill_iff_fully_charged_constraint_{snapshots[0]}",
-        )

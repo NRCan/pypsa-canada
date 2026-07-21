@@ -17,7 +17,7 @@ from constraints.generic_constraints import (
     CER_generator_grouping,
     add_bidirection_link_constraint,
     add_stop_prod_constraint,
-    load_custom_constraint_module,
+    load_custom_constraint_modules,
     prevent_spill_if_not_fully_charged,
 )
 from helpers import setup_script_logging
@@ -188,17 +188,20 @@ def optimize_uc_period(
 
     hours_per_yr = 8760
 
+    custom_config = config.get("custom_constraints", {})
+    custom_modules = []
+
+    if custom_config.get("enabled", False):
+        module_paths = custom_config.get("module_paths")
+
+        if module_paths is None:
+            module_paths = custom_config.get("module_path")
+
+        custom_modules = load_custom_constraint_modules(module_paths)
+
     def _add_custom_dispatch_constraints(n, sns):
-        custom_config = config.get("custom_constraints", {})
-
-        if custom_config.get("enabled", False):
-            custom_module = load_custom_constraint_module(
-                custom_config.get("module_path")
-            )
-
-            if custom_module is not None and hasattr(
-                custom_module, "add_dispatch_constraints"
-            ):
+        for custom_module in custom_modules:
+            if hasattr(custom_module, "add_dispatch_constraints"):
                 custom_module.add_dispatch_constraints(
                     network=n,
                     snapshots=sns,
