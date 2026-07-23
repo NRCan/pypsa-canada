@@ -16,6 +16,7 @@ from constraints.dispatch_constraints import (
 from constraints.generic_constraints import (
     CER_generator_grouping,
     add_bidirection_link_constraint,
+    add_custom_constraints,
     add_stop_prod_constraint,
     prevent_spill_if_not_fully_charged,
 )
@@ -268,8 +269,8 @@ def optimize_uc_period(
 
             # Closure captures CER state for this UC period
             def _extra_func(
-                n,
-                sns,
+                n: pypsa.Network,
+                sns: pd.DatetimeIndex,
                 _cfg=CER_constraint_cfg,
                 _gens=CER_generators,
                 _groups=CER_group_list,
@@ -297,8 +298,24 @@ def optimize_uc_period(
                 logging.info(
                     f"CER budget after UC {_uc}:\n{CER_group_budget.to_string()}"
                 )
+                add_custom_constraints(
+                    n,
+                    sns,
+                    config["dispatch"]["custom_constraints"],
+                    period_year,
+                    "dispatch",
+                )
         else:
-            _extra_func = add_all_dispatch_constraints
+
+            def _extra_func(n: pypsa.Network, sns: pd.DatetimeIndex):
+                add_all_dispatch_constraints(n, sns)
+                add_custom_constraints(
+                    n,
+                    sns,
+                    config["dispatch"]["custom_constraints"],
+                    period_year,
+                    "dispatch",
+                )
 
         status, condition = network.optimize(
             snapshots=snapshots,

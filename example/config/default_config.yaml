@@ -125,6 +125,7 @@ solving:
     "cbc-default": {}
     "glpk-default": {}
 
+
 load:
   load_mode: &load_mode "custom"
   # load_growth_forecast: "model/Canada-National/loads_forecast.csv"
@@ -210,6 +211,9 @@ planning:
     component_capacity_expansion_constraint:
       enable: false
       # custom_constraint_filepath: ""
+  custom_constraints:
+    enabled: false
+    module_path: null
 
   modify_components:
     links:
@@ -270,6 +274,10 @@ dispatch:
       min_cap: 25
       # forecast hours based on net load ('load'), uniformly ('uniform'), or assign max to first UC period and carry leftover ('carryover')
       forecast_hours: 'carryover'
+
+  custom_constraints:
+    enabled: false
+    module_path: null
 
 postprocess:
   result_type: "Provincial"  # "Provincial" or "Nodal"
