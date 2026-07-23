@@ -411,10 +411,18 @@ def prevent_spill_if_not_fully_charged(
             lhs1,
             "<=",
             rhs1,
-            name=f"GlobalConstraint-Storage_unit_{unit}_spill_seq_max_inflow_constraint_{snapshots[0]}",
+            name=(
+                f"GlobalConstraint-Storage_unit_{unit}_"
+                f"spill_seq_max_inflow_constraint_{snapshots[0]}"
+            ),
         )
+
         m.add_constraints(
             lhs2,
             "<=",
             rhs2,
-            name=f"GlobalConstraint-Storage_unit_{unit}_spill_iff_fully_charged_constraint_{snapshots[0]}",
+            name=(
+                f"GlobalConstraint-Storage_unit_{unit}_"
+                f"spill_iff_fully_charged_constraint_{snapshots[0]}"
+            ),
+        )
