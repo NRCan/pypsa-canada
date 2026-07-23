@@ -1,8 +1,9 @@
 import importlib.util
 import logging
+from collections.abc import Iterable
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -27,14 +28,9 @@ def _load_single_custom_constraint_module(
     path = Path(module_path).resolve()
 
     if not path.is_file():
-        raise FileNotFoundError(
-            f"Custom constraint module not found: {path}"
-        )
+        raise FileNotFoundError(f"Custom constraint module not found: {path}")
 
-    module_name = (
-        f"pypsa_canada_custom_constraints_"
-        f"{module_index}_{path.stem}"
-    )
+    module_name = f"pypsa_canada_custom_constraints_{module_index}_{path.stem}"
 
     spec = importlib.util.spec_from_file_location(
         module_name,
@@ -42,9 +38,7 @@ def _load_single_custom_constraint_module(
     )
 
     if spec is None or spec.loader is None:
-        raise ImportError(
-            f"Unable to load custom constraint module: {path}"
-        )
+        raise ImportError(f"Unable to load custom constraint module: {path}")
 
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -88,6 +82,51 @@ def load_custom_constraint_modules(
         )
 
     return modules
+
+
+def add_custom_constraints(
+    n: pypsa.Network,
+    sns: pd.DatetimeIndex,
+    custom_config: dict,
+    period_year: int,
+    constraint_type: str = "planning",
+):
+    """
+    Function to add custom constraints from external modules.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        The pypsa network class sent as an object
+    sns : pd.DatetimeIndex
+        The pypsa network snapshots for which the constraint will be applied
+    custom_config : dict
+        The configuration dictionary for custom constraints, including 'enabled' and 'module_paths'.
+    period_year : int
+        The year of the current dispatch period, used for any year-specific logic in custom constraints.
+    constraint_type : str, optional
+        Type of constraints to add, either 'planning' or 'dispatch' (default: 'planning').
+    """
+    # Quick return if not enabled
+    if not custom_config["enabled"]:
+        return
+
+    custom_modules = load_custom_constraint_modules(custom_config["module_paths"])
+    function_name = f"add_{constraint_type}_constraints"
+
+    for custom_module in custom_modules:
+        if hasattr(custom_module, function_name):
+            getattr(custom_module, function_name)(
+                network=n,
+                snapshots=sns,
+                config=custom_config,
+                year=period_year,
+            )
+        else:
+            logger.warning(
+                f"Custom constraint module {custom_module.__name__} does not have "
+                f"{function_name} function."
+            )
 
 
 def CER_generator_grouping(network, CER_constraint, year: int, mode: str):

@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 import pytest
-from constraints.generic_constraints import load_custom_constraint_module
+from constraints.generic_constraints import load_custom_constraint_modules
 
 snakemake_module = types.ModuleType("snakemake")
 snakemake_utils_module = types.ModuleType("snakemake.utils")
@@ -51,11 +51,14 @@ def planning_config(custom_constraints=None):
                 "NZ_constraint": {"enable": False},
                 "planning_reserve_margin": {"enable": False},
                 "component_capacity_expansion_constraint": {"enable": False},
-            }
+            },
+            "custom_constraints": (
+                custom_constraints
+                if custom_constraints is not None
+                else {"enabled": False, "module_paths": None}
+            ),
         }
     }
-    if custom_constraints is not None:
-        config["custom_constraints"] = custom_constraints
     return config
 
 
@@ -67,11 +70,14 @@ def dispatch_config(custom_constraints=None):
                 "add_bidirection_link": {"enable": False},
                 "add_prevent_spill_if_not_fully_charged": {"enable": False},
                 "CER_constraint": {"enable": False},
-            }
+            },
+            "custom_constraints": (
+                custom_constraints
+                if custom_constraints is not None
+                else {"enabled": False, "module_paths": None}
+            ),
         }
     }
-    if custom_constraints is not None:
-        config["custom_constraints"] = custom_constraints
     return config
 
 
@@ -102,19 +108,20 @@ class FakeDispatchNetwork:
 
 
 def test_loader_returns_none_for_none():
-    assert load_custom_constraint_module(None) is None
+    assert load_custom_constraint_modules(None) == []
 
 
 def test_loader_missing_file_raises(local_tmp_dir):
     with pytest.raises(FileNotFoundError):
-        load_custom_constraint_module(local_tmp_dir / "missing.py")
+        load_custom_constraint_modules(local_tmp_dir / "missing.py")
 
 
 def test_loader_loads_module(local_tmp_dir):
     module_path = write_module(local_tmp_dir, "VALUE = 42\n")
-    module = load_custom_constraint_module(module_path)
+    modules = load_custom_constraint_modules(module_path)
 
-    assert module.VALUE == 42
+    assert len(modules) == 1
+    assert modules[0].VALUE == 42
 
 
 def test_planning_hook_invokes_add_planning_constraints(local_tmp_dir):
@@ -128,7 +135,7 @@ def test_planning_hook_invokes_add_planning_constraints(local_tmp_dir):
     network = FakePlanningNetwork()
     old_config = solve_planning.config
     solve_planning.config = planning_config(
-        {"enabled": True, "module_path": str(module_path)}
+        {"enabled": True, "module_paths": [str(module_path)]}
     )
     try:
         solve_planning.add_all_planning_constraints(network, network.snapshots)
@@ -140,7 +147,7 @@ def test_planning_hook_invokes_add_planning_constraints(local_tmp_dir):
         network.snapshots[network.snapshots.get_level_values(0) == 2030]
     )
     assert network.calls[0][0] == expected_snapshots
-    assert network.calls[0][1]["module_path"] == str(module_path)
+    assert network.calls[0][1]["module_paths"] == [str(module_path)]
     assert network.calls[0][2] == 2030
 
 
@@ -156,7 +163,7 @@ def test_dispatch_hook_invokes_add_dispatch_constraints(local_tmp_dir):
     old_config = solve_dispatch.config
     old_snakemake = solve_dispatch.snakemake
     solve_dispatch.config = dispatch_config(
-        {"enabled": True, "module_path": str(module_path)}
+        {"enabled": True, "module_paths": [str(module_path)]}
     )
     solve_dispatch.snakemake = SimpleNamespace(
         output=SimpleNamespace(dispatch_output_file_csv=str(local_tmp_dir / "out"))
@@ -175,7 +182,7 @@ def test_dispatch_hook_invokes_add_dispatch_constraints(local_tmp_dir):
 
     assert len(network.calls) == 1
     assert network.calls[0][0] == list(network.snapshots)
-    assert network.calls[0][1]["module_path"] == str(module_path)
+    assert network.calls[0][1]["module_paths"] == [str(module_path)]
     assert network.calls[0][2] == 2030
 
 
@@ -184,7 +191,7 @@ def test_missing_optional_hook_function_is_skipped(local_tmp_dir):
     network = FakePlanningNetwork()
     old_config = solve_planning.config
     solve_planning.config = planning_config(
-        {"enabled": True, "module_path": str(module_path)}
+        {"enabled": True, "module_paths": [str(module_path)]}
     )
     try:
         solve_planning.add_all_planning_constraints(network, network.snapshots)

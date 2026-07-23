@@ -10,8 +10,8 @@ import pypsa
 from constraints.generic_constraints import (
     CER_generator_grouping,
     add_bidirection_link_constraint,
+    add_custom_constraints,
     add_stop_prod_constraint,
-    load_custom_constraint_modules,
 )
 from constraints.planning_constraints import (
     add_bidirection_link_constraint_OPT,
@@ -78,7 +78,11 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
     CER_constraint_cfg = constraint_dict["CER_constraint"]
     NZ_constraint_cfg = constraint_dict["NZ_constraint"]
     planning_reserve_margin_cfg = constraint_dict["planning_reserve_margin"]
-    custom_constraints_cfg = constraint_dict["component_capacity_expansion_constraint"]
+    component_capacity_expansion_cfg = constraint_dict[
+        "component_capacity_expansion_constraint"
+    ]
+
+    custom_constraints_cfg = config["planning"]["custom_constraints"]
 
     # The snapshots must only contain one unique year
     period_list = network.snapshots.get_level_values(0).unique()
@@ -176,37 +180,28 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
                 )
 
     # Custom capacity expansion constraints (applies to all periods)
-    if custom_constraints_cfg["enable"]:
+    if component_capacity_expansion_cfg["enable"]:
         logging.info(
-            f"Adding custom capacity expansion constraints: {custom_constraints_cfg}"
+            f"Adding custom capacity expansion constraints: {component_capacity_expansion_cfg}"
         )
         component_capacity_expansion_constraint(
-            network, custom_constraints_cfg["custom_constraint_filepath"]
+            network, component_capacity_expansion_cfg["custom_constraint_filepath"]
         )
 
-    custom_config = config.get("custom_constraints", {})
-
-    if custom_config.get("enabled", False):
-        module_paths = custom_config.get("module_paths")
-
-        if module_paths is None:
-            module_paths = custom_config.get("module_path")
-
-        custom_modules = load_custom_constraint_modules(module_paths)
-
+    # Custom model planning constraints (applies to all periods)
+    if custom_constraints_cfg["enabled"]:
         for period in period_list:
             period_snapshots = network.snapshots[
                 network.snapshots.get_level_values(0) == period
             ]
 
-            for custom_module in custom_modules:
-                if hasattr(custom_module, "add_planning_constraints"):
-                    custom_module.add_planning_constraints(
-                        network=network,
-                        snapshots=period_snapshots,
-                        config=custom_config,
-                        year=period,
-                    )
+            add_custom_constraints(
+                network,
+                period_snapshots,
+                custom_constraints_cfg,
+                period,
+                "planning",
+            )
 
     print("Display constraints")
     print(network.model.constraints)

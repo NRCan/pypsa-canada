@@ -16,8 +16,8 @@ from constraints.dispatch_constraints import (
 from constraints.generic_constraints import (
     CER_generator_grouping,
     add_bidirection_link_constraint,
+    add_custom_constraints,
     add_stop_prod_constraint,
-    load_custom_constraint_modules,
     prevent_spill_if_not_fully_charged,
 )
 from helpers import setup_script_logging
@@ -188,27 +188,6 @@ def optimize_uc_period(
 
     hours_per_yr = 8760
 
-    custom_config = config.get("custom_constraints", {})
-    custom_modules = []
-
-    if custom_config.get("enabled", False):
-        module_paths = custom_config.get("module_paths")
-
-        if module_paths is None:
-            module_paths = custom_config.get("module_path")
-
-        custom_modules = load_custom_constraint_modules(module_paths)
-
-    def _add_custom_dispatch_constraints(n, sns):
-        for custom_module in custom_modules:
-            if hasattr(custom_module, "add_dispatch_constraints"):
-                custom_module.add_dispatch_constraints(
-                    network=n,
-                    snapshots=sns,
-                    config=custom_config,
-                    year=period_year,
-                )
-
     for uc_period in range(nb_uc_period):
         starttime = pd.Timestamp.now()
         a = uc_period * horizon
@@ -290,8 +269,8 @@ def optimize_uc_period(
 
             # Closure captures CER state for this UC period
             def _extra_func(
-                n,
-                sns,
+                n: pypsa.Network,
+                sns: pd.DatetimeIndex,
                 _cfg=CER_constraint_cfg,
                 _gens=CER_generators,
                 _groups=CER_group_list,
@@ -319,11 +298,24 @@ def optimize_uc_period(
                 logging.info(
                     f"CER budget after UC {_uc}:\n{CER_group_budget.to_string()}"
                 )
-                _add_custom_dispatch_constraints(n, sns)
+                add_custom_constraints(
+                    n,
+                    sns,
+                    config["dispatch"]["custom_constraints"],
+                    period_year,
+                    "dispatch",
+                )
         else:
-            def _extra_func(n, sns):
+
+            def _extra_func(n: pypsa.Network, sns: pd.DatetimeIndex):
                 add_all_dispatch_constraints(n, sns)
-                _add_custom_dispatch_constraints(n, sns)
+                add_custom_constraints(
+                    n,
+                    sns,
+                    config["dispatch"]["custom_constraints"],
+                    period_year,
+                    "dispatch",
+                )
 
         status, condition = network.optimize(
             snapshots=snapshots,
