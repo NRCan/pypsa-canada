@@ -1,3 +1,9 @@
+## 0.3.3 (2026-08-05)
+
+### Bug Fixes
+
+- Moved the marginal cost calculation function from the add_components script t...
+
 ## 0.3.2 (2026-07-23)
 
 ### Bug Fixes
