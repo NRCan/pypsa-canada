@@ -534,7 +534,7 @@ def preprocess_components(
     # network.generators_t.carbon_cost = carbon_cost.copy()
     # network.generators_t.fuel_cost = fuel_cost.copy()
     # network.generators_t.variable_cost = variable_cost.copy()
-    
+
     print("-----CREATING STORAGE UNITS DATA-----")
     if not network.storage_units.empty:
         # Modify storage units dataframe to add generic data

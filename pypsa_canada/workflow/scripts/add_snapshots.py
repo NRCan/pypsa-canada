@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import traceback
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -15,7 +16,6 @@ from load_profile import (
     LoadProfile,
 )
 from pypsa import Network
-from typing import Any
 
 # Snakemake injects a global `snakemake` object when using `script:`.
 # It contains paths declared in the rule (input, output, log, params, threads, resources, etc.).
@@ -289,6 +289,7 @@ def _apply_load_profile(
                 f"Invalid load mode: {load_mode}. Check load_profile option in config."
             )
 
+
 def create_marginal_costs(
     network: Network,
     comp_config: dict[str, Any],
@@ -523,7 +524,7 @@ def main():
 
     network = create_yearly_snapshots(network=network, snapshot_config=snapshot_config)
     network = save_ref_year_data(network, network_ref)
-    
+
     comp_config: dict[str, Any] = config["components"]
 
     # Calculate marginal costs and save cost components
@@ -537,7 +538,7 @@ def main():
     print(f"Carbon Cost: {carbon_cost}")
     print(f"Fuel Cost: {fuel_cost}")
     print(f"Variable Cost: {variable_cost}")
-    
+
     network = create_yearly_weightings(
         network=network, snapshot_config=snapshot_config, discount_rate=discount_rate
     )
