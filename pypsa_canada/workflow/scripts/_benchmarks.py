@@ -59,6 +59,8 @@ class MemTimer(Process):
         self.include_children = kw.pop("include_children", True)
 
         super().__init__(*args, **kw)
+        # Never block parent shutdown if cleanup is skipped on an exception path.
+        self.daemon = True
 
     def run(self):
         # ignore the interrupt signal in the child process
@@ -82,7 +84,13 @@ class MemTimer(Process):
         else:
             stream = None
 
-        self.pipe.send(0)  # we're ready
+        try:
+            self.pipe.send(0)  # we're ready
+        except (BrokenPipeError, EOFError, OSError):
+            if stream is not None:
+                stream.close()
+            return
+
         stop = False
         while True:
             cur_mem = _get_memory(
@@ -104,14 +112,21 @@ class MemTimer(Process):
 
             if stop:
                 break
-            stop = self.pipe.poll(self.interval)
+            try:
+                stop = self.pipe.poll(self.interval)
+            except (BrokenPipeError, EOFError, OSError):
+                break
             # do one more iteration
 
         if stream is not None:
             stream.close()
 
-        self.pipe.send(mem_usage)
-        self.pipe.send(n_measurements)
+        try:
+            self.pipe.send(mem_usage)
+            self.pipe.send(n_measurements)
+        except (BrokenPipeError, EOFError, OSError):
+            # Parent exited early, so there is nowhere to publish results.
+            return
 
 
 class memory_logger:
@@ -193,13 +208,26 @@ class memory_logger:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            self.parent_conn.send(0)  # finish timing
+        try:
+            if exc_type is None:
+                self.parent_conn.send(0)  # finish timing
 
-            self.mem_usage = self.parent_conn.recv()
-            self.n_measurements = self.parent_conn.recv()
-        else:
-            self.p.terminate()
+                self.mem_usage = self.parent_conn.recv()
+                self.n_measurements = self.parent_conn.recv()
+            else:
+                self.p.terminate()
+        except (BrokenPipeError, EOFError, OSError) as error:
+            logger.debug("Benchmark memory tracker closed early: %s", error)
+        finally:
+            if hasattr(self, "child_conn"):
+                self.child_conn.close()
+            if hasattr(self, "parent_conn"):
+                self.parent_conn.close()
+            if hasattr(self, "p"):
+                self.p.join(timeout=1)
+                if self.p.is_alive():
+                    self.p.terminate()
+                    self.p.join(timeout=1)
 
         return False
 
