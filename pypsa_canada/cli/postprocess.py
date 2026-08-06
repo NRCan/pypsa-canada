@@ -110,7 +110,8 @@ def _resolve_config_path(run_dir: Path, config_path: str | None) -> Path:
 @click.command("postprocess")
 @click.option(
     "--run-dir",
-    default="results/minimal_model-2021-2050/run_2026-05-06_17-33",
+    default=".",
+    show_default="current working directory",
     help="Path to an existing run output directory.",
     type=click.Path(),
 )
@@ -147,7 +148,7 @@ def generate_postprocess(run_dir, config_path, result_type, skip_export, skip_ma
     4. Export to IDEA format (if configured and not skipped)
     5. Generate corridor utilization maps (if not skipped)
     """
-    run_dir = Path(run_dir)
+    run_dir = Path(run_dir or ".").resolve()
     if not run_dir.exists():
         click.echo(f"ERROR: Run directory not found: {run_dir}", err=True)
         sys.exit(1)
