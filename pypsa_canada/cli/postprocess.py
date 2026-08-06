@@ -27,9 +27,15 @@ import yaml
 
 def _run_snakemake_script(script: Path, snakemake: types.SimpleNamespace):
     """Execute a workflow script with a mocked snakemake namespace."""
-    builtins.snakemake = snakemake
+    previous_snakemake = getattr(builtins, "snakemake", None)
+    setattr(builtins, "snakemake", snakemake)
     script_path = str(script.parent)
-    script_globals = {"__builtins__": __builtins__, "snakemake": snakemake}
+    script_globals = {
+        "__builtins__": __builtins__,
+        "__name__": "__main__",
+        "__file__": str(script),
+        "snakemake": snakemake,
+    }
     sys.path.insert(0, script_path)
     try:
         exec(
@@ -37,6 +43,10 @@ def _run_snakemake_script(script: Path, snakemake: types.SimpleNamespace):
             script_globals,
         )
     finally:
+        if previous_snakemake is None:
+            delattr(builtins, "snakemake")
+        else:
+            setattr(builtins, "snakemake", previous_snakemake)
         if sys.path and sys.path[0] == script_path:
             sys.path.pop(0)
 
