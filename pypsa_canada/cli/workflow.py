@@ -51,6 +51,14 @@ os.environ.pop("SNAKEMAKE_OUTPUT_CACHE", None)  # no cache location => cache unu
     multiple=True,
 )
 @click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    default=False,
+    show_default=False,
+    help="Enable verbose Snakemake output (job details and shell commands)",
+)
+@click.option(
     "--debug",
     is_flag=True,
     default=False,
@@ -97,6 +105,7 @@ def run(
     file: str,
     targets: str,
     data_folder: str | None = None,
+    verbose: bool = False,
     debug: bool = False,
     test: bool = False,
     cores: int | None = None,
@@ -172,7 +181,10 @@ def run(
     try:
         with SnakemakeApi(
             OutputSettings(
-                verbose=False, show_failed_logs=True, benchmark_extended=True
+                verbose=verbose,
+                printshellcmds=verbose,
+                show_failed_logs=True,
+                benchmark_extended=True,
             )
         ) as api:
             config_settings = None

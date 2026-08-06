@@ -1,6 +1,6 @@
 # PyPSA-Canada
 
-**[English](#pypsa-canada)** | **[Français](#pypsa-canada-fr)**
+**[English](#pypsa-canada)** | **[Français](#francais)**
 
 ## Keywords
 Python, Optimization, Linopy, Power Systems
@@ -153,10 +153,11 @@ https://docs.pypsa.org/latest/
 
 ---
 
-<a name="pypsa-canada-fr"></a>
+## Francais
+
 # PyPSA-Canada
 
-**[English](#pypsa-canada)** | **[Français](#pypsa-canada-fr)**
+**[English](#pypsa-canada)** | **[Français](#francais)**
 
 ## Mots-clés
 Python, Optimisation, Linopy, Réseaux électriques
