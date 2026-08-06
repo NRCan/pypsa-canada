@@ -1,5 +1,7 @@
 # PyPSA-Canada
 
+**[English](#pypsa-canada)** | **[Français](#pypsa-canada-fr)**
+
 ## Keywords
 Python, Optimization, Linopy, Power Systems
 
@@ -147,4 +149,160 @@ Copyright CanmetENERGY - Varennes, NRCan, Goverment of Canada
 * Serban Ivanescu (serban.ivanescu@nrcan-rncan.gc.ca)
 
 ## Getting Further Information
+https://docs.pypsa.org/latest/
+
+---
+
+<a name="pypsa-canada-fr"></a>
+# PyPSA-Canada
+
+**[English](#pypsa-canada)** | **[Français](#pypsa-canada-fr)**
+
+## Mots-clés
+Python, Optimisation, Linopy, Réseaux électriques
+
+## Description du projet
+`pypsa_canada` est un cadre de modélisation basé sur des flux de travail pour l'analyse des réseaux électriques au Canada, construit sur [PyPSA](https://pypsa.org/) (Python for Power System Analysis). Cet outil permet une optimisation et une planification complètes des systèmes énergétiques pour les réseaux électriques canadiens.
+
+**Caractéristiques principales :**
+- **Modélisation par scénarios** : Définir et exécuter plusieurs scénarios de réseaux électriques avec des configurations personnalisables
+- **Analyse multi-temporelle** : Support pour la planification à long terme et la modélisation de la répartition opérationnelle
+- **Jours représentatifs** : Modélisation efficace utilisant des périodes de temps représentatives pour réduire la complexité computationnelle
+- **Modélisation flexible du réseau** : Modéliser les réseaux électriques à différentes échelles spatiales (nationale, provinciale, régionale)
+- **Intégration des composants** : Gérer divers composants du système énergétique, y compris les générateurs, les unités de stockage, les charges et les liens de transmission
+- **Optimisation des coûts** : Incorporer des données détaillées sur les coûts en capital, opérationnels et de carburant avec plusieurs scénarios de coûts
+- **Gestion des contraintes** : Appliquer des contraintes personnalisées, y compris les limites de capacité, les objectifs d'émissions et les exigences politiques
+- **Automatisation du flux de travail** : Pipeline basé sur Snakemake pour une analyse reproductible et évolutive
+
+Ce cadre a été appliqué pour analyser des scénarios de réseaux électriques canadiens, y compris l'initiative de la Boucle de l'Atlantique et l'intégration du réseau de la Saskatchewan.
+
+## Utilisation
+
+### Aperçu
+`pypsa_canada` fournit une interface en ligne de commande pour exécuter des flux de travail d'optimisation de réseaux électriques. L'outil traite les fichiers de configuration de scénarios (YAML) et exécute une série de tâches automatisées, y compris la création de réseaux, le chargement de données, l'application de contraintes et la résolution d'optimisation.
+
+### Flux de travail de base
+Le flux de travail typique comprend :
+1. **Préparer les données d'entrée** : Composants du réseau (bus, générateurs, charges, etc.), données de coûts et contraintes
+2. **Définir le scénario** : Créer un fichier de configuration YAML spécifiant les paramètres et hypothèses du modèle
+3. **Exécuter l'optimisation** : Exécuter le flux de travail en utilisant l'interface en ligne de commande
+4. **Analyser les résultats** : Examiner les sorties, y compris la répartition optimale, l'expansion de la capacité et les coûts du système
+
+### Interface en ligne de commande
+Exécuter un scénario avec :
+```bash
+(env)  >> pypsa_canada run -f config/[votre-scenario].yaml
+```
+
+Scénarios d'exemple disponibles dans le répertoire `example/scenarios/` :
+- `minimal_model.yaml` : Réseau minimal utilisé à des fins de test
+
+### Options avancées
+- **Déverrouiller les flux de travail bloqués** : Si une exécution précédente a été interrompue, déverrouillez avec :
+  ```bash
+  pypsa_canada run -f scenarios/[scenario].yaml --unlock
+  ```
+- **Visualiser le graphique du flux de travail** : Visualiser le flux de travail computationnel (nécessite une configuration supplémentaire en installant graphviz)
+    ```bash
+  pypsa_canada dag -f scenarios/[scenario].yaml
+  ```
+
+### Organisation des données
+- `data/` : Données d'entrée, y compris les composants du réseau, les coûts et les contraintes
+- `config/` : Fichiers de configuration YAML définissant les scénarios du modèle
+- `ressources/` : Fichiers de réseau intermédiaires générés pendant le flux de travail
+- `results/` : Résultats et sorties d'optimisation
+
+## Installation
+Avant de commencer le processus d'installation :
+0. Clonez le projet/bibliothèque pypsa_canada suivant :
+Pour les utilisateurs de GitHub :
+```bash
+$ git clone https://github.com/NRCan/pypsa-canada.git
+```
+
+Pour les utilisateurs internes de RNCan :
+```bash
+$ git clone https://nrcan-eets-cev-renouvelable-devops@dev.azure.com/nrcan-eets-cev-renouvelable-devops/Canadian_Scenarios_Analysis/_git/pypsa_canada
+```
+
+1. Créez l'environnement virtuel avec Conda ou Python avec Python 3.12. N'hésitez pas à choisir le nom de votre environnement.
+
+1-a) **Pour les utilisateurs d'Anaconda/Miniconda uniquement, créez un environnement virtuel avec la commande suivante :
+```bash
+$(base) conda create --name pypsa_canada_p312 python=3.12.10
+```
+
+1-b) **Pour les utilisateurs de Python uniquement, en supposant que vous avez Python 3.12 installé, exécutez la commande suivante pour créer un nouvel environnement virtuel :
+```bash
+$(base) python -m venv pypsa_canada_p312
+```
+
+1-b) Procédez à l'activation de l'environnement
+
+2. Allez dans le dossier du projet
+```bash
+(env)  >> cd [PROJECT_DIR]
+```
+3. Installez le package/bibliothèque :
+
+```bash
+(env)  >> pip install -e .[dev]
+```
+
+Après ces étapes, la plupart des dépendances devraient être installées et vous devriez pouvoir utiliser pypsa_canada
+
+## Exemple (À partir du dossier du projet)
+1. Allez dans le dossier du projet
+```bash
+(env)  >> cd [ROOT_DIR]/example
+```
+
+2. Pour exécuter un exemple
+```bash
+(env)  >> pypsa_canada run -f config\minimal_model.yaml
+```
+
+3. Si le processus est bloqué, vous devrez le déverrouiller avec la commande suivante
+```bash
+(env)  >> pypsa_canada run -f sconfig\minimal_model.yaml --unlock
+```
+
+## Développeurs
+Des hooks de pré-commit sont utilisés dans ce projet. Les hooks de pré-commit seront appliqués via un pipeline pendant la demande de tirage (PR). S'il échoue, la PR sera rejetée. Pour valider si vos modifications répondent au standard minimum, vous devez exécuter ce qui suit. S'il y a des problèmes, résolvez-les et validez à nouveau.
+```bash
+(pypsa-canada_py312)  >> pre-commit run --all-files --hook-stage manual
+```
+
+## Documentation
+Pour construire la documentation :
+```bash
+sphinx-build -b html docs/source docs/_build/html
+```
+
+## Licence
+Licence MIT PyPSA : https://github.com/PyPSA/PyPSA/blob/master/LICENSE.txt
+Licence pypsa-eur : https://github.com/PyPSA/pypsa-eur/tree/master/LICENSES
+
+## Droits
+Copyright CanmetÉNERGIE - Varennes, RNCan, Gouvernement du Canada
+
+## Auteurs
+* Steven Wong (Ressources naturelles Canada - CanmetÉNERGIE)
+* Nathan De Matos (Ressources naturelles Canada - CanmetÉNERGIE)
+* Michel Bui (Ressources naturelles Canada - CanmetÉNERGIE)
+* Sophie Pelland (Ressources naturelles Canada - CanmetÉNERGIE)
+* Matheus Zambroni De Souza (Ressources naturelles Canada - CanmetÉNERGIE)
+* Adrien Prigent (Ressources naturelles Canada - CanmetÉNERGIE)
+* Serban Ivanescu (Ressources naturelles Canada - CanmetÉNERGIE)
+
+## Coordonnées
+* Steven Wong (steven.wong@nrcan-rncan.gc.ca)
+* Nathan De Matos (nathan.dematos@nrcan-rncan.gc.ca)
+* Michel Bui (michel.bui@nrcan-rncan.gc.ca)
+* Sophie Pelland (sophie.pelland@nrcan-rncan.gc.ca)
+* Adrien Prigent (adrien.prigent@nrcan-rncan.gc.ca)
+* Serban Ivanescu (serban.ivanescu@nrcan-rncan.gc.ca)
+
+## Pour plus d'informations
 https://docs.pypsa.org/latest/
