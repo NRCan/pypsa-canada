@@ -228,16 +228,26 @@ def generate_postprocess(run_dir, config_path, result_type, skip_export, skip_ma
                     post_process_planning=str(run_dir / "post_process_planning"),
                 ),
                 output=types.SimpleNamespace(
-                    planning_corridor_map=str(maps_dir / "planning_corridor_utilization_map.html"),
-                    planning_corridor_summary=str(maps_dir / "planning_corridor_utilization_map_summary.csv"),
+                    planning_corridor_map=str(
+                        maps_dir / "planning_corridor_utilization_map.html"
+                    ),
+                    planning_corridor_summary=str(
+                        maps_dir / "planning_corridor_utilization_map_summary.csv"
+                    ),
                 ),
                 config=config,
                 log=[str(run_dir / "logs" / "plot_planning_corridor_map_cli.log")],
             )
-            _run_snakemake_script(script_root / "plot_corridor_map.py", planning_map_snakemake)
-            click.echo(f"✓ Planning corridor map created: {maps_dir / 'planning_corridor_utilization_map.html'}")
+            _run_snakemake_script(
+                script_root / "plot_corridor_map.py", planning_map_snakemake
+            )
+            click.echo(
+                f"✓ Planning corridor map created: {maps_dir / 'planning_corridor_utilization_map.html'}"
+            )
         else:
-            click.echo(f"Step 5: Skipping planning corridor map (no solved network at {solved_planning})")
+            click.echo(
+                f"Step 5: Skipping planning corridor map (no solved network at {solved_planning})"
+            )
 
         if solved_dispatch.exists() and solved_planning.exists():
             click.echo("Step 6: Generating dispatch corridor map...")
@@ -252,19 +262,31 @@ def generate_postprocess(run_dir, config_path, result_type, skip_export, skip_ma
                     post_process_dispatch=str(run_dir / "post_process_dispatch"),
                 ),
                 output=types.SimpleNamespace(
-                    dispatch_corridor_map=str(maps_dir / "dispatch_corridor_utilization_map.html"),
-                    dispatch_corridor_summary=str(maps_dir / "dispatch_corridor_utilization_map_summary.csv"),
+                    dispatch_corridor_map=str(
+                        maps_dir / "dispatch_corridor_utilization_map.html"
+                    ),
+                    dispatch_corridor_summary=str(
+                        maps_dir / "dispatch_corridor_utilization_map_summary.csv"
+                    ),
                 ),
                 config=config,
                 log=[str(run_dir / "logs" / "plot_dispatch_corridor_map_cli.log")],
             )
-            _run_snakemake_script(script_root / "plot_corridor_map.py", dispatch_map_snakemake)
-            click.echo(f"✓ Dispatch corridor map created: {maps_dir / 'dispatch_corridor_utilization_map.html'}")
+            _run_snakemake_script(
+                script_root / "plot_corridor_map.py", dispatch_map_snakemake
+            )
+            click.echo(
+                f"✓ Dispatch corridor map created: {maps_dir / 'dispatch_corridor_utilization_map.html'}"
+            )
         else:
             if not solved_dispatch.exists():
-                click.echo(f"Step 6: Skipping dispatch corridor map (no solved network at {solved_dispatch})")
+                click.echo(
+                    f"Step 6: Skipping dispatch corridor map (no solved network at {solved_dispatch})"
+                )
             else:
-                click.echo("Step 6: Skipping dispatch corridor map (planning network required)")
+                click.echo(
+                    "Step 6: Skipping dispatch corridor map (planning network required)"
+                )
     else:
         click.echo("Steps 5-6: Skipping corridor maps (--skip-maps flag)")
 
