@@ -9,10 +9,11 @@ This module executes all postprocessing steps:
 5. Generate corridor utilization maps
 
 Usage:
-    pypsa-canada postprocess-summary --run-dir results/minimal_model-2021-2050/run_2026-05-06_17-33 --config config/minimal_model.yaml
-    pypsa-canada postprocess-summary --skip-export  # Skip IDEA export
-    pypsa-canada postprocess-summary --skip-maps    # Skip corridor map generation
-    pypsa-canada postprocess-summary  # uses defaults
+    pypsa_canada postprocess --run-dir results/minimal_model-2021-2050/run_2026-05-06_17-33
+    pypsa_canada postprocess --run-dir results/minimal_model-2021-2050/run_2026-05-06_17-33 --config config/minimal_model.yaml
+    pypsa_canada postprocess --skip-export  # Skip IDEA export
+    pypsa_canada postprocess --skip-maps    # Skip corridor map generation
+    pypsa_canada postprocess  # uses defaults
 """
 
 import builtins
@@ -85,7 +86,28 @@ def _ensure_postprocess_outputs(run_dir: Path, config: dict, result_type: str):
         )
 
 
-@click.command("postprocess-summary")
+def _resolve_config_path(run_dir: Path, config_path: str | None) -> Path:
+    """Resolve config path from CLI option or run directory artifacts."""
+    if config_path:
+        return Path(config_path)
+
+    candidates = [
+        run_dir / "config.yaml",
+        run_dir / "config.yml",
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    raise click.ClickException(
+        "Could not find a config file in the run directory. "
+        "Expected one of: config.yaml, config.yml. "
+        "Pass --config to specify a config file explicitly."
+    )
+
+
+@click.command("postprocess")
 @click.option(
     "--run-dir",
     default="results/minimal_model-2021-2050/run_2026-05-06_17-33",
@@ -95,8 +117,8 @@ def _ensure_postprocess_outputs(run_dir: Path, config: dict, result_type: str):
 @click.option(
     "--config",
     "config_path",
-    default="config/minimal_model.yaml",
-    help="Path to the config YAML file.",
+    default=None,
+    help="Optional path to the config YAML file. If omitted, loads config.yaml from --run-dir.",
     type=click.Path(exists=True),
 )
 @click.option(
@@ -114,7 +136,7 @@ def _ensure_postprocess_outputs(run_dir: Path, config: dict, result_type: str):
     is_flag=True,
     help="Skip corridor map generation.",
 )
-def generate_postprocess_summary(run_dir, config_path, result_type, skip_export, skip_maps):
+def generate_postprocess(run_dir, config_path, result_type, skip_export, skip_maps):
     """
     Run the complete postprocess chain on a results folder.
 
@@ -130,7 +152,10 @@ def generate_postprocess_summary(run_dir, config_path, result_type, skip_export,
         click.echo(f"ERROR: Run directory not found: {run_dir}", err=True)
         sys.exit(1)
 
-    with open(config_path) as f:
+    config_file = _resolve_config_path(run_dir, config_path)
+    click.echo(f"Using config: {config_file}")
+
+    with open(config_file) as f:
         config = yaml.safe_load(f)
 
     result_type = result_type or config.get("postprocess", {}).get(
