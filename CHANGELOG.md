@@ -1,3 +1,10 @@
+## 0.3.4 (2026-08-06)
+
+### Bug Fixes
+
+- fixed benchmark.py causing broken pipe on process error
+- fixed benchmark.py causing broken pipe on process error
+
 ## 0.3.3 (2026-08-05)
 
 ### Bug Fixes
