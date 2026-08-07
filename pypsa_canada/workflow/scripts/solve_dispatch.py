@@ -9,6 +9,9 @@ from itertools import chain, groupby
 
 import pandas as pd
 import pypsa
+from common import (
+    apply_generator_preprocess_toggles,
+)
 from constraints.dispatch_constraints import (
     add_CER_constraint_dispatch,
     distribute_CER_hours_dispatch,
@@ -178,7 +181,10 @@ def optimize_uc_period(
             logging.info(f"No CER generators found for year {period_year}")
 
     # Committable generators
-    com_gens = network.generators[network.generators.committable]
+    if "committable" in network.generators.columns:
+        com_gens = network.generators[network.generators.committable]
+    else:
+        com_gens = pd.DataFrame()
 
     length_snapshot = len(network.snapshots)
     nb_uc_period = math.ceil(length_snapshot / horizon)
@@ -393,6 +399,8 @@ def main():
 
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.unsolved_dispatch_network)
+    dispatch_options = config["solving"]["options"]["dispatch"]
+    network = apply_generator_preprocess_toggles(network, dispatch_options)
 
     logging.info("Running Dispatch Solve")
 

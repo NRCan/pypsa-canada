@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 import pypsa
+from common import (
+    apply_generator_preprocess_toggles,
+)
 from constraints.generic_constraints import (
     CER_generator_grouping,
     add_bidirection_link_constraint,
@@ -51,12 +54,20 @@ config = snakemake.config if snakemake is not None else None
 
 
 def disable_committable_for_OPT(network: pypsa.Network):
-    network.generators.loc[
-        network.generators["p_nom_extendable"] == True, "committable"
-    ] = False
-    network.generators.loc[
-        network.generators["p_nom_extendable"] == True, "p_min_pu"
-    ] = 0
+    planning_options = config["solving"]["options"]["planning"]
+    enable_committable = planning_options["enable_committable"]
+    enable_p_min_pu = planning_options["enable_p_min_pu"]
+
+    if enable_committable and "committable" in network.generators.columns:
+        network.generators.loc[
+            network.generators["p_nom_extendable"] == True, "committable"
+        ] = False
+
+    if enable_p_min_pu and "p_min_pu" in network.generators.columns:
+        network.generators.loc[
+            network.generators["p_nom_extendable"] == True, "p_min_pu"
+        ] = 0
+
     network.links.loc[network.links["p_nom_extendable"] == True, "committable"] = False
 
 
@@ -213,6 +224,8 @@ def main():
 
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.planning_unsolved_network)
+    planning_options = config["solving"]["options"]["planning"]
+    network = apply_generator_preprocess_toggles(network, planning_options)
     disable_committable_for_OPT(network)
 
     # # TODO Temporary fix for standing_loss dim_0 issue - should be fixed in the network loading step instead

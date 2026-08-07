@@ -1,6 +1,8 @@
 import logging
 from typing import TYPE_CHECKING
 
+import pandas as pd
+
 if TYPE_CHECKING:
     import pypsa
 
@@ -83,6 +85,101 @@ def drop_inactive_assets(
             logging.debug(f"Active components = {network.df(component)}")
         else:
             logging.debug(f"DataFrame {component} is empty")
+
+
+def apply_generator_preprocess_toggles(
+    network: "pypsa.Network", stage_config: dict
+) -> "pypsa.Network":
+    """
+    Apply generator preprocessing toggles and normalize power-limit time-series.
+
+    Parameters
+    ----------
+    network : pypsa.Network
+        Network whose generator and time-series tables will be updated.
+    stage_config : dict
+        Stage configuration dictionary (planning or dispatch section).
+
+    Returns
+    -------
+    pypsa.Network
+        Network with generator columns conditionally removed and power-limit
+        time-series coerced to numeric values.
+    """
+    generators = network.generators
+
+    if not generators.empty:
+        enable_committable = stage_config["enable_committable"]
+        enable_p_min_pu = stage_config["enable_p_min_pu"]
+        enable_ramp_rates = stage_config["enable_ramp_rates"]
+
+        columns_to_drop: list[str] = []
+
+        if not enable_committable:
+            if "committable" in generators.columns:
+                generators.loc[:, "committable"] = False
+            if "up_time_before" in generators.columns:
+                generators.loc[:, "up_time_before"] = 1
+            if "down_time_before" in generators.columns:
+                generators.loc[:, "down_time_before"] = 0
+            columns_to_drop.extend(
+                [
+                    "min_up_time",
+                    "min_down_time",
+                    "ramp_limit_start_up",
+                    "ramp_limit_shut_down",
+                ]
+            )
+
+        if not enable_p_min_pu:
+            columns_to_drop.append("p_min_pu")
+
+        if not enable_ramp_rates:
+            columns_to_drop.extend(["ramp_limit_up", "ramp_limit_down"])
+
+        existing_columns_to_drop = [
+            column for column in columns_to_drop if column in generators.columns
+        ]
+        if existing_columns_to_drop:
+            logging.info(
+                "Removing generator columns due to preprocess toggles: %s",
+                existing_columns_to_drop,
+            )
+            network.generators = generators.drop(columns=existing_columns_to_drop)
+
+    # Keep time-series power-limit tables numeric to avoid PyPSA consistency
+    # checks failing on object-typed dense arrays.
+    def _coerce_df(df: pd.DataFrame) -> pd.DataFrame:
+        if df is None or df.empty:
+            return df
+        return df.apply(pd.to_numeric, errors="coerce")
+
+    if hasattr(network, "generators_t"):
+        if hasattr(network.generators_t, "p_min_pu"):
+            p_min_df = network.generators_t.p_min_pu
+            if p_min_df.empty and "p_min_pu" not in network.generators.columns:
+                # With no static p_min_pu and empty time-series, PyPSA can construct
+                # object-typed dense min_pu during consistency checks.
+                network.generators_t.p_min_pu = pd.DataFrame(
+                    0.0,
+                    index=network.snapshots,
+                    columns=network.generators.index,
+                    dtype=float,
+                )
+            else:
+                network.generators_t.p_min_pu = _coerce_df(p_min_df).fillna(0.0)
+        if hasattr(network.generators_t, "p_max_pu"):
+            network.generators_t.p_max_pu = _coerce_df(
+                network.generators_t.p_max_pu
+            ).fillna(0.0)
+
+    if hasattr(network, "links_t"):
+        if hasattr(network.links_t, "p_min_pu"):
+            network.links_t.p_min_pu = _coerce_df(network.links_t.p_min_pu).fillna(0.0)
+        if hasattr(network.links_t, "p_max_pu"):
+            network.links_t.p_max_pu = _coerce_df(network.links_t.p_max_pu).fillna(0.0)
+
+    return network
 
 
 # def switch_committables(network:pypsa.Network, state:bool=True):
