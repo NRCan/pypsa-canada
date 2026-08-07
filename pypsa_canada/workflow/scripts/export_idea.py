@@ -378,7 +378,7 @@ def main():
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
 
     logging.info("===== IDEA FORMAT EXPORT =====")
-    root_path = os.path.dirname(output_dir)
+    root_path = os.path.dirname(output_dir) or "."
     # output_folder = os.path.join(root_path, "idea_output")
     df = export_as_idea(root_path)
 
