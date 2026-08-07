@@ -17,11 +17,17 @@ year_settings:
 solving:
   options:
     planning:
+      enable_committable: false
+      enable_p_min_pu: false
+      enable_ramp_rates: false
       load_shedding: false
       linearized_unit_commitment: false
       keep_files: false
       store_model: false
     dispatch:
+      enable_committable: true
+      enable_p_min_pu: true
+      enable_ramp_rates: true
       load_shedding: true
       linearized_unit_commitment: false
       keep_files: false
