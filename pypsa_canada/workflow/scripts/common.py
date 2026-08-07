@@ -119,7 +119,7 @@ def apply_generator_preprocess_toggles(
             if "committable" in generators.columns:
                 generators.loc[:, "committable"] = False
             if "up_time_before" in generators.columns:
-                generators.loc[:, "up_time_before"] = 0
+                generators.loc[:, "up_time_before"] = 1
             if "down_time_before" in generators.columns:
                 generators.loc[:, "down_time_before"] = 0
             columns_to_drop.extend(
