@@ -9,8 +9,6 @@ import pandas as pd
 import pypsa
 from common import (
     apply_generator_preprocess_toggles,
-    normalize_generator_operational_columns,
-    normalize_time_series_power_limit_columns,
 )
 from constraints.generic_constraints import (
     CER_generator_grouping,
@@ -56,11 +54,9 @@ config = snakemake.config if snakemake is not None else None
 
 
 def disable_committable_for_OPT(network: pypsa.Network):
-    planning_options = (
-        config.get("solving", {}).get("options", {}).get("planning", {})
-    )
-    enable_committable = planning_options.get("enable_committable", True)
-    enable_p_min_pu = planning_options.get("enable_p_min_pu", True)
+    planning_options = config["solving"]["options"]["planning"]
+    enable_committable = planning_options["enable_committable"]
+    enable_p_min_pu = planning_options["enable_p_min_pu"]
 
     if enable_committable and "committable" in network.generators.columns:
         network.generators.loc[
@@ -228,11 +224,8 @@ def main():
 
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.planning_unsolved_network)
-    planning_options = (
-        config.get("solving", {}).get("options", {}).get("planning", {})
-    )
+    planning_options = config["solving"]["options"]["planning"]
     network = apply_generator_preprocess_toggles(network, planning_options)
-    network = normalize_generator_operational_columns(network)
     disable_committable_for_OPT(network)
 
     # # TODO Temporary fix for standing_loss dim_0 issue - should be fixed in the network loading step instead
@@ -305,8 +298,6 @@ def main():
     else:
         linearized_uc_ena = False
         logging.info("Linearized Unit Commitment Flag has been disabled")
-
-    network = normalize_time_series_power_limit_columns(network)
 
     # Load shedding feature if needed
     if load_shedding:

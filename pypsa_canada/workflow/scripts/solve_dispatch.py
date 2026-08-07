@@ -11,8 +11,6 @@ import pandas as pd
 import pypsa
 from common import (
     apply_generator_preprocess_toggles,
-    normalize_generator_operational_columns,
-    normalize_time_series_power_limit_columns,
 )
 from constraints.dispatch_constraints import (
     add_CER_constraint_dispatch,
@@ -401,11 +399,8 @@ def main():
 
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.unsolved_dispatch_network)
-    dispatch_options = (
-        config.get("solving", {}).get("options", {}).get("dispatch", {})
-    )
+    dispatch_options = config["solving"]["options"]["dispatch"]
     network = apply_generator_preprocess_toggles(network, dispatch_options)
-    network = normalize_generator_operational_columns(network)
 
     logging.info("Running Dispatch Solve")
 
@@ -450,7 +445,6 @@ def main():
         drop_inactive_assets(network=period_network, period=period)
         logging.info(f"Period_snapshots = {period_snapshots}")
         period_network.set_snapshots(period_snapshots)
-        period_network = normalize_time_series_power_limit_columns(period_network)
 
         if linearized_unit_commitment:
             linearized_uc_ena = True

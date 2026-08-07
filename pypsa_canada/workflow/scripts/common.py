@@ -91,117 +91,64 @@ def apply_generator_preprocess_toggles(
     network: "pypsa.Network", stage_config: dict
 ) -> "pypsa.Network":
     """
-    Apply optional generator preprocessing toggles.
+    Apply generator preprocessing toggles and normalize power-limit time-series.
 
     Parameters
     ----------
     network : pypsa.Network
-        Network whose ``generators`` table will be updated.
+        Network whose generator and time-series tables will be updated.
     stage_config : dict
         Stage configuration dictionary (planning or dispatch section).
 
     Returns
     -------
     pypsa.Network
-        Network with generator columns conditionally removed.
+        Network with generator columns conditionally removed and power-limit
+        time-series coerced to numeric values.
     """
     generators = network.generators
-    if generators.empty:
-        return network
 
-    enable_committable = stage_config.get("enable_committable", True)
-    enable_p_min_pu = stage_config.get("enable_p_min_pu", True)
-    enable_ramp_rates = stage_config.get("enable_ramp_rates", True)
+    if not generators.empty:
+        enable_committable = stage_config["enable_committable"]
+        enable_p_min_pu = stage_config["enable_p_min_pu"]
+        enable_ramp_rates = stage_config["enable_ramp_rates"]
 
-    columns_to_drop: list[str] = []
+        columns_to_drop: list[str] = []
 
-    if not enable_committable:
-        if "committable" in generators.columns:
-            generators.loc[:, "committable"] = False
-        if "up_time_before" in generators.columns:
-            generators.loc[:, "up_time_before"] = 0
-        if "down_time_before" in generators.columns:
-            generators.loc[:, "down_time_before"] = 0
-        columns_to_drop.extend(
-            [
-                "min_up_time",
-                "min_down_time",
-                "ramp_limit_start_up",
-                "ramp_limit_shut_down",
-            ]
-        )
-
-    if not enable_p_min_pu:
-        columns_to_drop.append("p_min_pu")
-
-    if not enable_ramp_rates:
-        columns_to_drop.extend(["ramp_limit_up", "ramp_limit_down"])
-
-    existing_columns_to_drop = [
-        column for column in columns_to_drop if column in generators.columns
-    ]
-    if existing_columns_to_drop:
-        logging.info(
-            "Removing generator columns due to preprocess toggles: %s",
-            existing_columns_to_drop,
-        )
-        network.generators = generators.drop(columns=existing_columns_to_drop)
-
-    return network
-
-
-def normalize_generator_operational_columns(network: "pypsa.Network") -> "pypsa.Network":
-    """
-    Normalize generator operational columns to stable dtypes before optimization.
-
-    Some CSV inputs can leave these columns as object/string; this causes failures
-    in numpy/linopy checks (e.g. ``np.isinf`` on object arrays).
-    """
-    if network.generators.empty:
-        return network
-
-    generators = network.generators
-
-    if "committable" in generators.columns:
-        committable_series = generators["committable"]
-        if not pd.api.types.is_bool_dtype(committable_series):
-            normalized = (
-                committable_series.astype(str)
-                .str.strip()
-                .str.lower()
-                .map({"true": True, "false": False, "1": True, "0": False})
+        if not enable_committable:
+            if "committable" in generators.columns:
+                generators.loc[:, "committable"] = False
+            if "up_time_before" in generators.columns:
+                generators.loc[:, "up_time_before"] = 0
+            if "down_time_before" in generators.columns:
+                generators.loc[:, "down_time_before"] = 0
+            columns_to_drop.extend(
+                [
+                    "min_up_time",
+                    "min_down_time",
+                    "ramp_limit_start_up",
+                    "ramp_limit_shut_down",
+                ]
             )
-            generators.loc[:, "committable"] = normalized.fillna(False).astype(bool)
 
-    numeric_cols = [
-        "p_min_pu",
-        "min_up_time",
-        "min_down_time",
-        "up_time_before",
-        "down_time_before",
-        "ramp_limit_up",
-        "ramp_limit_down",
-        "ramp_limit_start_up",
-        "ramp_limit_shut_down",
-    ]
+        if not enable_p_min_pu:
+            columns_to_drop.append("p_min_pu")
 
-    for col in numeric_cols:
-        if col in generators.columns:
-            generators.loc[:, col] = pd.to_numeric(generators[col], errors="coerce")
+        if not enable_ramp_rates:
+            columns_to_drop.extend(["ramp_limit_up", "ramp_limit_down"])
 
-    network.generators = generators
-    return network
+        existing_columns_to_drop = [
+            column for column in columns_to_drop if column in generators.columns
+        ]
+        if existing_columns_to_drop:
+            logging.info(
+                "Removing generator columns due to preprocess toggles: %s",
+                existing_columns_to_drop,
+            )
+            network.generators = generators.drop(columns=existing_columns_to_drop)
 
-
-def normalize_time_series_power_limit_columns(network: "pypsa.Network") -> "pypsa.Network":
-    """
-    Coerce time-series power limit tables to numeric dtypes.
-
-    PyPSA consistency checks run ``np.isinf`` on dense min/max pu time-series.
-    If any backing DataFrame has object dtype (e.g. from CSV strings/blanks),
-    this can raise a TypeError before meaningful validation happens.
-    """
-
+    # Keep time-series power-limit tables numeric to avoid PyPSA consistency
+    # checks failing on object-typed dense arrays.
     def _coerce_df(df: pd.DataFrame) -> pd.DataFrame:
         if df is None or df.empty:
             return df
