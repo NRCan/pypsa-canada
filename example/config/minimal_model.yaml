@@ -113,6 +113,8 @@ planning:
         }
       # minimum capacity
       min_cap: 25
+      # provinces to exclude from CER
+      exemptions: ['NB']
     component_capacity_expansion_constraint:
       enable: true
       custom_constraint_filepath: "data/constraints/custom_constraints.csv"
@@ -175,6 +177,8 @@ dispatch:
       min_cap: 25
       # forecast hours based on net load ('load'), uniformly ('uniform'), or assign max to first UC period and carry leftover ('carryover')
       forecast_hours: 'carryover'
+      # provinces to exclude from CER
+      exemptions: ['NB']
 
 # postprocess:
 #   result_type: "Provincial"  # "Provincial" or "Nodal"

@@ -155,10 +155,16 @@ def CER_generator_grouping(network, CER_constraint, year: int, mode: str):
     CER_fuels = list(CER_constraint["carriers"])
     min_cap = CER_constraint["min_cap"]  # NOQA F841
     active_cer_year = CER_constraint["year"]
+    exemptions = CER_constraint["exemptions"]
+    exemption_buses = network.buses[network.buses.province.isin(exemptions)].index
+
     CER_generators = pd.DataFrame()
     if mode == "dispatch":
         CER_generators = (
-            network.generators[network.generators["carrier"].isin(CER_fuels)]
+            network.generators[
+                (network.generators["carrier"].isin(CER_fuels))
+                & (~network.generators.bus.isin(exemption_buses))
+            ]
             .query("p_nom_opt >= @min_cap")
             .copy()
         )
@@ -186,7 +192,10 @@ def CER_generator_grouping(network, CER_constraint, year: int, mode: str):
 
     else:
         CER_generators_existing = (
-            network.generators[network.generators["carrier"].isin(CER_fuels)]
+            network.generators[
+                (network.generators["carrier"].isin(CER_fuels))
+                & (~network.generators.bus.isin(exemption_buses))
+            ]
             .query("p_nom_extendable == False")
             .query("p_nom >= @min_cap")
         )
@@ -215,7 +224,10 @@ def CER_generator_grouping(network, CER_constraint, year: int, mode: str):
                 )
             ]
         CER_generators_extendable = (
-            network.generators[network.generators["carrier"].isin(CER_fuels)]
+            network.generators[
+                (network.generators["carrier"].isin(CER_fuels))
+                & (~network.generators.bus.isin(exemption_buses))
+            ]
             .query("p_nom_extendable == True")
             .query("p_nom_max >= @min_cap")
         )
