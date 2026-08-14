@@ -198,6 +198,8 @@ planning:
         }
       # minimum capacity
       min_cap: 25
+      # provinces to exclude from CER
+      exemptions: []
     NZ_constraint:
       enable: false
     planning_reserve_margin:
@@ -280,6 +282,8 @@ dispatch:
       min_cap: 25
       # forecast hours based on net load ('load'), uniformly ('uniform'), or assign max to first UC period and carry leftover ('carryover')
       forecast_hours: 'carryover'
+      # provinces to exclude from CER
+      exemptions: []
 
   custom_constraints:
     enabled: false
