@@ -155,7 +155,7 @@ def CER_generator_grouping(network, CER_constraint, year: int, mode: str):
     CER_fuels = list(CER_constraint["carriers"])
     min_cap = CER_constraint["min_cap"]  # NOQA F841
     active_cer_year = CER_constraint["year"]
-    exemptions = CER_constraint["exemptions"]
+    exemptions = CER_constraint.get("exemptions", [])
     exemption_buses = network.buses[network.buses.province.isin(exemptions)].index
 
     CER_generators = pd.DataFrame()
