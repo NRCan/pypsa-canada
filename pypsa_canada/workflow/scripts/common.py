@@ -22,6 +22,23 @@ CANADIAN_PROVINCES = {
     "SK",  # Saskatchewan
     "YT",  # Yukon
 }
+# States/areas that border Canada
+US_STATES = {
+    "AK",  # Alaska
+    "WA",  # Washington
+    "ID",  # Idaho
+    "MT",  # Montana
+    "ND",  # North Dakota
+    "MN",  # Minnesota
+    "MI",  # Michigan
+    "OH",  # Ohio
+    "PA",  # Pennsylvania
+    "NY",  # New York
+    "VT",  # Vermont
+    "NH",  # New Hampshire
+    "ME",  # Maine
+    "NE", # New England
+}
 
 
 def validate_bus_provinces(network: "pypsa.Network") -> None:
@@ -40,11 +57,11 @@ def validate_bus_provinces(network: "pypsa.Network") -> None:
         )
 
     provinces_in_data = set(network.buses["province"].dropna().unique())
-    invalid = provinces_in_data - CANADIAN_PROVINCES
+    invalid = provinces_in_data - CANADIAN_PROVINCES - US_STATES
     if invalid:
         raise ValueError(
             f"buses contain invalid province codes: {sorted(invalid)}. "
-            f"Valid codes are: {sorted(CANADIAN_PROVINCES)}"
+            f"Valid codes are: {sorted(CANADIAN_PROVINCES.union(US_STATES))}"
         )
 
     missing = network.buses["province"].isna()
