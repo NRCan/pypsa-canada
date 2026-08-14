@@ -1,3 +1,9 @@
+## 0.3.7 (2026-08-14)
+
+### Bug Fixes
+
+- Allow provinces to be exempt from CER
+
 ## 0.3.6 (2026-08-07)
 
 ### Bug Fixes
