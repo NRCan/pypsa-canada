@@ -61,7 +61,7 @@ components:
 
 snapshots:
   #method: "OPT_VRE_HYDRO", "KMEDOID_VRE_HYDRO", "CARPE_DIEM", "AVG_PEAK" or "ALL_DAYS"
-  method: "OPT_VRE_HYDRO"
+  method: "CARPE_DIEM"
   load_mode: *load_mode
   folder_name: "model/minimal_model"
   last_investment_period: 5 #duration in years
