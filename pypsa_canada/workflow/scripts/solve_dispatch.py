@@ -208,10 +208,14 @@ def optimize_uc_period(
         logging.info(f"Solving UC ({uc_period}): {snapshots[0]} to {snapshots[-1]}")
         if a:
             if not network.stores.empty:
-                network.stores.e_initial = network.stores_t.e.loc[network.snapshots[a - 1]]
+                network.stores.e_initial = network.stores_t.e.loc[
+                    network.snapshots[a - 1]
+                ]
             if not network.storage_units.empty:
                 network.storage_units.state_of_charge_initial = (
-                    network.storage_units_t.state_of_charge.loc[network.snapshots[a - 1]]
+                    network.storage_units_t.state_of_charge.loc[
+                        network.snapshots[a - 1]
+                    ]
                 )
             if not com_gens.empty:
                 # Compute up_time_before and down_time_before at a
