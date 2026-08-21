@@ -51,17 +51,17 @@ components:
   obps: true
   technology_costs: "Default_costs"
   carbon_tax:
-    "2021": 50 # $ per tonne, based on federal minimums
-    "2025": 125
-    "2030": 170
-    "2035": 170
-    "2040": 170
-    "2045": 170
-    "2050": 170
+    "2021": 43.04 # $ per tonne, based on federal minimums and in 2022 CAD
+    "2025": 74.28
+    "2030": 103.63
+    "2035": 117.15
+    "2040": 126.16
+    "2045": 126.16
+    "2050": 126.16
 
 snapshots:
   #method: "OPT_VRE_HYDRO", "KMEDOID_VRE_HYDRO", "CARPE_DIEM", "AVG_PEAK" or "ALL_DAYS"
-  method: "OPT_VRE_HYDRO"
+  method: "CARPE_DIEM"
   load_mode: *load_mode
   folder_name: "model/minimal_model"
   last_investment_period: 5 #duration in years

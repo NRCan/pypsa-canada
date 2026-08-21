@@ -113,7 +113,7 @@ def save_ref_year_data(
     component_timeseries = [
         (network_ref.generators_t, network.generators_t, "p_max_pu"),
         (network_ref.generators_t, network.generators_t, "p_min_pu"),
-        (network_ref.generators_t, network.generators_t, "marginal_cost"),
+        # (network_ref.generators_t, network.generators_t, "marginal_cost"),
         # (network_ref.generators_t, network.generators_t, "carbon_cost"),
         # (network_ref.generators_t, network.generators_t, "fuel_cost"),
         # (network_ref.generators_t, network.generators_t, "variable_cost"),
