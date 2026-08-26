@@ -387,6 +387,12 @@ def create_marginal_costs(
                     gen_fuel_cost[gen_name] = fuel_costs.loc[model, tech_year]
                 else:
                     gen_fuel_cost[gen_name] = 0
+            # NOTE: Take static value defined manually if not null or 0
+            elif network.generators.loc[gen_name].marginal_cost > 0:
+                marginal_costs[gen_name] = network.generators.loc[
+                    gen_name
+                ].marginal_cost
+                gen_fuel_cost[gen_name] = 0
             else:
                 if model in fuel_costs.index:
                     marginal_costs[gen_name] = fuel_costs.loc[model, tech_year]
@@ -412,6 +418,8 @@ def create_marginal_costs(
                     gen_variable_costs[gen_name] = var_costs.loc[model, tech_year]
                 else:
                     gen_variable_costs[gen_name] = 0
+            elif network.generators.loc[gen_name].marginal_cost > 0:
+                gen_variable_costs[gen_name] = 0
             else:
                 if model in var_costs.index:
                     marginal_costs[gen_name] += var_costs.loc[model, tech_year]
