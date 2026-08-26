@@ -1,3 +1,12 @@
+## 0.3.8 (2026-08-21)
+
+### Bug Fixes
+
+- Add condition to don't modify initial_SoC and up/down_time_before for...
+- Add condition to don't modify initial_SoC and up/down_time_before for first UC period in dispatch
+- Update generator generic parameters values based on litterature
+- updated carbon tax with May 15, 2026 federal ajdustment (cost in 2022 CAD)
+
 ## 0.3.7 (2026-08-14)
 
 ### Bug Fixes

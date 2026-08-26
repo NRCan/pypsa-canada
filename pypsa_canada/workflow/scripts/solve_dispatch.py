@@ -206,44 +206,48 @@ def optimize_uc_period(
         else:
             snapshots = network.snapshots[a : b + overlap].copy()
         logging.info(f"Solving UC ({uc_period}): {snapshots[0]} to {snapshots[-1]}")
-        # if a:
-        if not network.stores.empty:
-            network.stores.e_initial = network.stores_t.e.loc[network.snapshots[a - 1]]
-        if not network.storage_units.empty:
-            network.storage_units.state_of_charge_initial = (
-                network.storage_units_t.state_of_charge.loc[network.snapshots[a - 1]]
-            )
-        if not com_gens.empty:
-            # Compute up_time_before and down_time_before at a
-            cumcount = pd.DataFrame(
-                index=network.snapshots,
-                columns=network.generators_t.status.columns,
-            )
-
-            for col in network.generators_t.status.columns:
-                cumcount[col] = list(
-                    chain(
-                        *(
-                            list(range(len(list(g))))
-                            for _, g in groupby(network.generators_t.status[col])
-                        )
-                    )
+        if a:
+            if not network.stores.empty:
+                network.stores.e_initial = network.stores_t.e.loc[
+                    network.snapshots[a - 1]
+                ]
+            if not network.storage_units.empty:
+                network.storage_units.state_of_charge_initial = (
+                    network.storage_units_t.state_of_charge.loc[
+                        network.snapshots[a - 1]
+                    ]
+                )
+            if not com_gens.empty:
+                # Compute up_time_before and down_time_before at a
+                cumcount = pd.DataFrame(
+                    index=network.snapshots,
+                    columns=network.generators_t.status.columns,
                 )
 
-                # Add 1 since previous gives 1 for two consecutive values, 2 for 3 and so on
-                cumcount[col] = cumcount[col] + 1
+                for col in network.generators_t.status.columns:
+                    cumcount[col] = list(
+                        chain(
+                            *(
+                                list(range(len(list(g))))
+                                for _, g in groupby(network.generators_t.status[col])
+                            )
+                        )
+                    )
 
-            # Calculate up time and down time at given time step, and then use time step before, for generators with status (note: ignore initial values at first snapshot for simplicity, since length of UC periods is greater than the min_up_time and min_down_time anyway)
-            network.generators.loc[
-                network.generators_t.status.columns, "up_time_before"
-            ] = (network.generators_t.status * cumcount).iloc[a - 1, :].astype(int)
-            network.generators.loc[
-                network.generators_t.status.columns, "down_time_before"
-            ] = (
-                ((1 - network.generators_t.status) * cumcount)
-                .iloc[a - 1, :]
-                .astype(int)
-            )
+                    # Add 1 since previous gives 1 for two consecutive values, 2 for 3 and so on
+                    cumcount[col] = cumcount[col] + 1
+
+                # Calculate up time and down time at given time step, and then use time step before, for generators with status (note: ignore initial values at first snapshot for simplicity, since length of UC periods is greater than the min_up_time and min_down_time anyway)
+                network.generators.loc[
+                    network.generators_t.status.columns, "up_time_before"
+                ] = (network.generators_t.status * cumcount).iloc[a - 1, :].astype(int)
+                network.generators.loc[
+                    network.generators_t.status.columns, "down_time_before"
+                ] = (
+                    ((1 - network.generators_t.status) * cumcount)
+                    .iloc[a - 1, :]
+                    .astype(int)
+                )
 
         # Build the extra_functionality callback for this UC period.
         # Base constraints are always applied via add_all_dispatch_constraints.
