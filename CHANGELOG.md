@@ -1,3 +1,10 @@
+## 0.3.9 (2026-08-26)
+
+### Bug Fixes
+
+- Don't use costs folder values for generator marginal_cost if static va...
+- Don't use costs folder values for generator marginal_cost if static value is defined
+
 ## 0.3.8 (2026-08-21)
 
 ### Bug Fixes
