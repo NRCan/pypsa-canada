@@ -6,7 +6,7 @@
 Python, Optimization, Linopy, Power Systems
 
 ## Project Description
-`pypsa_canada` is a workflow-based modeling framework for power system analysis in Canada, built on top of [PyPSA](https://pypsa.org/) (Python for Power System Analysis). This tool enables comprehensive energy system optimization and planning for Canadian electricity grids.
+`pypsa_canada` is a workflow-based modeling framework for power system analysis in Canada, built on top of [PyPSA](https://pypsa.org/) (Python for Power System Analysis). This tool enables comprehensive energy system optimization and planning for Canadian electricity grids. It supports the [PyPSA-Canada-National](https://github.com/NRCan/pypsa-canada-national) model and can be used with other provincial and regional models.
 
 **Key Features:**
 - **Scenario-based modeling**: Define and run multiple power system scenarios with customizable configurations
@@ -149,13 +149,14 @@ Copyright CanmetENERGY - Varennes, NRCan, Goverment of Canada
 * Serban Ivanescu (serban.ivanescu@nrcan-rncan.gc.ca)
 
 ## Getting Further Information
-https://docs.pypsa.org/latest/
+
+[PyPSA-Canada-National](https://github.com/NRCan/pypsa-canada-national)
+
+[PyPSA Documentation](https://docs.pypsa.org/latest/)
 
 ---
 
-## Francais
-
-# PyPSA-Canada
+# <a id="francais"></a> PyPSA-Canada
 
 **[English](#pypsa-canada)** | **[Français](#francais)**
 
@@ -163,7 +164,7 @@ https://docs.pypsa.org/latest/
 Python, Optimisation, Linopy, Réseaux électriques
 
 ## Description du projet
-`pypsa_canada` est un cadre de modélisation basé sur des flux de travail pour l'analyse des réseaux électriques au Canada, construit sur [PyPSA](https://pypsa.org/) (Python for Power System Analysis). Cet outil permet une optimisation et une planification complètes des systèmes énergétiques pour les réseaux électriques canadiens.
+`pypsa_canada` est un cadre de modélisation basé sur des flux de travail pour l'analyse des réseaux électriques au Canada, construit sur [PyPSA](https://pypsa.org/) (Python for Power System Analysis). Cet outil permet une optimisation et une planification complètes des systèmes énergétiques pour les réseaux électriques canadiens. Il prend en charge le modèle [PyPSA-Canada-National](https://github.com/NRCan/pypsa-canada-national) et peut être utilisé avec d'autres modèles provinciaux et régionaux.
 
 **Caractéristiques principales :**
 - **Modélisation par scénarios** : Définir et exécuter plusieurs scénarios de réseaux électriques avec des configurations personnalisables
@@ -306,4 +307,7 @@ Copyright CanmetÉNERGIE - Varennes, RNCan, Gouvernement du Canada
 * Serban Ivanescu (serban.ivanescu@nrcan-rncan.gc.ca)
 
 ## Pour plus d'informations
-https://docs.pypsa.org/latest/
+
+[PyPSA-Canada-National](https://github.com/NRCan/pypsa-canada-national)
+
+[PyPSA Documentation](https://docs.pypsa.org/latest/)
