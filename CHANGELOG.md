@@ -1,3 +1,10 @@
+## 0.3.10 (2026-09-17)
+
+### Bug Fixes
+
+- Add Store, Transformer and Process in drop_inactive_assets function fo...
+- Add Store, Transformer and Process in drop_inactive_assets function for dispatch
+
 ## 0.3.9 (2026-08-26)
 
 ### Bug Fixes
