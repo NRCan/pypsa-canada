@@ -73,7 +73,15 @@ def drop_inactive_assets(
         List containing all the investment periods
     """
     # for component in network.components.keys():
-    for component in ["Generator", "StorageUnit", "Line", "Link"]:
+    for component in [
+        "Generator",
+        "StorageUnit",
+        "Store",
+        "Line",
+        "Link",
+        "Transformer",
+        "Process",
+    ]:
         # active_elem = {}
         logging.debug(f"Component: {component}")
         c = network.components[component].static
