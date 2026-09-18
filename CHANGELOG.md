@@ -1,3 +1,10 @@
+## 0.3.11 (2026-09-18)
+
+### Bug Fixes
+
+- [#2268] implemented old worlkflow summary variable
+- implemented old worlkflow summary variable
+
 ## 0.3.10 (2026-09-17)
 
 ### Bug Fixes
