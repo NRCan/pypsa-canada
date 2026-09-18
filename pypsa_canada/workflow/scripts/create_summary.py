@@ -416,7 +416,9 @@ def main():
     )
 
     if not dispatch_results.empty:
-        dispatch_results = dispatch_results[dispatch_results["Parameter"].isin(DISPATCH_PARAMS)]
+        dispatch_results = dispatch_results[
+            dispatch_results["Parameter"].isin(DISPATCH_PARAMS)
+        ]
     if not planning_results.empty:
         planning_results = planning_results[
             planning_results["Parameter"].isin(PLANNING_PARAMS)
@@ -437,7 +439,9 @@ def main():
     if not dispatch_results.empty:
         logging.info("Aggregating dispatch results")
         dispatch_results = (
-            dispatch_results.groupby(["Scenario", "Parameter", "Variable", "Region", "Time"])
+            dispatch_results.groupby(
+                ["Scenario", "Parameter", "Variable", "Region", "Time"]
+            )
             .sum()
             .reset_index()
         )
@@ -468,7 +472,9 @@ def main():
 
     # Build comparison matrices
     logging.info("Combining planning and dispatch results")
-    result_frames = [frame for frame in [dispatch_results, planning_results] if not frame.empty]
+    result_frames = [
+        frame for frame in [dispatch_results, planning_results] if not frame.empty
+    ]
     all_results = (
         pd.concat(result_frames, ignore_index=True) if result_frames else pd.DataFrame()
     )
