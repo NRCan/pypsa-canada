@@ -57,6 +57,50 @@ summary_filepath = (
 
 reference_scenario = config.get("postprocess", {}).get("reference_scenario", 0)
 
+DISPATCH_PARAMS = [
+    "Annual_Generation",
+    "Annual_Generation_Mix",
+    "Annual_Load",
+    "Average_Capacity_Factor",
+    "Average_Utilization",
+    "Carbon_Cost",
+    "Fuel_Cost",
+    "Curtailed_Energy",
+    "Emissions",
+    "Generator_Opex",
+    "Line_Flow",
+    "Peak_Load",
+    "Solve_Time",
+    "Storage_Unit_Out",
+    "Variable_Cost",
+]
+
+PLANNING_PARAMS = [
+    "Capacity",
+    "Capital_Cost",
+    "Capital_Cost_Transmission",
+    "Cumulative_Forced_Capacity",
+    "Cumulative_New_Capacity",
+    "Cumulative_New_Transmission_Capacity",
+    "Fixed_OM_Cost",
+    "Fixed_OM_Cost_Transmission",
+    "Investment_Period_Weighting",
+    "New_Forced_Capacity",
+    "New_Transmission_Capacity",
+    "Other_Capacity_Costs",
+    "Other_Capacity_Costs_Transmission",
+    "Qualifying_Capacity",
+    "Representative_Days",
+    "Removed_Emissions",
+    "Retired_Capacity",
+    "Solve_Time",
+    "Storage_Capacity",
+    "Total_Capex",
+    "Total_Capex_Transmission",
+    "Transmission_Capacity",
+    "Weighted_Total_Capex",
+]
+
 
 # ────────────────────────────────────────────
 # Comparison helper functions
@@ -364,14 +408,21 @@ def main():
     logging.info("Loading summary inputs")
 
     # Load results
-    results = (
+    dispatch_results = (
         pd.read_csv(dispatch_csv) if os.path.exists(dispatch_csv) else pd.DataFrame()
     )
     planning_results = (
         pd.read_csv(planning_csv) if os.path.exists(planning_csv) else pd.DataFrame()
     )
 
-    if results.empty and planning_results.empty:
+    if not dispatch_results.empty:
+        dispatch_results = dispatch_results[dispatch_results["Parameter"].isin(DISPATCH_PARAMS)]
+    if not planning_results.empty:
+        planning_results = planning_results[
+            planning_results["Parameter"].isin(PLANNING_PARAMS)
+        ]
+
+    if dispatch_results.empty and planning_results.empty:
         logging.warning("No results found for comparison")
         # os.makedirs(output_dir, exist_ok=True)
         finish_benchmark_tracker(
@@ -383,10 +434,10 @@ def main():
         return
 
     # Aggregate
-    if not results.empty:
+    if not dispatch_results.empty:
         logging.info("Aggregating dispatch results")
-        results = (
-            results.groupby(["Scenario", "Parameter", "Variable", "Region", "Time"])
+        dispatch_results = (
+            dispatch_results.groupby(["Scenario", "Parameter", "Variable", "Region", "Time"])
             .sum()
             .reset_index()
         )
@@ -406,18 +457,18 @@ def main():
     # Determine reference scenario
     logging.info("Selecting reference scenario")
     ref = reference_scenario
-    if ref == 0 and not results.empty:
-        rep_days = results[results.Parameter == "Representative_Days"]
+    if ref == 0 and not dispatch_results.empty:
+        rep_days = dispatch_results[dispatch_results.Parameter == "Representative_Days"]
         if not rep_days.empty:
-            ref = results.loc[rep_days.Value.idxmax()].Scenario
+            ref = dispatch_results.loc[rep_days.Value.idxmax()].Scenario
         else:
-            ref = results.Scenario.iloc[0]
+            ref = dispatch_results.Scenario.iloc[0]
     elif ref == 0 and not planning_results.empty:
         ref = planning_results.Scenario.iloc[0]
 
     # Build comparison matrices
     logging.info("Combining planning and dispatch results")
-    result_frames = [frame for frame in [results, planning_results] if not frame.empty]
+    result_frames = [frame for frame in [dispatch_results, planning_results] if not frame.empty]
     all_results = (
         pd.concat(result_frames, ignore_index=True) if result_frames else pd.DataFrame()
     )
