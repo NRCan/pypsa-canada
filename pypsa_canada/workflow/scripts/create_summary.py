@@ -85,6 +85,7 @@ PLANNING_PARAMS = [
     "Fixed_OM_Cost",
     "Fixed_OM_Cost_Transmission",
     "Investment_Period_Weighting",
+    "New_Capacity",
     "New_Forced_Capacity",
     "New_Transmission_Capacity",
     "Other_Capacity_Costs",
