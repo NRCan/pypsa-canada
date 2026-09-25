@@ -1,3 +1,10 @@
+## 0.3.12 (2026-09-25)
+
+### Bug Fixes
+
+- [#2267] added missing params from summary list
+- added missing params from summary list
+
 ## 0.3.11 (2026-09-18)
 
 ### Bug Fixes
