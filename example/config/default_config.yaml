@@ -252,6 +252,8 @@ dispatch:
   overlap: 48 #48
   investment_period: [] #If empty, it will take the planning investment periods
 
+  planning_solved_network: '' # Path to solve planning model to use for dispatch only stage
+
   constraints:
     add_stop_production:
       enable: false

@@ -324,39 +324,36 @@ def main():
 
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
 
+    solved_planning_network = pypsa.Network(snakemake.input.planning_solved_network)
     network = pypsa.Network(snakemake.input.base_network)
 
-    # If the planning stage was executed, load the solved planning network to copy optimal capacities.
-    if "planning" in config["run"]["workflow_stages"]:
-        solved_planning_network = pypsa.Network(snakemake.input.planning_solved_network)
-
-        # Copy optimized capacities from the solved planning network.
-        # Load-shedding generators are omitted from the dispatch network.
-        copy_optimal_capacity_values(
-            network.generators,
-            solved_planning_network.generators,
-            "p_nom_opt",
-            exclude_load_shedding=True,
-        )
-        copy_optimal_capacity_values(
-            network.storage_units,
-            solved_planning_network.storage_units,
-            "p_nom_opt",
-        )
-        copy_optimal_capacity_values(
-            network.stores, solved_planning_network.stores, "e_nom_opt"
-        )
-        copy_optimal_capacity_values(
-            network.lines, solved_planning_network.lines, "s_nom_opt"
-        )
-        copy_optimal_capacity_values(
-            network.links, solved_planning_network.links, "p_nom_opt"
-        )
-        copy_optimal_capacity_values(
-            network.transformers,
-            solved_planning_network.transformers,
-            "s_nom_opt",
-        )
+    # Copy optimized capacities from the solved planning network.
+    # Load-shedding generators are omitted from the dispatch network.
+    copy_optimal_capacity_values(
+        network.generators,
+        solved_planning_network.generators,
+        "p_nom_opt",
+        exclude_load_shedding=True,
+    )
+    copy_optimal_capacity_values(
+        network.storage_units,
+        solved_planning_network.storage_units,
+        "p_nom_opt",
+    )
+    copy_optimal_capacity_values(
+        network.stores, solved_planning_network.stores, "e_nom_opt"
+    )
+    copy_optimal_capacity_values(
+        network.lines, solved_planning_network.lines, "s_nom_opt"
+    )
+    copy_optimal_capacity_values(
+        network.links, solved_planning_network.links, "p_nom_opt"
+    )
+    copy_optimal_capacity_values(
+        network.transformers,
+        solved_planning_network.transformers,
+        "s_nom_opt",
+    )
 
     # Re-establish correct weighting
     # TODO Verify if we put 1,1,1 or something

@@ -122,7 +122,9 @@ def get_all_targets():
             *rules.plot_dispatch_corridor_map.output,
         ]
 
-    if set(["planning", "dispatch"]).issubset(WORKFLOW_STAGES):
+    # TODO generate summary that dosen't require both?
+    if "planning" in WORKFLOW_STAGES and "dispatch" in WORKFLOW_STAGES:
+    # if set(["planning", "dispatch"]).issubset(WORKFLOW_STAGES):
         targets += [*rules.create_summary.output]
         if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
             targets.append(*rules.export_idea.output)

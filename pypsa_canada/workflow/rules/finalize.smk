@@ -72,7 +72,5 @@ onerror:
     print(f"--- Crash artifacts saved to {crash_dir} ---\n")
 
 onsuccess:
-    # Preserve the timestamp sentinel when running planning-only so a
-    # subsequent dispatch run can locate the same output directory.
-    if "planning" in WORKFLOW_STAGES and "dispatch" not in WORKFLOW_STAGES and _ts_file.exists():
+    if _ts_file.exists():
         _ts_file.unlink()

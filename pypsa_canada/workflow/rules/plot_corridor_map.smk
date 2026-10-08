@@ -3,6 +3,8 @@
 
 if "planning" in WORKFLOW_STAGES:
     rule plot_planning_corridor_map:
+        params:
+            type = "planning"
         input:
             planning_solved_network=f"{RUN_OUTPUT_DIR}/planning_solved_network",
             post_process_planning=f"{RUN_OUTPUT_DIR}/post_process_planning"
@@ -17,6 +19,8 @@ if "planning" in WORKFLOW_STAGES:
 
 if "dispatch" in WORKFLOW_STAGES:
     rule plot_dispatch_corridor_map:
+        params:
+            type = "dispatch"
         input:
             dispatch_solved_network=f"{RUN_OUTPUT_DIR}/dispatch_solved_network",
             post_process_dispatch=f"{RUN_OUTPUT_DIR}/post_process_dispatch"

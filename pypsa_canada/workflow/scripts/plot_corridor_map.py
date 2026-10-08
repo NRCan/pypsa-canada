@@ -1602,17 +1602,11 @@ def main():
 
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
     generated_maps = []
-    workflow_stages = config["run"]["workflow_stages"]
-
-
-    for stage in workflow_stages:
-        generate_corridor_map(stage, generated_maps)
-
     benchmark_result_anchor = None
-    if "planning" in workflow_stages:
-        benchmark_result_anchor = get_named_value(snakemake.output, "planning_corridor_summary")
-    elif "dispatch" in workflow_stages:
-        benchmark_result_anchor = get_named_value(snakemake.output, "dispatch_corridor_summary")
+
+
+    generate_corridor_map(snakemake.params.type, generated_maps)
+    benchmark_result_anchor = get_named_value(snakemake.output, f"{snakemake.params.type}_corridor_summary")
 
     finish_benchmark_tracker(
         result_benchmark_csv_path(benchmark_result_anchor),
