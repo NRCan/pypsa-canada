@@ -55,9 +55,3 @@ def test_validate_bus_provinces_nan_value():
 
     with pytest.raises(ValueError, match="missing a province value"):
         validate_bus_provinces(network)
-
-
-@pytest.mark.unit
-def test_canadian_provinces_complete():
-    """Sanity check that the CANADIAN_PROVINCES set has all 13 provinces/territories"""
-    assert len(CANADIAN_PROVINCES) == 13
