@@ -71,47 +71,65 @@ config.setdefault("run", {})["benchmark_results_file"] = f"{RUN_OUTPUT_DIR}/resu
 RESULTS = "results/" + RDIR
 
 
-# Rules are in order of use
+WORKFLOW_STAGE = config.get("run", {}).get("workflow_stage", "both").lower()
+EXPORT_FORMAT = config.get("postprocess", {}).get("export_format", None)
+
+# Pre-solve pipeline runs for all stages (builds planning_base_network.nc)
 include: "rules/load_network.smk"
 include: "rules/add_components.smk"
-if config["load"]["load_mode"].upper() != "DEFAULT": # Only add loads if not using default load profile, whose loads are already in the base network
+if config["load"]["load_mode"].upper() != "DEFAULT":  # loads already in base network when DEFAULT
     include: "rules/add_loads.smk"
 include: "rules/add_snapshots.smk"
 include: "rules/add_representative_days.smk"
 include: "rules/add_extra_loads.smk"
 include: "rules/modify_components.smk"
 
-include: "rules/solve_planning.smk"
+# Planning solve (skipped for dispatch-only)
+if WORKFLOW_STAGE in ("planning", "both"):
+    include: "rules/solve_planning.smk"
+    include: "rules/post_process_planning.smk"
 
-include: "rules/create_dispatch_network.smk"
-include: "rules/solve_dispatch.smk"
+# Dispatch solve (requires planning_solved_network/ from a prior planning run for dispatch-only)
+if WORKFLOW_STAGE in ("dispatch", "both"):
+    include: "rules/create_dispatch_network.smk"
+    include: "rules/solve_dispatch.smk"
+    include: "rules/post_process_dispatch.smk"
 
-# Post-processing rules
-include: "rules/post_process_planning.smk"
-include: "rules/post_process_dispatch.smk"
 include: "rules/plot_corridor_map.smk"
-include: "rules/create_summary.smk"
-include: "rules/export_idea.smk"
+
+# Combined post-processing requires both stages
+if WORKFLOW_STAGE == "both":
+    include: "rules/create_summary.smk"
+    include: "rules/export_idea.smk"
+
 include: "rules/finalize.smk"
 
-# Check if IDEA export is requested
-EXPORT_FORMAT = config.get("postprocess", {}).get("export_format", None)
-
 def get_all_targets():
-    targets = [
-        *rules.solve_planning.output,
-        *rules.solve_dispatch.output,
-        *rules.post_process_planning.output,
-        *rules.post_process_dispatch.output,
-        *rules.plot_planning_corridor_map.output,
-        *rules.plot_dispatch_corridor_map.output,
-        *rules.create_summary.output,
-        *rules.copy_config.output,
-        *rules.collect_logs.output
-    ]
+    targets = []
 
-    if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
-        targets.append(*rules.export_idea.output)
+    if WORKFLOW_STAGE in ("planning", "both"):
+        targets += [
+            *rules.solve_planning.output,
+            *rules.post_process_planning.output,
+            *rules.plot_planning_corridor_map.output,
+        ]
+
+    if WORKFLOW_STAGE in ("dispatch", "both"):
+        targets += [
+            *rules.solve_dispatch.output,
+            *rules.post_process_dispatch.output,
+            *rules.plot_dispatch_corridor_map.output,
+        ]
+
+    if WORKFLOW_STAGE == "both":
+        targets += [*rules.create_summary.output]
+        if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
+            targets.append(*rules.export_idea.output)
+
+    targets += [
+        *rules.copy_config.output,
+        *rules.collect_logs.output,
+    ]
     return targets
 
 rule all:
