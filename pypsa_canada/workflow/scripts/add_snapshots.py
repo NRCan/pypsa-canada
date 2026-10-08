@@ -366,6 +366,10 @@ def create_marginal_costs(
         print(f"Carbon tax for {year} = {carbon_tax}")
 
         for gen_name in marginal_costs.columns:
+            bus = network.generators.loc[gen_name].bus
+            # TODO: think of a better way to exclude areas from carbon tax
+            if bus == 'ISONE':
+                continue
             carrier = network.generators.loc[gen_name].carrier
             carrier_data = network.carriers.loc[carrier]
             model = network.generators.loc[gen_name].model
