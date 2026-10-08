@@ -7,7 +7,7 @@ Run with: pytest tests/test_validation.py -v
 import numpy as np
 import pypsa
 import pytest
-from common import CANADIAN_PROVINCES, validate_bus_provinces
+from common import validate_bus_provinces
 
 # ============================================================================
 # BUS PROVINCE VALIDATION TESTS
