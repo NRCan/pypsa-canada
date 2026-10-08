@@ -368,7 +368,7 @@ def create_marginal_costs(
         for gen_name in marginal_costs.columns:
             bus = network.generators.loc[gen_name].bus
             # TODO: think of a better way to exclude areas from carbon tax
-            if bus == 'ISONE':
+            if bus == "ISONE":
                 continue
             carrier = network.generators.loc[gen_name].carrier
             carrier_data = network.carriers.loc[carrier]
@@ -523,15 +523,26 @@ def apply_OBPS(
     return round(regulated_co2 * carbon_tax, 2)
 
 
-def forecast_p_max_pu(n: Network, comp_config: dict[str, Any],):
+def forecast_p_max_pu(
+    n: Network,
+    comp_config: dict[str, Any],
+):
     p_max_pu_forecast: pd.DataFrame | None = None
     override_dir: str = comp_config["override_dir"]
     override_filepath = os.path.join(override_dir, "generators_p_max_pu_forecast.csv")
     if os.path.isfile(override_filepath):
         print(f"p_max_pu forecast file detected in {override_filepath}")
-        p_max_pu_forecast = pd.read_csv(override_filepath, index_col=0, parse_dates=True)
+        p_max_pu_forecast = pd.read_csv(
+            override_filepath, index_col=0, parse_dates=True
+        )
     if p_max_pu_forecast is not None:
-        n.generators_t.p_max_pu = pd.merge(n.generators_t.p_max_pu, p_max_pu_forecast, how='left', right_index=True, left_index=True)
+        n.generators_t.p_max_pu = pd.merge(
+            n.generators_t.p_max_pu,
+            p_max_pu_forecast,
+            how="left",
+            right_index=True,
+            left_index=True,
+        )
         n.generators_t.p_max_pu = n.generators_t.p_max_pu.round(4)
     return n
 
