@@ -21,6 +21,8 @@ CANADIAN_PROVINCES = {
     "QC",  # Quebec
     "SK",  # Saskatchewan
     "YT",  # Yukon
+    "AL",  # Atlantic Region
+    "MT",  # Maritimes
 }
 # States/areas that border Canada
 US_STATES = {
