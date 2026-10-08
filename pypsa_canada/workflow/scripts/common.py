@@ -39,7 +39,7 @@ US_STATES = {
     "VT",  # Vermont
     "NH",  # New Hampshire
     "ME",  # Maine
-    "NE", # New England
+    "NE",  # New England
 }
 
 
