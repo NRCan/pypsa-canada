@@ -13,20 +13,20 @@ def get_log_inputs(wildcards=None):
     if config["load"]["load_mode"].upper() != "DEFAULT":
         logs += [*rules.add_loads.log]
 
-    if WORKFLOW_STAGE in ("planning", "both"):
+    if "planning" in WORKFLOW_STAGES:
         logs += [
             *rules.solve_planning.log,
             *rules.post_process_planning.log,
         ]
 
-    if WORKFLOW_STAGE in ("dispatch", "both"):
+    if "dispatch" in WORKFLOW_STAGES:
         logs += [
             *rules.create_dispatch_network.log,
             *rules.solve_dispatch.log,
             *rules.post_process_dispatch.log,
         ]
 
-    if WORKFLOW_STAGE == "both":
+    if set(["planning", "dispatch"]).issubset(WORKFLOW_STAGES):
         logs += [*rules.create_summary.log]
         if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
             logs += [*rules.export_idea.log]
@@ -74,5 +74,5 @@ onerror:
 onsuccess:
     # Preserve the timestamp sentinel when running planning-only so a
     # subsequent dispatch run can locate the same output directory.
-    if WORKFLOW_STAGE != "planning" and _ts_file.exists():
+    if "planning" in WORKFLOW_STAGES and "dispatch" not in WORKFLOW_STAGES and _ts_file.exists():
         _ts_file.unlink()

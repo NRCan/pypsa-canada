@@ -7,7 +7,7 @@ run:
   shared_cutouts: true # set to true to share the default cutout(s) across runs
   validation: false # set to true to run back-casting plots
   export_csv: false # set to true to export csv files of the model outputs
-  workflow_stage: "both"  # "planning", "dispatch", or "both"
+  workflow_stages: ["planning", "dispatch"]  # "planning", "dispatch", or "flexibility(TBI)"
 
 year_settings:
   ref_year: 2021

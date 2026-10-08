@@ -6,7 +6,7 @@ run:
   shared_resources: false # set to true to share the default resources across runs
   shared_cutouts: true # set to true to share the default cutout(s) across runs
   validation: false # set to true to run back-casting plots
-  workflow_stage: "dispatch"  # "planning", "dispatch", or "both"
+  workflow_stages: ["dispatch"]  # "planning", "dispatch", or "flexibility(TBI)"
 
 year_settings:
   ref_year: 2021

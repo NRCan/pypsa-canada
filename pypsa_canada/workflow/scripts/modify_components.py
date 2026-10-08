@@ -114,11 +114,11 @@ def main():
                             action="Delete",
                         )
 
-    network.export_to_netcdf(snakemake.output.planning_unsolved_network)
-    network.export_to_csv_folder(snakemake.output.planning_unsolved_network_csv)
+    network.export_to_netcdf(snakemake.output.unsolved_network)
+    network.export_to_csv_folder(snakemake.output.unsolved_network_csv)
 
     finish_benchmark_tracker(
-        result_benchmark_csv_path(snakemake.output.planning_unsolved_network),
+        result_benchmark_csv_path(snakemake.output.unsolved_network),
         "modify_components",
         benchmark_timer,
         benchmark_memory,
