@@ -52,12 +52,12 @@ components:
   technology_costs: "Default_costs"
   carbon_tax:
     "2021": 43.04 # $ per tonne, based on federal minimums and in 2022 CAD
-    "2025": 74.28
-    "2030": 103.63
-    "2035": 117.15
-    "2040": 126.16
-    "2045": 126.16
-    "2050": 126.16
+    "2025": 87.45
+    "2030": 95.89
+    "2035": 98.17
+    "2040": 95.76
+    "2045": 86.73
+    "2050": 78.56
 
 snapshots:
   #method: "OPT_VRE_HYDRO", "KMEDOID_VRE_HYDRO", "CARPE_DIEM", "AVG_PEAK" or "ALL_DAYS"

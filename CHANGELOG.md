@@ -1,3 +1,31 @@
+## 0.3.12 (2026-09-25)
+
+### Bug Fixes
+
+- [#2267] added missing params from summary list
+- added missing params from summary list
+
+## 0.3.11 (2026-09-18)
+
+### Bug Fixes
+
+- [#2268] implemented old worlkflow summary variable
+- implemented old worlkflow summary variable
+
+## 0.3.10 (2026-09-17)
+
+### Bug Fixes
+
+- Add Store, Transformer and Process in drop_inactive_assets function fo...
+- Add Store, Transformer and Process in drop_inactive_assets function for dispatch
+
+## 0.3.9 (2026-08-26)
+
+### Bug Fixes
+
+- Don't use costs folder values for generator marginal_cost if static va...
+- Don't use costs folder values for generator marginal_cost if static value is defined
+
 ## 0.3.8 (2026-08-21)
 
 ### Bug Fixes
