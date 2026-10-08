@@ -527,14 +527,12 @@ def forecast_p_max_pu(n: Network, comp_config: dict[str, Any],):
     p_max_pu_forecast: pd.DataFrame | None = None
     override_dir: str = comp_config["override_dir"]
     override_filepath = os.path.join(override_dir, "generators_p_max_pu_forecast.csv")
-    print('OVER HERE')
-    print(override_filepath)
     if os.path.isfile(override_filepath):
-        print("p_max_pu forecast file detected")
+        print(f"p_max_pu forecast file detected in {override_filepath}")
         p_max_pu_forecast = pd.read_csv(override_filepath, index_col=0, parse_dates=True)
     if p_max_pu_forecast is not None:
         n.generators_t.p_max_pu = pd.merge(n.generators_t.p_max_pu, p_max_pu_forecast, how='left', right_index=True, left_index=True)
-    n.generators_t.p_max_pu = n.generators_t.p_max_pu.round(4)
+        n.generators_t.p_max_pu = n.generators_t.p_max_pu.round(4)
     return n
 
 
