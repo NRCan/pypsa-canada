@@ -1516,9 +1516,7 @@ def load_context(res_folder: str, stage: str):
     """
     Load planning topology and group physical lines into corridor rows.
     """
-    bus_ll, _, bus_to_province = load_buses(
-        os.path.join(res_folder, "buses.csv")
-    )
+    bus_ll, _, bus_to_province = load_buses(os.path.join(res_folder, "buses.csv"))
     lines, _ = load_lines(res_folder)
 
     corridors: dict = defaultdict(list)
@@ -1531,9 +1529,7 @@ def load_metadata(post_process_folder: str, stage: str):
     """
     Load planning metadata used in corridor popups.
     """
-    unit_summary_path = os.path.join(
-        post_process_folder, "unit_summary_planning.csv"
-    )
+    unit_summary_path = os.path.join(post_process_folder, "unit_summary_planning.csv")
     final_added, last_year, expansion_detail = load_final_capacity_additions(
         unit_summary_path
     )
@@ -1554,9 +1550,7 @@ def generate_corridor_map(stage: str, generated_maps: list):
         return
 
     out_html = get_named_value(snakemake.output, f"{stage}_corridor_map")
-    out_csv = get_named_value(
-        snakemake.output, f"{stage}_corridor_summary"
-    )
+    out_csv = get_named_value(snakemake.output, f"{stage}_corridor_summary")
     res_folder = require_named_value(
         snakemake.input, f"{stage}_solved_network", "input"
     )
@@ -1567,12 +1561,9 @@ def generate_corridor_map(stage: str, generated_maps: list):
         snakemake.input, f"post_process_{stage}", "input"
     )
     bus_ll, bus_to_province, corridors = load_context(res_folder, stage)
-    final_added, last_year, expansion_detail = load_metadata(
-        post_process_folder, stage
-    )
+    final_added, last_year, expansion_detail = load_metadata(post_process_folder, stage)
     logging.info(
-        f"Generating {stage} corridor map outputs: "
-        f"html={out_html}, csv={out_csv}"
+        f"Generating {stage} corridor map outputs: html={out_html}, csv={out_csv}"
     )
     link_flows_ts, link_flows_df = load_link_flows(res_folder)
     planning_nodal_index = index_nodal_files(
@@ -1595,7 +1586,6 @@ def generate_corridor_map(stage: str, generated_maps: list):
     generated_maps.append(stage)
 
 
-
 def main():
     if snakemake is None:
         raise RuntimeError("plot_corridor_map.py must be executed by Snakemake")
@@ -1604,9 +1594,10 @@ def main():
     generated_maps = []
     benchmark_result_anchor = None
 
-
     generate_corridor_map(snakemake.params.type, generated_maps)
-    benchmark_result_anchor = get_named_value(snakemake.output, f"{snakemake.params.type}_corridor_summary")
+    benchmark_result_anchor = get_named_value(
+        snakemake.output, f"{snakemake.params.type}_corridor_summary"
+    )
 
     finish_benchmark_tracker(
         result_benchmark_csv_path(benchmark_result_anchor),
