@@ -548,7 +548,7 @@ def forecast_p_max_pu(
             * generators.loc[generators.index, "efficiency"]
         )
 
-        # Apply Multi-index on forecast_multi to make the merge compatible
+        # Apply a multi-index to the dataframe to make the merge compatible
         dt = pd.to_datetime(forecast_multi.index)
         forecast_multi.index = pd.MultiIndex.from_arrays(
             [
@@ -558,7 +558,12 @@ def forecast_p_max_pu(
             names=n.generators_t.p_max_pu.index.names,
         )
 
-        n.generators_t.p_max_pu.update(forecast_multi)
+        # Add or overwrite profiles in "generators-p_max_pu.csv" using "generators_p_max_pu_forecast.csv"
+        common_idx = n.generators_t.p_max_pu.index.intersection(forecast_multi.index)
+        for col in forecast_multi.columns:
+            n.generators_t.p_max_pu.loc[common_idx, col] = forecast_multi.loc[
+                common_idx, col
+            ]
         n.generators_t.p_max_pu = n.generators_t.p_max_pu.round(4)
     return n
 
