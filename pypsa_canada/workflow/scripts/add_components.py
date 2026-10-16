@@ -250,7 +250,10 @@ def apply_wind_loss_factors(network: Network) -> Network:
     Multiplies wind p_max_pu by efficiency coefficient to account for losses.
     """
     # Select wind generators and multiply their capacity factors in p_max_pu by the loss coefficient
-    generators = network.generators[network.generators.carrier == "wind"]
+    generators = network.generators[
+        (network.generators.carrier == "wind")
+        & (network.generators.index.isin(network.generators_t.p_max_pu.columns))
+    ]
     p_max_pu = (
         network.generators_t.p_max_pu[generators.index]
         * generators.loc[generators.index, "efficiency"]
