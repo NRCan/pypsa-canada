@@ -102,6 +102,7 @@ def create_p_max_pu(network: Network, comp_config: dict[str, Any]) -> Network:
     """
     years: list[int] = config["year_settings"]["investment_period"]
     generators = network.generators[network.generators.p_nom_extendable]
+    generators = generators[generators.index.str.contains("OPT")]
     generator_t_p_max_pu_ref_df = network.generators_t.p_max_pu.copy()
     p_max_pu = generator_t_p_max_pu_ref_df.copy()
 

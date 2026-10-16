@@ -536,13 +536,29 @@ def forecast_p_max_pu(
             override_filepath, index_col=0, parse_dates=True
         )
     if p_max_pu_forecast is not None:
-        n.generators_t.p_max_pu = pd.merge(
-            n.generators_t.p_max_pu,
-            p_max_pu_forecast,
-            how="left",
-            right_index=True,
-            left_index=True,
+        forecast_multi = p_max_pu_forecast.copy()
+
+        # Apply wind loss factor
+        generators = n.generators[
+            (n.generators.carrier == "wind")
+            & (n.generators.index.isin(forecast_multi.columns))
+        ]
+        forecast_multi[generators.index] = (
+            forecast_multi[generators.index]
+            * generators.loc[generators.index, "efficiency"]
         )
+
+        # Apply Multi-index on forecast_multi to make the merge compatible
+        dt = pd.to_datetime(forecast_multi.index)
+        forecast_multi.index = pd.MultiIndex.from_arrays(
+            [
+                dt.year,
+                dt,
+            ],
+            names=n.generators_t.p_max_pu.index.names,
+        )
+
+        n.generators_t.p_max_pu.update(forecast_multi)
         n.generators_t.p_max_pu = n.generators_t.p_max_pu.round(4)
     return n
 
@@ -575,12 +591,12 @@ def main():
     print(f"Fuel Cost: {fuel_cost}")
     print(f"Variable Cost: {variable_cost}")
 
-    # Read forecasted p_max_pu
-    network = forecast_p_max_pu(network, comp_config)
-
     network = create_yearly_weightings(
         network=network, snapshot_config=snapshot_config, discount_rate=discount_rate
     )
+
+    # Read forecasted p_max_pu
+    network = forecast_p_max_pu(network, comp_config)
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     if config["run"]["export_csv"]:
