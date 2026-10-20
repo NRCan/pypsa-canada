@@ -2,15 +2,57 @@ import datetime
 import math
 import os
 from collections import Counter
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 import pypsa
 from matplotlib import pyplot as plt
-from sklearn_extra.cluster import KMedoids
 
 RES = ["wind", "solar"]
 HD = 24
+
+
+@dataclass
+class _KMedoidsResult:
+    labels_: np.ndarray
+    medoid_indices_: np.ndarray
+    cluster_centers_: np.ndarray
+
+
+def _fit_kmedoids(data: np.ndarray, n_clusters: int) -> _KMedoidsResult:
+    if data.ndim != 2 or not np.isfinite(data).all():
+        raise ValueError("K-Medoids input must be a finite two-dimensional array")
+    if n_clusters < 1 or n_clusters > len(data):
+        raise ValueError("n_clusters must be between 1 and the number of samples")
+
+    squared_norms = np.sum(data**2, axis=1)
+    distances = np.sqrt(
+        np.maximum(
+            squared_norms[:, None] + squared_norms[None, :] - 2 * data @ data.T,
+            0,
+        )
+    )
+    medoids = np.argsort(distances.sum(axis=1), kind="stable")[:n_clusters]
+
+    for _ in range(300):
+        labels = distances[:, medoids].argmin(axis=1)
+        updated_medoids = medoids.copy()
+        for cluster_index in range(n_clusters):
+            members = np.flatnonzero(labels == cluster_index)
+            if members.size:
+                within_cluster = distances[np.ix_(members, members)]
+                updated_medoids[cluster_index] = members[
+                    np.argmin(within_cluster.sum(axis=1))
+                ]
+        if np.array_equal(updated_medoids, medoids):
+            break
+        medoids = updated_medoids
+
+    labels = distances[:, medoids].argmin(axis=1)
+    if len(np.unique(labels)) != n_clusters:
+        raise ValueError("K-Medoids produced an empty cluster")
+    return _KMedoidsResult(labels, medoids, data[medoids])
 
 
 def kmedoid_quad_method(
@@ -405,7 +447,7 @@ def get_k_input(
 def saving_figures(
     filename: str,
     k_input: np.ndarray,
-    kmedoids: KMedoids,
+    kmedoids: _KMedoidsResult,
     saving_folder_path: str,
     period: int = None,
 ):
@@ -447,7 +489,7 @@ def saving_figures(
 
 
 def snap_df_period(
-    period: int, snap_df: pd.DataFrame, kmedoids: KMedoids
+    period: int, snap_df: pd.DataFrame, kmedoids: _KMedoidsResult
 ) -> pd.DataFrame:
     """
     Fill in snapshots dataframe weights for the period
@@ -487,7 +529,7 @@ def snap_df_period(
 
 
 def snap_df_no_period(
-    snap_df: pd.DataFrame, hd: int, kmedoids: KMedoids
+    snap_df: pd.DataFrame, hd: int, kmedoids: _KMedoidsResult
 ) -> pd.DataFrame:
     """
     Fill in snapshots dataframe weights without period
@@ -612,7 +654,7 @@ def create_snapshots(
                 year=year,
             )
 
-        kmedoids = KMedoids(n_clusters=cluster).fit(k_input)
+        kmedoids = _fit_kmedoids(k_input, n_clusters=cluster)
         if year is None:
             snap_df = snap_df_period(snap_df=snap_df, period=period, kmedoids=kmedoids)
         elif year is not None:
