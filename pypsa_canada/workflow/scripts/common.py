@@ -21,6 +21,7 @@ CANADIAN_PROVINCES = {
     "QC",  # Quebec
     "SK",  # Saskatchewan
     "YT",  # Yukon
+    # TODO Move following into own list: CANADIAN_REGIONS
     "AL",  # Atlantic Region
     "MT",  # Maritimes
 }
