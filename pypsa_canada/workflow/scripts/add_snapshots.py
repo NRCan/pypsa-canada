@@ -366,6 +366,10 @@ def create_marginal_costs(
         print(f"Carbon tax for {year} = {carbon_tax}")
 
         for gen_name in marginal_costs.columns:
+            bus = network.generators.loc[gen_name].bus
+            # TODO: think of a better way to exclude areas from carbon tax
+            if bus == "ISONE":
+                continue
             carrier = network.generators.loc[gen_name].carrier
             carrier_data = network.carriers.loc[carrier]
             model = network.generators.loc[gen_name].model
@@ -519,6 +523,38 @@ def apply_OBPS(
     return round(regulated_co2 * carbon_tax, 2)
 
 
+def forecast_p_max_pu(
+    n: Network,
+    comp_config: dict[str, Any],
+):
+    p_max_pu_forecast: pd.DataFrame | None = None
+    override_dir: str = comp_config["override_dir"]
+    override_filepath = os.path.join(override_dir, "generators_p_max_pu_forecast.csv")
+    if os.path.isfile(override_filepath):
+        print(f"p_max_pu forecast file detected in {override_filepath}")
+        p_max_pu_forecast = pd.read_csv(
+            override_filepath, index_col=0, parse_dates=True
+        )
+    if p_max_pu_forecast is not None:
+        # Apply wind loss factor
+        wind_gens = n.generators[
+            (n.generators.carrier == "wind")
+            & (n.generators.index.isin(p_max_pu_forecast.columns))
+        ]
+        p_max_pu_forecast[wind_gens.index] *= wind_gens.loc[
+            wind_gens.index, "efficiency"
+        ]
+
+        # Add or overwrite profiles in "generators-p_max_pu.csv" using "generators_p_max_pu_forecast.csv"
+        common_idx = n.generators_t.p_max_pu.index.intersection(p_max_pu_forecast.index)
+        for col in p_max_pu_forecast.columns:
+            n.generators_t.p_max_pu.loc[common_idx, col] = p_max_pu_forecast.loc[
+                common_idx, col
+            ]
+        n.generators_t.p_max_pu = n.generators_t.p_max_pu.round(4)
+    return n
+
+
 def main():
     if snakemake is None:
         raise RuntimeError("add_snapshots.py must be executed by Snakemake")
@@ -546,6 +582,9 @@ def main():
     print(f"Carbon Cost: {carbon_cost}")
     print(f"Fuel Cost: {fuel_cost}")
     print(f"Variable Cost: {variable_cost}")
+
+    # Read forecasted p_max_pu
+    network = forecast_p_max_pu(network, comp_config)
 
     network = create_yearly_weightings(
         network=network, snapshot_config=snapshot_config, discount_rate=discount_rate
