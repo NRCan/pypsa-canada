@@ -536,32 +536,19 @@ def forecast_p_max_pu(
             override_filepath, index_col=0, parse_dates=True
         )
     if p_max_pu_forecast is not None:
-        forecast_multi = p_max_pu_forecast.copy()
-
         # Apply wind loss factor
-        generators = n.generators[
+        wind_gens = n.generators[
             (n.generators.carrier == "wind")
-            & (n.generators.index.isin(forecast_multi.columns))
+            & (n.generators.index.isin(p_max_pu_forecast.columns))
         ]
-        forecast_multi[generators.index] = (
-            forecast_multi[generators.index]
-            * generators.loc[generators.index, "efficiency"]
-        )
-
-        # Apply a multi-index to the dataframe to make the merge compatible
-        dt = pd.to_datetime(forecast_multi.index)
-        forecast_multi.index = pd.MultiIndex.from_arrays(
-            [
-                dt.year,
-                dt,
-            ],
-            names=n.generators_t.p_max_pu.index.names,
-        )
+        p_max_pu_forecast[wind_gens.index] *= wind_gens.loc[
+            wind_gens.index, "efficiency"
+        ]
 
         # Add or overwrite profiles in "generators-p_max_pu.csv" using "generators_p_max_pu_forecast.csv"
-        common_idx = n.generators_t.p_max_pu.index.intersection(forecast_multi.index)
-        for col in forecast_multi.columns:
-            n.generators_t.p_max_pu.loc[common_idx, col] = forecast_multi.loc[
+        common_idx = n.generators_t.p_max_pu.index.intersection(p_max_pu_forecast.index)
+        for col in p_max_pu_forecast.columns:
+            n.generators_t.p_max_pu.loc[common_idx, col] = p_max_pu_forecast.loc[
                 common_idx, col
             ]
         n.generators_t.p_max_pu = n.generators_t.p_max_pu.round(4)
@@ -602,9 +589,6 @@ def main():
     network = create_yearly_weightings(
         network=network, snapshot_config=snapshot_config, discount_rate=discount_rate
     )
-
-    # Read forecasted p_max_pu
-    network = forecast_p_max_pu(network, comp_config)
 
     network.export_to_netcdf(snakemake.output.planning_unsolved_network)
     if config["run"]["export_csv"]:
