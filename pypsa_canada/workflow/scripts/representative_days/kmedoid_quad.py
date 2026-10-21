@@ -21,7 +21,8 @@ class _KMedoidsResult:
 
 
 def _fit_kmedoids(data: np.ndarray, n_clusters: int) -> _KMedoidsResult:
-    """Cluster samples using a local Euclidean K-Medoids heuristic.
+    """
+    Cluster samples using a local Euclidean K-Medoids heuristic.
 
     The input is treated as a matrix of samples by features. Each medoid is
     an actual input sample. Medoids are initialized from the samples with the
@@ -101,7 +102,8 @@ def kmedoid_quad_method(
     save_csv: bool = False,
     saving_folder_path="./",
 ):
-    """Create representative-day snapshot weightings with K-Medoids.
+    """
+    Create representative-day snapshot weightings with K-Medoids.
 
     For each selected investment period (or the requested ``year``), this
     method builds one feature vector per day from province-level load,
