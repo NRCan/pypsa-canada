@@ -1,3 +1,9 @@
+## 0.4.0 (2026-10-21)
+
+### Features
+
+- cambium model
+
 ## 0.3.12 (2026-09-25)
 
 ### Bug Fixes
