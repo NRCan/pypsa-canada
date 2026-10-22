@@ -1,3 +1,9 @@
+## 0.4.1 (2026-10-22)
+
+### Bug Fixes
+
+- [#2234] split solving workflow
+
 ## 0.4.0 (2026-10-21)
 
 ### Features
