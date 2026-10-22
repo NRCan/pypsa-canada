@@ -6,6 +6,7 @@ run:
   shared_resources: false # set to true to share the default resources across runs
   shared_cutouts: true # set to true to share the default cutout(s) across runs
   validation: false # set to true to run back-casting plots
+  # workflow_stages: ["planning", "dispatch"]  # "planning", "dispatch", or "flexibility(TBI)"
 
 year_settings:
   ref_year: 2021
@@ -145,6 +146,8 @@ dispatch:
   horizon: 336 #336 #2 weeks in hours
   overlap: 48 #48
   investment_period: [] #If empty, it will take the planning investment periods
+
+  # planning_solved_network: '' # Path to solve planning network folder (csvs) to use for dispatch only stage
 
   constraints:
     # add_spilling_variable:

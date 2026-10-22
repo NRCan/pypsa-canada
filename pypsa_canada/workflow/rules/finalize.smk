@@ -9,19 +9,28 @@ def get_log_inputs(wildcards=None):
         *rules.add_representative_days.log,
         *rules.add_extra_loads.log,
         *rules.modify_components.log,
-        *rules.solve_planning.log,
-        *rules.create_dispatch_network.log,
-        *rules.solve_dispatch.log,
-        *rules.post_process_planning.log,
-        *rules.post_process_dispatch.log,
-        *rules.create_summary.log,
-        *rules.copy_config.log,
-        *rules.collect_logs.log
     ]
-    if config["load"]["load_mode"].upper() != "DEFAULT": # Only add loads if not using default load profile, whose loads are already in the base network
+    if config["load"]["load_mode"].upper() != "DEFAULT":
         logs += [*rules.add_loads.log]
-    if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
-        logs += [*rules.export_idea.log]
+
+    if "planning" in WORKFLOW_STAGES:
+        logs += [
+            *rules.solve_planning.log,
+            *rules.post_process_planning.log,
+        ]
+
+    if "dispatch" in WORKFLOW_STAGES:
+        logs += [
+            *rules.create_dispatch_network.log,
+            *rules.solve_dispatch.log,
+            *rules.post_process_dispatch.log,
+        ]
+
+    if set(["planning", "dispatch"]).issubset(WORKFLOW_STAGES):
+        logs += [*rules.create_summary.log]
+        if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
+            logs += [*rules.export_idea.log]
+
     return logs
 
 rule copy_config:
@@ -55,17 +64,13 @@ onerror:
     run_output_dir = Path(RUN_OUTPUT_DIR)
     if run_output_dir.exists():
         run_output_dir.rename(crash_dir)
-    # Remove the sentinel so the next invocation starts with a fresh timestamp.
     if _ts_file.exists():
         _ts_file.unlink()
     print(f"\n--- Crash detected: collecting artifacts to {crash_dir} ---")
     log_files = get_log_inputs()
-    if EXPORT_FORMAT and EXPORT_FORMAT.lower() == "idea":
-        log_files += [*rules.export_idea.log]
     collect_crash_artifacts(crash_dir, log_files, config, RUN_NET_DIR, RUN_START.timestamp())
     print(f"--- Crash artifacts saved to {crash_dir} ---\n")
 
 onsuccess:
-    # Remove the sentinel so the next invocation starts with a fresh timestamp.
     if _ts_file.exists():
         _ts_file.unlink()
