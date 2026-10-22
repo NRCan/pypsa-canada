@@ -9,7 +9,8 @@ import pytest
 
 
 def _run_snakemake_script(monkeypatch, scripts_path, script_name, snakemake):
-    """Run a workflow script's ``main`` using a test-provided Snakemake context.
+    """
+    Run a workflow script's ``main`` using a test-provided Snakemake context.
 
     Snakemake normally injects the ``snakemake`` object and adds the workflow
     scripts directory to Python's import path. This helper supplies those
