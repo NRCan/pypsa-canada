@@ -223,7 +223,7 @@ def main():
         raise RuntimeError("solve_planning.py must be executed by Snakemake")
 
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
-    network = pypsa.Network(snakemake.input.planning_unsolved_network)
+    network = pypsa.Network(snakemake.input.unsolved_network)
     planning_options = config["solving"]["options"]["planning"]
     network = apply_generator_preprocess_toggles(network, planning_options)
     disable_committable_for_OPT(network)

@@ -325,7 +325,7 @@ def main():
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
 
     solved_planning_network = pypsa.Network(snakemake.input.planning_solved_network)
-    network = pypsa.Network(snakemake.input.planning_unsolved_network_unfiltered)
+    network = pypsa.Network(snakemake.input.base_network)
 
     # Copy optimized capacities from the solved planning network.
     # Load-shedding generators are omitted from the dispatch network.

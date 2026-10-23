@@ -1,8 +1,8 @@
 # Previous rule: modify_components
-# Next rule: create_dispatch_network
+# Next rule: post_process_planning
 rule solve_planning:
     input:
-        planning_unsolved_network=f"{RUN_NET_DIR}/planning_base_network.nc"
+        unsolved_network=f"{RUN_NET_DIR}/base_network.nc"
     output:
         solved_network_csv=directory(f"{RUN_OUTPUT_DIR}/planning_solved_network")
     log:

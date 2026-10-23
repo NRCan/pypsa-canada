@@ -102,6 +102,7 @@ def create_p_max_pu(network: Network, comp_config: dict[str, Any]) -> Network:
     """
     years: list[int] = config["year_settings"]["investment_period"]
     generators = network.generators[network.generators.p_nom_extendable]
+    generators = generators[generators.index.str.contains("OPT")]
     generator_t_p_max_pu_ref_df = network.generators_t.p_max_pu.copy()
     p_max_pu = generator_t_p_max_pu_ref_df.copy()
 
@@ -249,7 +250,10 @@ def apply_wind_loss_factors(network: Network) -> Network:
     Multiplies wind p_max_pu by efficiency coefficient to account for losses.
     """
     # Select wind generators and multiply their capacity factors in p_max_pu by the loss coefficient
-    generators = network.generators[network.generators.carrier == "wind"]
+    generators = network.generators[
+        (network.generators.carrier == "wind")
+        & (network.generators.index.isin(network.generators_t.p_max_pu.columns))
+    ]
     p_max_pu = (
         network.generators_t.p_max_pu[generators.index]
         * generators.loc[generators.index, "efficiency"]

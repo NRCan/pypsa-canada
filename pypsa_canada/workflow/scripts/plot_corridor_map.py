@@ -44,6 +44,8 @@ LOG_PATH = (
 
 setup_script_logging(LOG_PATH)
 
+config = snakemake.config if snakemake is not None else None
+
 # ---------------------------------------------------------------------------
 # Geometry / layout constants (tune in the rule params if needed)
 # ---------------------------------------------------------------------------
@@ -583,7 +585,7 @@ def parallel_offsets(n: int, base_offset_m: float, step_m: float):
 # =============================================================================
 # PLANNING CAPACITY EXPANSION
 # =============================================================================
-def load_final_planning_capacity_additions(unit_summary_csv: str):
+def load_final_capacity_additions(unit_summary_csv: str):
     """
     Load cumulative transmission capacity additions from unit_summary_planning.csv.
 
@@ -1510,30 +1512,25 @@ def require_named_value(named_values, name: str, value_type: str) -> str:
     return value
 
 
-def load_planning_context(planning_res_folder: str):
+def load_context(res_folder: str, stage: str):
     """
     Load planning topology and group physical lines into corridor rows.
     """
-    bus_ll, _, bus_to_province = load_buses(
-        os.path.join(planning_res_folder, "buses.csv")
-    )
-    lines, _ = load_lines(planning_res_folder)
+    bus_ll, _, bus_to_province = load_buses(os.path.join(res_folder, "buses.csv"))
+    lines, _ = load_lines(res_folder)
 
     corridors: dict = defaultdict(list)
     for _, row in lines.iterrows():
         corridors[canonical_pair(row["bus0"], row["bus1"])].append(row)
-
     return bus_ll, bus_to_province, corridors
 
 
-def load_planning_metadata(planning_post_process_folder: str):
+def load_metadata(post_process_folder: str, stage: str):
     """
     Load planning metadata used in corridor popups.
     """
-    unit_summary_path = os.path.join(
-        planning_post_process_folder, "unit_summary_planning.csv"
-    )
-    final_added, last_year, expansion_detail = load_final_planning_capacity_additions(
+    unit_summary_path = os.path.join(post_process_folder, "unit_summary_planning.csv")
+    final_added, last_year, expansion_detail = load_final_capacity_additions(
         unit_summary_path
     )
 
@@ -1544,99 +1541,63 @@ def load_planning_metadata(planning_post_process_folder: str):
     return final_added, last_year, expansion_detail
 
 
+def generate_corridor_map(stage: str, generated_maps: list):
+    """
+    Generate corridor map for the given workflow stage.
+    """
+    # Skip stages that are not planning or dispatch
+    if stage not in ["planning", "dispatch"]:
+        return
+
+    out_html = get_named_value(snakemake.output, f"{stage}_corridor_map")
+    out_csv = get_named_value(snakemake.output, f"{stage}_corridor_summary")
+    res_folder = require_named_value(
+        snakemake.input, f"{stage}_solved_network", "input"
+    )
+    if stage == "dispatch":
+        res_folder = os.path.join(res_folder, str(config["year_settings"]["ref_year"]))
+
+    post_process_folder = require_named_value(
+        snakemake.input, f"post_process_{stage}", "input"
+    )
+    bus_ll, bus_to_province, corridors = load_context(res_folder, stage)
+    final_added, last_year, expansion_detail = load_metadata(post_process_folder, stage)
+    logging.info(
+        f"Generating {stage} corridor map outputs: html={out_html}, csv={out_csv}"
+    )
+    link_flows_ts, link_flows_df = load_link_flows(res_folder)
+    planning_nodal_index = index_nodal_files(
+        post_process_folder, POST_PROCESS_FILE_GLOB
+    )
+    build_corridor_map(
+        corridors,
+        bus_ll,
+        bus_to_province,
+        planning_nodal_index,
+        link_flows_ts,
+        link_flows_df,
+        out_html,
+        out_csv,
+        stage,
+        final_added,
+        last_year,
+        expansion_detail,
+    )
+    generated_maps.append(stage)
+
+
 def main():
     if snakemake is None:
         raise RuntimeError("plot_corridor_map.py must be executed by Snakemake")
 
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
-
-    planning_out_html = get_named_value(snakemake.output, "planning_corridor_map")
-    planning_out_csv = get_named_value(snakemake.output, "planning_corridor_summary")
-    dispatch_out_html = get_named_value(snakemake.output, "dispatch_corridor_map")
-    dispatch_out_csv = get_named_value(snakemake.output, "dispatch_corridor_summary")
-
-    planning_requested = bool(planning_out_html and planning_out_csv)
-    dispatch_requested = bool(dispatch_out_html and dispatch_out_csv)
-    if not planning_requested and not dispatch_requested:
-        raise RuntimeError("No corridor map outputs were requested by Snakemake")
-
-    logging.info(
-        "Corridor map requests: "
-        f"planning={planning_requested}, dispatch={dispatch_requested}"
-    )
-
-    planning_res_folder = require_named_value(
-        snakemake.input, "planning_solved_network", "input"
-    )
-    planning_post_process_folder = require_named_value(
-        snakemake.input, "post_process_planning", "input"
-    )
-
-    bus_ll, bus_to_province, corridors = load_planning_context(planning_res_folder)
-    final_added, last_year, expansion_detail = load_planning_metadata(
-        planning_post_process_folder
-    )
-
     generated_maps = []
-    benchmark_result_anchor = planning_out_csv or dispatch_out_csv
+    benchmark_result_anchor = None
 
-    if planning_requested:
-        logging.info(
-            "Generating planning corridor map outputs: "
-            f"html={planning_out_html}, csv={planning_out_csv}"
-        )
-        link_flows_ts, link_flows_df = load_link_flows(planning_res_folder)
-        planning_nodal_index = index_nodal_files(
-            planning_post_process_folder, POST_PROCESS_FILE_GLOB
-        )
-        build_corridor_map(
-            corridors,
-            bus_ll,
-            bus_to_province,
-            planning_nodal_index,
-            link_flows_ts,
-            link_flows_df,
-            planning_out_html,
-            planning_out_csv,
-            "Planning",
-            final_added,
-            last_year,
-            expansion_detail,
-        )
-        generated_maps.append("planning")
-
-    if dispatch_requested:
-        dispatch_res_folder = require_named_value(
-            snakemake.input, "dispatch_solved_network", "input"
-        )
-        dispatch_post_process_folder = require_named_value(
-            snakemake.input, "post_process_dispatch", "input"
-        )
-        logging.info(
-            "Generating dispatch corridor map outputs: "
-            f"html={dispatch_out_html}, csv={dispatch_out_csv}"
-        )
-        dispatch_nodal_index = index_nodal_files(
-            dispatch_post_process_folder, POST_PROCESS_FILE_GLOB
-        )
-        dispatch_link_flows_ts, dispatch_link_flows_df = load_dispatch_link_flows(
-            dispatch_res_folder
-        )
-        build_corridor_map(
-            corridors,
-            bus_ll,
-            bus_to_province,
-            dispatch_nodal_index,
-            dispatch_link_flows_ts,
-            dispatch_link_flows_df,
-            dispatch_out_html,
-            dispatch_out_csv,
-            "Dispatch",
-            final_added,
-            last_year,
-            expansion_detail,
-        )
-        generated_maps.append("dispatch")
+    generate_corridor_map(snakemake.params.type, generated_maps)
+    benchmark_result_anchor = get_named_value(
+        snakemake.output, f"{snakemake.params.type}_corridor_summary"
+    )
 
     finish_benchmark_tracker(
         result_benchmark_csv_path(benchmark_result_anchor),
