@@ -3,13 +3,14 @@
 import logging
 import os
 from collections import defaultdict
+from enum import Enum
 
 import folium
 import numpy as np
 import pandas as pd
 
 from .charts import build_popup_html, build_util_plot_html
-from .flows import _bus_index_key, _hourly_cache, resolve_corridor_flow
+from .flows import _bus_index_key, resolve_corridor_flow
 from .geometry import (
     approx_distance_m,
     canonical_pair,
@@ -19,6 +20,7 @@ from .geometry import (
     voltage_mix_label,
 )
 from .settings import (
+    _NEW_LINE_BADGE,
     CURVE_OFFSET_M,
     LINE_COLOR_NO_DATA,
     LINE_COLOR_WITH_DATA,
@@ -28,11 +30,43 @@ from .settings import (
     SELF_LOOP_RADIUS_M,
     SELF_LOOP_STEP_M,
     SUMMARY_COLUMNS,
-    _NEW_LINE_BADGE,
 )
 
 
-def build_corridor_map(
+class TilesType(Enum):
+    STADIA_DARK = "stadia_dark"  # Needs API key
+    ARCGIS = "arcgis"
+    OPENSTREETMAP = "openstreetmap"  # Needs API key
+    CARTODB_DARK = "carto_db_dark"  # Needs API key
+    CARTODB = "carto_db"  # Needs API key
+
+
+def map_tiles_selector(type: TilesType) -> tuple[str, str | None]:
+    match type:
+        case TilesType.STADIA_DARK:
+            return (
+                "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
+                '"&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors"',
+            )
+        case TilesType.ARCGIS:
+            return (
+                "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+                "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ",
+            )
+        case TilesType.OPENSTREETMAP:
+            return ("OpenStreetMap", None)
+        case TilesType.CARTODB_DARK:
+            return (
+                "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            )
+        case TilesType.CARTODB:
+            return ("CartoDB", None)
+        case _:
+            raise ValueError(f"Unknown map tile type: {type}")
+
+
+def build_corridor_map_folium(
     corridors,
     bus_ll,
     bus_to_province,
@@ -42,46 +76,61 @@ def build_corridor_map(
     out_html,
     out_csv,
     map_label,
-    final_added,
     last_year,
-    expansion_detail,
-):
+) -> None:
     """Build and save a corridor utilization Folium map and summary CSV."""
-    _hourly_cache.clear()
+    # _hourly_cache.clear()
 
     map_center = (
         np.mean([ll[0] for ll in bus_ll.values()]),
         np.mean([ll[1] for ll in bus_ll.values()]),
     )
-    fmap = folium.Map(location=map_center, zoom_start=6, tiles="CartoDB positron")
+
+    # Select map tiles and initialize the Folium map
+    tiles, attr = map_tiles_selector(TilesType.OPENSTREETMAP)
+    fmap = folium.Map(
+        location=map_center,
+        zoom_start=6,
+        tiles=tiles,
+        attr=attr,
+    )
+
+    # Add a feature group for corridor utilization lines
     flow_layer = folium.FeatureGroup(
         name="Corridor utilization (click lines)", show=True
     )
-    flow_layer.add_to(fmap)
-    no_data_layer = folium.FeatureGroup(name="No flow data (grey)", show=True)
-    no_data_layer.add_to(fmap)
+    fmap.add_child(flow_layer)
 
-    skipped_coords = skipped_flow = drawn_lines = drawn_no_data = 0
+    # Add a feature group for corridors with no flow data
+    no_flow_layer = folium.FeatureGroup(name="No flow data (grey)", show=True)
+    fmap.add_child(no_flow_layer)
+
+    skipped_coords, skipped_flow, drawn_lines, drawn_no_data = 0, 0, 0, 0
     summary = []
 
+    # Compute the total capacity for each interprovincial corridor pair
     province_pair_capacity = defaultdict(float)
     for (bus_a, bus_b), rows in corridors.items():
+        # Skip corridors with missing coordinates
         if bus_a not in bus_ll or bus_b not in bus_ll:
             continue
+
         prov_a = bus_to_province.get(bus_a, bus_a)
         prov_b = bus_to_province.get(bus_b, bus_b)
+
+        # Only consider interprovincial corridors for capacity aggregation
         if prov_a != prov_b:
             prov_pair = canonical_pair(prov_a, prov_b)
             corridor_capacity = sum(float(r["s_nom"]) for r in rows)
             province_pair_capacity[prov_pair] += corridor_capacity
 
+    # Iterate over each corridor to build the map and summary data
     for (bus_a, bus_b), rows in corridors.items():
         if bus_a not in bus_ll or bus_b not in bus_ll:
             skipped_coords += 1
             continue
 
         corridor_capacity_mw = sum(float(r["s_nom"]) for r in rows)
-
         base_capacity_mw = sum(
             float(r["s_nom"]) for r in rows if not r.get("is_new", False)
         )
@@ -169,7 +218,7 @@ def build_corridor_map(
             <div style="margin-top:6px;"><b>Included lines:</b><br>{lines_html}</div>
             """
             popup = folium.Popup(
-                folium.IFrame(html=info_html, width=420, height=240),
+                folium.IFrame(html=info_html, width="420", height="240"),
                 max_width=500,
             )
         else:
@@ -228,8 +277,8 @@ def build_corridor_map(
             popup = folium.Popup(
                 folium.IFrame(
                     html=build_popup_html(info_html, plot_html),
-                    width=POPUP_WIDTH,
-                    height=POPUP_HEIGHT,
+                    width=str(POPUP_WIDTH),
+                    height=str(POPUP_HEIGHT),
                 ),
                 max_width=POPUP_WIDTH + 80,
             )
@@ -280,7 +329,7 @@ def build_corridor_map(
             if line.get("is_new"):
                 continue
             line_color = LINE_COLOR_NO_DATA if missing_flow else LINE_COLOR_WITH_DATA
-            target_layer = no_data_layer if missing_flow else flow_layer
+            target_layer = no_flow_layer if missing_flow else flow_layer
             folium.PolyLine(
                 locations=curve,
                 color=line_color,
@@ -307,8 +356,9 @@ def build_corridor_map(
         ascending=[False, False],
     )
     summary_df.to_csv(out_csv, index=False, encoding="utf-8-sig")
-    logging.info(f"[{map_label}] Saved CSV: {out_csv}")
 
+    # Log summary information about the map generation
+    logging.info(f"[{map_label}] Saved CSV: {out_csv}")
     logging.info(f"[{map_label}] Saved HTML: {out_html}")
     logging.info(f"[{map_label}] Corridors total: {len(corridors)}")
     logging.info(f"[{map_label}] Drawn physical lines: {drawn_lines}")

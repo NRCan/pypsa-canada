@@ -1,6 +1,5 @@
 """CSV loading and transmission topology preparation."""
 
-import logging
 import os
 from collections import defaultdict
 
@@ -21,6 +20,7 @@ def load_buses(buses_csv: str) -> tuple[dict, dict, dict]:
     """Load jittered coordinates, nominal voltages, and province codes."""
     buses = read_csv_flex(buses_csv)
     need = {"name", "x", "y"}
+
     if not need.issubset(buses.columns):
         raise ValueError(
             f"buses.csv must contain {need}. Found: {buses.columns.tolist()}"
@@ -76,23 +76,18 @@ def load_lines(res_folder: str) -> tuple[pd.DataFrame, str]:
     """Load positive-capacity lines, falling back to links and optimized capacity."""
     lines_csv = os.path.join(res_folder, "lines.csv")
     links_csv = os.path.join(res_folder, "links.csv")
+
+    # Read lines.csv if it exists, otherwise fall back to links.csv
     if os.path.exists(lines_csv):
         lines = read_csv_flex(lines_csv)
         cap_col = "s_nom"
     elif os.path.exists(links_csv):
         lines = read_csv_flex(links_csv)
         cap_col = "p_nom"
-        logging.info("lines.csv not found -- falling back to links.csv (using p_nom)")
     else:
         raise FileNotFoundError(
             f"Neither lines.csv nor links.csv found in {res_folder}"
         )
-
-    for c in ["name", "bus0", "bus1", cap_col]:
-        if c not in lines.columns:
-            raise ValueError(
-                f"Lines file missing '{c}'. Found: {lines.columns.tolist()}"
-            )
 
     lines["name"] = lines["name"].astype(str).str.strip()
     lines["bus0"] = lines["bus0"].astype(str).str.strip()
@@ -107,15 +102,17 @@ def load_lines(res_folder: str) -> tuple[pd.DataFrame, str]:
 
     lines["is_new"] = (s_nom_base == 0) & (lines["s_nom"] > 0)
     lines = lines[lines["s_nom"] > 0].copy()
+
     return lines, cap_col
 
 
-def load_context(res_folder: str, stage: str):
+def load_context(res_folder: str) -> tuple[dict, dict, dict]:
     """Load topology and group physical lines by canonical bus pair."""
     bus_ll, _, bus_to_province = load_buses(os.path.join(res_folder, "buses.csv"))
     lines, _ = load_lines(res_folder)
-
     corridors: dict = defaultdict(list)
+
     for _, row in lines.iterrows():
         corridors[canonical_pair(row["bus0"], row["bus1"])].append(row)
+
     return bus_ll, bus_to_province, corridors

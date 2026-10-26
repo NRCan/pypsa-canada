@@ -13,8 +13,7 @@ from _benchmarks import (
 from corridor_map.capacity import load_metadata
 from corridor_map.data import load_context
 from corridor_map.flows import index_nodal_files, load_link_flows
-from corridor_map.map import build_corridor_map
-from corridor_map.settings import POST_PROCESS_FILE_GLOB
+from corridor_map.map import build_corridor_map_folium
 from helpers import setup_script_logging
 
 snakemake = globals().get("snakemake")
@@ -29,87 +28,58 @@ setup_script_logging(LOG_PATH)
 config = snakemake.config if snakemake is not None else None
 
 
-def get_named_value(named_values, name: str) -> str | None:
-    """Return a named Snakemake input/output value when it is declared."""
-    try:
-        value = getattr(named_values, name)
-    except (AttributeError, KeyError):
-        return None
-    if value is None:
-        return None
-    value = str(value)
-    return value if value else None
+def main():
+    """Generate corridor map and summary for the current workflow stage."""
 
+    if snakemake is None:
+        raise RuntimeError("plot_corridor_map.py must be executed by Snakemake")
+    if config is None:
+        raise RuntimeError("Snakemake config is not available")
 
-def require_named_value(named_values, name: str, value_type: str) -> str:
-    """Return a required named Snakemake input/output value."""
-    value = get_named_value(named_values, name)
-    if value is None:
-        raise RuntimeError(
-            f"plot_corridor_map.py requires {value_type}.{name} for this output"
-        )
-    return value
+    benchmark_result_anchor: str = snakemake.output[
+        f"{snakemake.params.type}_corridor_summary"
+    ]
+    benchmark_timer, benchmark_memory = start_benchmark_tracker()
 
+    # Resolve workflow inputs and outputs for the current stage
+    stage: str = snakemake.params.type
+    res_folder: str = snakemake.input[f"{stage}_solved_network"]
+    post_process_folder: str = snakemake.input[f"post_process_{stage}"]
+    out_html: str = snakemake.output[f"{stage}_corridor_map"]
+    out_csv: str = snakemake.output[f"{stage}_corridor_summary"]
 
-def generate_corridor_map(stage: str, generated_maps: list):
-    """Resolve workflow inputs and outputs and generate the stage's map."""
-    if stage not in ["planning", "dispatch"]:
-        return
-
-    out_html = get_named_value(snakemake.output, f"{stage}_corridor_map")
-    out_csv = get_named_value(snakemake.output, f"{stage}_corridor_summary")
-    res_folder = require_named_value(
-        snakemake.input, f"{stage}_solved_network", "input"
-    )
     if stage == "dispatch":
         res_folder = os.path.join(res_folder, str(config["year_settings"]["ref_year"]))
 
-    post_process_folder = require_named_value(
-        snakemake.input, f"post_process_{stage}", "input"
-    )
-    bus_ll, bus_to_province, corridors = load_context(res_folder, stage)
-    final_added, last_year, expansion_detail = load_metadata(post_process_folder, stage)
+    # Load bus locations, bus-to-province mapping, and corridor definitions
+    bus_ll, bus_to_province, corridors = load_context(res_folder)
+    # Load post-processing metadata for the stage
+    _final_added, last_year, _expansion_detail = load_metadata(post_process_folder)
+    # Load direct link flows for the resolved network
+    link_flows_ts, link_flows_df = load_link_flows(res_folder)
+    # Index nodal files for the stage
+    nodal_index = index_nodal_files(post_process_folder)
+
     logging.info(
         f"Generating {stage} corridor map outputs: html={out_html}, csv={out_csv}"
     )
-    link_flows_ts, link_flows_df = load_link_flows(res_folder)
-    planning_nodal_index = index_nodal_files(
-        post_process_folder, POST_PROCESS_FILE_GLOB
-    )
-    build_corridor_map(
-        corridors,
-        bus_ll,
-        bus_to_province,
-        planning_nodal_index,
-        link_flows_ts,
-        link_flows_df,
-        out_html,
-        out_csv,
-        stage,
-        final_added,
-        last_year,
-        expansion_detail,
-    )
-    generated_maps.append(stage)
 
-
-def main():
-    """Run map generation with workflow logging and benchmark tracking."""
-    if snakemake is None:
-        raise RuntimeError("plot_corridor_map.py must be executed by Snakemake")
-
-    benchmark_timer, benchmark_memory = start_benchmark_tracker()
-    generated_maps = []
-    benchmark_result_anchor = None
-
-    generate_corridor_map(snakemake.params.type, generated_maps)
-    benchmark_result_anchor = get_named_value(
-        snakemake.output, f"{snakemake.params.type}_corridor_summary"
+    build_corridor_map_folium(
+        corridors=corridors,
+        bus_ll=bus_ll,
+        bus_to_province=bus_to_province,
+        nodal_index=nodal_index,
+        link_flows_ts=link_flows_ts,
+        link_flows_df=link_flows_df,
+        out_html=out_html,
+        out_csv=out_csv,
+        map_label=stage,
+        last_year=last_year,
     )
 
     finish_benchmark_tracker(
         result_benchmark_csv_path(benchmark_result_anchor),
-        f"plot_corridor_map_{'_'.join(generated_maps)}",
+        f"plot_corridor_map_{snakemake.params.type}",
         benchmark_timer,
         benchmark_memory,
     )

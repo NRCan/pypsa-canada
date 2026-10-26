@@ -94,7 +94,7 @@ def get_corridor_expansion_text(bus0: str, bus1: str, expansion_detail: dict):
     return "<br>".join(parts)
 
 
-def load_metadata(post_process_folder: str, stage: str):
+def load_metadata(post_process_folder: str) -> tuple[dict, int | str, dict]:
     """Load planning expansion metadata used in corridor popups."""
     unit_summary_path = os.path.join(post_process_folder, "unit_summary_planning.csv")
     final_added, last_year, expansion_detail = load_final_capacity_additions(

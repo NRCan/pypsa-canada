@@ -1,10 +1,8 @@
 """Hourly flow indexing, caching, and corridor flow resolution."""
 
-import logging
 import os
 from glob import glob
 
-import numpy as np
 import pandas as pd
 
 from .data import read_csv_flex
@@ -35,14 +33,16 @@ def detect_time_index(df: pd.DataFrame) -> pd.DatetimeIndex:
     return pd.date_range("2021-01-01 00:00:00", periods=len(df), freq="h")
 
 
-def index_nodal_files(nodal_dir: str, pattern: str) -> dict:
+def index_nodal_files(nodal_dir: str) -> dict:
     """Index hourly CSVs by the bus or province prefix before _hourly."""
+
+    pattern = "**/*_hourly*.csv"
     filepaths = glob(os.path.join(nodal_dir, pattern), recursive=True)
+
     if not filepaths:
-        logging.warning(
+        raise FileNotFoundError(
             f"No nodal files found in {nodal_dir} with pattern {pattern}. Flow data will be unavailable."
         )
-        return {}
 
     file_index = {}
     for filepath in filepaths:
@@ -50,6 +50,7 @@ def index_nodal_files(nodal_dir: str, pattern: str) -> dict:
         if "_hourly" in filename:
             stem = filename.split("_hourly")[0].strip()
             file_index[stem] = filepath
+
     return file_index
 
 
@@ -113,15 +114,16 @@ def load_link_flows(res_folder: str) -> tuple:
     snap_path = os.path.join(res_folder, "snapshots.csv")
     links_p0 = os.path.join(res_folder, "links-p0.csv")
     lines_p0 = os.path.join(res_folder, "lines-p0.csv")
+
+    # Use links-p0.csv if it exists, otherwise fall back to lines-p0.csv
     if os.path.exists(links_p0):
         p0_path = links_p0
     elif os.path.exists(lines_p0):
         p0_path = lines_p0
     else:
-        logging.info(
-            "Neither links-p0.csv nor lines-p0.csv found; direct flow fallback unavailable."
+        raise FileNotFoundError(
+            f"Neither links-p0.csv nor lines-p0.csv found in {res_folder}"
         )
-        return None, None
 
     flows = pd.read_csv(p0_path, index_col=0, encoding="utf-8-sig")
     flows.columns = [c.strip() for c in flows.columns]
@@ -139,6 +141,7 @@ def load_link_flows(res_folder: str) -> tuple:
         timestamps = pd.date_range("2021-01-01 00:00:00", periods=len(flows), freq="h")
 
     flows.index = timestamps
+
     return timestamps, flows
 
 
