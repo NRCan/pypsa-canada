@@ -13,7 +13,7 @@ from _benchmarks import (
 from corridor_map.capacity import load_metadata
 from corridor_map.data import load_context
 from corridor_map.flows import index_nodal_files, load_link_flows
-from corridor_map.map import build_corridor_map_folium
+from corridor_map.map import MapContext, build_corridor_map
 from helpers import setup_script_logging
 
 snakemake = globals().get("snakemake")
@@ -64,7 +64,7 @@ def main():
         f"Generating {stage} corridor map outputs: html={out_html}, csv={out_csv}"
     )
 
-    build_corridor_map_folium(
+    map_context = MapContext(
         corridors=corridors,
         bus_ll=bus_ll,
         bus_to_province=bus_to_province,
@@ -76,6 +76,7 @@ def main():
         map_label=stage,
         last_year=last_year,
     )
+    build_corridor_map(map_context)
 
     finish_benchmark_tracker(
         result_benchmark_csv_path(benchmark_result_anchor),
