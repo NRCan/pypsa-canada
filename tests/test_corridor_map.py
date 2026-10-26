@@ -6,10 +6,17 @@ import pytest
 
 from pypsa_canada.workflow.scripts.corridor_map import flows
 from pypsa_canada.workflow.scripts.corridor_map.capacity import (
+    get_corridor_added_capacity_for_year,
     load_final_capacity_additions,
 )
+from pypsa_canada.workflow.scripts.corridor_map.charts import build_util_plot_html
 from pypsa_canada.workflow.scripts.corridor_map.data import load_context
-from pypsa_canada.workflow.scripts.corridor_map.map import build_corridor_map
+from pypsa_canada.workflow.scripts.corridor_map.map import (
+    CorridorData,
+    MapContext,
+    build_corridor_map,
+    capacity_by_timestamp,
+)
 from pypsa_canada.workflow.scripts.corridor_map.settings import SUMMARY_COLUMNS
 
 
@@ -59,6 +66,85 @@ def test_capacity_additions_deduplicate_directions(tmp_path):
     assert added == {"A__to__B": 15.0}
     assert year == 2040
     assert detail["A__to__B"]["Cumulative_Value"].tolist() == [10.0, 15.0]
+
+
+def test_capacity_additions_are_limited_to_the_current_year():
+    """Do not include transmission capacity that is added in future years."""
+    additions = pd.DataFrame(
+        {
+            "Time": [2030, 2040],
+            "Value": [20.0, 30.0],
+            "Cumulative_Value": [20.0, 50.0],
+        }
+    )
+    detail = {"A__to__B": additions}
+
+    assert get_corridor_added_capacity_for_year("A", "B", 2025, detail) == 0.0
+    assert get_corridor_added_capacity_for_year("B", "A", 2030, detail) == 20.0
+    assert get_corridor_added_capacity_for_year("A", "B", 2035, detail) == 20.0
+    assert get_corridor_added_capacity_for_year("A", "B", 2040, detail) == 50.0
+
+
+def test_utilization_uses_capacity_available_in_each_timestamp_year():
+    """Calculate each utilization point with that year's available capacity."""
+    timestamps = pd.to_datetime(["2030-01-01", "2040-01-01"])
+    _, metrics = build_util_plot_html(
+        timestamps,
+        np.array([120.0, 120.0]),
+        np.array([120.0, 150.0]),
+        "A <-> B",
+        "year-specific capacity",
+    )
+
+    assert metrics["max_utilization"] == pytest.approx(1.0)
+    assert metrics["avg_utilization"] == pytest.approx(0.9)
+    assert metrics["hours_ge_0_8"] == 2
+
+
+def test_map_capacity_tracks_corridor_expansion_by_timestamp_year():
+    """Apply the planning capacity timeline to each corridor's flow timestamps."""
+    rows = [
+        {"name": "existing", "s_nom": 100.0},
+        {"name": "new", "s_nom": 50.0, "is_new": True},
+    ]
+    expansion_detail = {
+        "A__to__B": pd.DataFrame(
+            {
+                "Time": [2030, 2040],
+                "Value": [20.0, 30.0],
+                "Cumulative_Value": [20.0, 50.0],
+            }
+        )
+    }
+    context = MapContext(
+        corridors={("A", "B"): rows},
+        bus_ll={"A": (53.0, -110.0), "B": (52.0, -105.0)},
+        bus_to_province={},
+        nodal_index={},
+        link_flows_ts=None,
+        link_flows_df=None,
+        map_label="planning",
+        last_year=2040,
+        out_html="",
+        out_csv="",
+        expansion_detail=expansion_detail,
+    )
+    corridor = CorridorData(
+        bus_a="A",
+        bus_b="B",
+        rows=rows,
+        corridor_capacity_mw=150.0,
+        base_capacity_mw=100.0,
+        added_capacity_mw=50.0,
+        kv_label="315 kV",
+        sorted_lines=rows,
+        lines_html="",
+        timestamps=pd.to_datetime(["2030-01-01", "2040-01-01"]),
+    )
+
+    np.testing.assert_array_equal(
+        capacity_by_timestamp(corridor, context), [120.0, 150.0]
+    )
 
 
 def test_corridor_flow_reverse_fallback(tmp_path, monkeypatch):

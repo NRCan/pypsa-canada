@@ -73,6 +73,19 @@ def get_corridor_added_capacity(bus0: str, bus1: str, final_added: dict):
     return float(final_added.get(key, 0.0))
 
 
+def get_corridor_added_capacity_for_year(
+    bus0: str, bus1: str, year: int, expansion_detail: dict
+) -> float:
+    """Look up cumulative added capacity available by the given year in MW."""
+    a, b = sorted([str(bus0).strip(), str(bus1).strip()])
+    key = f"{a}__to__{b}"
+    if key not in expansion_detail:
+        return 0.0
+
+    additions = expansion_detail[key]
+    return float(additions.loc[additions["Time"] <= year, "Value"].sum())
+
+
 def get_corridor_expansion_text(bus0: str, bus1: str, expansion_detail: dict):
     """Format a corridor's year-by-year expansion as HTML."""
     a, b = sorted([str(bus0).strip(), str(bus1).strip()])

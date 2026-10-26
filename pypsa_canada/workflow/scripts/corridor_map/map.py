@@ -11,6 +11,7 @@ import folium
 import numpy as np
 import pandas as pd
 
+from .capacity import get_corridor_added_capacity_for_year
 from .charts import build_popup_html, build_util_plot_html
 from .flows import _bus_index_key, resolve_corridor_flow
 from .geometry import (
@@ -61,6 +62,7 @@ class MapContext:
     last_year: Any
     out_html: str
     out_csv: str
+    expansion_detail: dict = field(default_factory=dict)
     province_pair_capacity: dict = field(init=False)
     fmap: folium.Map = field(init=False)
     flow_layer: folium.FeatureGroup = field(init=False)
@@ -152,6 +154,64 @@ def _province_pair_capacities(corridors, bus_ll, bus_to_province):
             pair = canonical_pair(prov_a, prov_b)
             province_pair_capacity[pair] += sum(float(row["s_nom"]) for row in rows)
     return province_pair_capacity
+
+
+def _available_corridor_capacity(bus_a, bus_b, rows, year, context):
+    total_capacity = sum(float(row["s_nom"]) for row in rows)
+    a, b = sorted([str(bus_a).strip(), str(bus_b).strip()])
+    key = f"{a}__to__{b}"
+    if key not in context.expansion_detail:
+        return total_capacity
+
+    base_capacity = sum(
+        float(row["s_nom"]) for row in rows if not row.get("is_new", False)
+    )
+    return base_capacity + get_corridor_added_capacity_for_year(
+        bus_a, bus_b, year, context.expansion_detail
+    )
+
+
+def capacity_by_timestamp(corridor: CorridorData, context: MapContext) -> np.ndarray:
+    """Return the capacity online in each flow timestamp's investment year."""
+    years = pd.DatetimeIndex(corridor.timestamps).year
+    capacities_by_year = {}
+    for year in np.unique(years):
+        if corridor.is_interprovincial and corridor.using_provincial_flow:
+            province_pair = canonical_pair(corridor.prov_a, corridor.prov_b)
+            matching_corridors = []
+            for (bus_a, bus_b), rows in context.corridors.items():
+                if bus_a not in context.bus_ll or bus_b not in context.bus_ll:
+                    continue
+                prov_a = context.bus_to_province.get(bus_a, bus_a)
+                prov_b = context.bus_to_province.get(bus_b, bus_b)
+                if prov_a != prov_b and canonical_pair(prov_a, prov_b) == province_pair:
+                    matching_corridors.append((bus_a, bus_b, rows))
+
+            province_key = f"{province_pair[0]}__to__{province_pair[1]}"
+            if province_key in context.expansion_detail:
+                base_capacity = sum(
+                    float(row["s_nom"])
+                    for _, _, rows in matching_corridors
+                    for row in rows
+                    if not row.get("is_new", False)
+                )
+                capacity = base_capacity + get_corridor_added_capacity_for_year(
+                    province_pair[0],
+                    province_pair[1],
+                    year,
+                    context.expansion_detail,
+                )
+            else:
+                capacity = sum(
+                    _available_corridor_capacity(bus_a, bus_b, rows, year, context)
+                    for bus_a, bus_b, rows in matching_corridors
+                )
+        else:
+            capacity = _available_corridor_capacity(
+                corridor.bus_a, corridor.bus_b, corridor.rows, year, context
+            )
+        capacities_by_year[year] = capacity
+    return np.asarray([capacities_by_year[year] for year in years], dtype=float)
 
 
 def _resolve_map_flow(corridor: CorridorData, context: MapContext) -> None:
@@ -293,14 +353,15 @@ def _build_utilization_popup(corridor: CorridorData, context: MapContext):
         if provincial_aggregation_used
         else "corridor-specific"
     )
+    capacity_by_timestamp_value = capacity_by_timestamp(corridor, context)
     subtitle = (
-        f"Capacity: {corridor.final_capacity_mw:.1f} MW ({capacity_mode}) | "
+        f"Capacity: year-specific ({capacity_mode}) | "
         f"flow: {corridor.bus0} -> {corridor.bus1}"
     )
     plot_html, metrics = build_util_plot_html(
         corridor.timestamps,
         corridor.flow_mw,
-        corridor.final_capacity_mw,
+        capacity_by_timestamp_value,
         corridor_title,
         subtitle,
     )
@@ -309,15 +370,16 @@ def _build_utilization_popup(corridor: CorridorData, context: MapContext):
         capacity_explanation = f"""
             <div style="margin-top:6px;"><b>Capacity calculation (provincial mode):</b></div>
             <div><b>This corridor:</b> {corridor.corridor_capacity_mw:.1f} MW (existing: {corridor.base_capacity_mw:.1f} + new: {corridor.added_capacity_mw:.1f})</div>
-            <div><b>Total {corridor.prov_a}↔{corridor.prov_b}:</b> {corridor.final_capacity_mw:.1f} MW (aggregates all inter-provincial corridors)</div>
-            <div style="margin-top:4px; color:#0066cc; font-size:12px;"><i>Note: Provincial flow data aggregates across all {corridor.prov_a}-{corridor.prov_b} connections, so utilization is calculated using the total provincial capacity.</i></div>
+            <div><b>Final {corridor.prov_a}↔{corridor.prov_b} capacity:</b> {corridor.final_capacity_mw:.1f} MW (aggregates all inter-provincial corridors)</div>
+            <div style="margin-top:4px; color:#0066cc; font-size:12px;"><i>Note: Provincial flow data aggregates across all {corridor.prov_a}-{corridor.prov_b} connections. Utilization uses the provincial capacity available in each timestamp's year.</i></div>
             """
     else:
         capacity_explanation = f"""
             <div style="margin-top:6px;"><b>Capacity calculation:</b></div>
             <div>Existing lines (base s_nom) = {corridor.base_capacity_mw:.1f} MW</div>
             <div>New lines from planning (s_nom_opt) = {corridor.added_capacity_mw:.1f} MW</div>
-            <div><b>Total corridor capacity = {corridor.final_capacity_mw:.1f} MW</b></div>
+            <div><b>Final corridor capacity = {corridor.final_capacity_mw:.1f} MW</b></div>
+            <div>Utilization uses the capacity available in each timestamp's year.</div>
             """
 
     info_html = f"""
@@ -328,7 +390,7 @@ def _build_utilization_popup(corridor: CorridorData, context: MapContext):
             <div><b>Final planning year:</b> {context.last_year}</div>
             <div><b>Flow orientation:</b> {corridor.bus0} -> {corridor.bus1}</div>
             {capacity_explanation}
-            <div style="margin-top:6px;"><b>Utilization:</b> |flow| / {corridor.final_capacity_mw:.1f} MW</div>
+            <div style="margin-top:6px;"><b>Utilization:</b> |flow| / capacity available in that timestamp's year</div>
             <div><b>Max utilization:</b> {metrics["max_utilization"]:.3f} p.u.</div>
             <div><b>Avg utilization:</b> {metrics["avg_utilization"]:.3f} p.u.</div>
             <div><b>Hours ≥ 0.8 p.u.:</b> {metrics["hours_ge_0_8"]}</div>

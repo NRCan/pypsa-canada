@@ -6,14 +6,18 @@ import plotly.graph_objects as go
 from .settings import CONGESTION_THRESHOLD, FULL_CAPACITY_LINE
 
 
-def build_util_plot_html(time_index, flow_signed, cap_sum, title, subtitle):
+def build_util_plot_html(time_index, flow_signed, capacity_mw, title, subtitle):
     """Build a Plotly utilization fragment and return its summary metrics."""
     flow_signed = np.asarray(flow_signed, dtype=float)
-
-    if cap_sum and cap_sum > 0:
-        util = np.abs(flow_signed) / cap_sum
-    else:
-        util = np.full_like(flow_signed, np.nan, dtype=float)
+    capacity_mw = np.asarray(capacity_mw, dtype=float)
+    if capacity_mw.ndim == 0:
+        capacity_mw = np.full_like(flow_signed, capacity_mw, dtype=float)
+    util = np.divide(
+        np.abs(flow_signed),
+        capacity_mw,
+        out=np.full_like(flow_signed, np.nan, dtype=float),
+        where=capacity_mw > 0,
+    )
 
     max_util = float(np.nanmax(util)) if len(util) > 0 else 0.0
     avg_util = float(np.nanmean(util)) if len(util) > 0 else 0.0

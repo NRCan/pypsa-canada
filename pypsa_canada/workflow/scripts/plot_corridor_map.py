@@ -54,7 +54,7 @@ def main():
     # Load bus locations, bus-to-province mapping, and corridor definitions
     bus_ll, bus_to_province, corridors = load_context(res_folder)
     # Load post-processing metadata for the stage
-    _final_added, last_year, _expansion_detail = load_metadata(post_process_folder)
+    _final_added, last_year, expansion_detail = load_metadata(post_process_folder)
     # Load direct link flows for the resolved network
     link_flows_ts, link_flows_df = load_link_flows(res_folder)
     # Index nodal files for the stage
@@ -75,6 +75,7 @@ def main():
         out_csv=out_csv,
         map_label=stage,
         last_year=last_year,
+        expansion_detail=expansion_detail,
     )
     build_corridor_map(map_context)
 
