@@ -2,15 +2,95 @@ import datetime
 import math
 import os
 from collections import Counter
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 import pypsa
 from matplotlib import pyplot as plt
-from sklearn_extra.cluster import KMedoids
 
 RES = ["wind", "solar"]
 HD = 24
+
+
+@dataclass
+class _KMedoidsResult:
+    labels_: np.ndarray
+    medoid_indices_: np.ndarray
+    cluster_centers_: np.ndarray
+
+
+def _fit_kmedoids(data: np.ndarray, n_clusters: int) -> _KMedoidsResult:
+    """
+    Cluster samples using a local Euclidean K-Medoids heuristic.
+
+    The input is treated as a matrix of samples by features. Each medoid is
+    an actual input sample. Medoids are initialized from the samples with the
+    smallest total distance to all samples, then iteratively updated to the
+    most central sample within each assigned cluster. Iteration stops when
+    the medoids no longer change or after 300 updates. This implementation
+    does not require ``scikit-learn-extra`` and does not guarantee a globally
+    optimal clustering.
+
+    Parameters
+    ----------
+    data : np.ndarray
+            Finite, two-dimensional array with shape ``(n_samples, n_features)``.
+    n_clusters : int
+            Number of clusters. Must be between 1 and ``n_samples``, inclusive.
+
+    Returns
+    -------
+    _KMedoidsResult
+            Fitted clustering result containing:
+
+            - ``labels_``: cluster index assigned to each sample, shape
+                ``(n_samples,)``.
+            - ``medoid_indices_``: input row index of each medoid, shape
+                ``(n_clusters,)``.
+            - ``cluster_centers_``: medoid feature rows, shape
+                ``(n_clusters, n_features)``. These are observed samples, not
+                arithmetic means.
+
+    Raises
+    ------
+    ValueError
+            If ``data`` is not a finite two-dimensional array, ``n_clusters`` is
+            outside the valid range, or the fitted result contains an empty
+            cluster.
+    """
+    if data.ndim != 2 or not np.isfinite(data).all():
+        raise ValueError("K-Medoids input must be a finite two-dimensional array")
+    if n_clusters < 1 or n_clusters > len(data):
+        raise ValueError("n_clusters must be between 1 and the number of samples")
+
+    squared_norms = np.sum(data**2, axis=1)
+    distances = np.sqrt(
+        np.maximum(
+            squared_norms[:, None] + squared_norms[None, :] - 2 * data @ data.T,
+            0,
+        )
+    )
+    medoids = np.argsort(distances.sum(axis=1), kind="stable")[:n_clusters]
+
+    for _ in range(300):
+        labels = distances[:, medoids].argmin(axis=1)
+        updated_medoids = medoids.copy()
+        for cluster_index in range(n_clusters):
+            members = np.flatnonzero(labels == cluster_index)
+            if members.size:
+                within_cluster = distances[np.ix_(members, members)]
+                updated_medoids[cluster_index] = members[
+                    np.argmin(within_cluster.sum(axis=1))
+                ]
+        if np.array_equal(updated_medoids, medoids):
+            break
+        medoids = updated_medoids
+
+    labels = distances[:, medoids].argmin(axis=1)
+    if len(np.unique(labels)) != n_clusters:
+        raise ValueError("K-Medoids produced an empty cluster")
+    return _KMedoidsResult(labels, medoids, data[medoids])
 
 
 def kmedoid_quad_method(
@@ -23,28 +103,46 @@ def kmedoid_quad_method(
     saving_folder_path="./",
 ):
     """
+    Create representative-day snapshot weightings with K-Medoids.
+
+    For each selected investment period (or the requested ``year``), this
+    method builds one feature vector per day from province-level load,
+    hydro-adjusted net load, and average wind and solar capacity factors. It
+    clusters the daily vectors using :func:`_fit_kmedoids`; each selected
+    representative is therefore an observed day. The resulting snapshot
+    weightings encode how many original days each representative day stands
+    for.
 
     Parameters
     ----------
     n : pypsa.Network
-        Imported pypsa network
-    provinces : list, optional
-        List of provinces whose data (load, VRE) are to be used to generate representative days, by default None
-    year : int, optional
-        If year is None, it will run by period, else it will run by the year in the variable.
-    clusters : int, optional
-        Number of clusters, by default 6
+        Network providing snapshots, loads, generators, buses, and renewable
+        availability time series.
+    provinces : list[str] or None, optional
+        Provinces whose load and renewable profiles are included. ``None``
+        processes the profiles for the whole network as one group.
+    year : int or None, optional
+        Process only this year, using the year-specific time-series handling.
+        If ``None``, process each investment period in the network.
+    cluster : int, optional
+        Number of representative-day clusters per processed period. Defaults
+        to 6; must not exceed the number of daily samples (365).
     save_fig : bool, optional
-        Save figure if needed, by default True
+        Whether to save a plot of the daily feature vectors and medoids.
+        Defaults to ``True``.
     save_csv : bool, optional
-        Save snapshot file, by default False
-    saving_folder_path: str, optional
-        Location of folder to be save into, by default current working directory
+        Whether to save the resulting snapshot-weighting table as a CSV file.
+        Defaults to ``False``.
+    saving_folder_path : str or path-like, optional
+        Directory for generated figures and CSV output. Defaults to the
+        current directory (``"./"``).
 
     Returns
     -------
     pd.DataFrame
-        Snapshot weighting dataframe
+        Snapshot-weighting table with the same snapshot index as the network.
+        The objective, stores, and generators columns contain the resulting
+        representative-day weights.
     """
     if provinces is None:
         provinces = [None]
@@ -405,7 +503,7 @@ def get_k_input(
 def saving_figures(
     filename: str,
     k_input: np.ndarray,
-    kmedoids: KMedoids,
+    kmedoids: _KMedoidsResult,
     saving_folder_path: str,
     period: int = None,
 ):
@@ -447,7 +545,7 @@ def saving_figures(
 
 
 def snap_df_period(
-    period: int, snap_df: pd.DataFrame, kmedoids: KMedoids
+    period: int, snap_df: pd.DataFrame, kmedoids: _KMedoidsResult
 ) -> pd.DataFrame:
     """
     Fill in snapshots dataframe weights for the period
@@ -487,7 +585,7 @@ def snap_df_period(
 
 
 def snap_df_no_period(
-    snap_df: pd.DataFrame, hd: int, kmedoids: KMedoids
+    snap_df: pd.DataFrame, hd: int, kmedoids: _KMedoidsResult
 ) -> pd.DataFrame:
     """
     Fill in snapshots dataframe weights without period
@@ -612,7 +710,7 @@ def create_snapshots(
                 year=year,
             )
 
-        kmedoids = KMedoids(n_clusters=cluster).fit(k_input)
+        kmedoids = _fit_kmedoids(k_input, n_clusters=cluster)
         if year is None:
             snap_df = snap_df_period(snap_df=snap_df, period=period, kmedoids=kmedoids)
         elif year is not None:

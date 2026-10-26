@@ -43,7 +43,6 @@ autodoc_mock_imports = [
     "pint",
     "pytz",
     "sklearn",
-    "sklearn_extra",
     "folium",
 ]
 
