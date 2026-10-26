@@ -1,3 +1,10 @@
+## 0.4.2 (2026-10-26)
+
+### Bug Fixes
+
+- Remove scikit learn extra
+- Removed scitkit learn extra dependencies
+
 ## 0.4.1 (2026-10-22)
 
 ### Bug Fixes
