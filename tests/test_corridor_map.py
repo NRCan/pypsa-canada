@@ -167,6 +167,20 @@ def test_corridor_flow_reverse_fallback(tmp_path):
     np.testing.assert_array_equal(actual_flow, [-15.0, 25.0])
 
 
+@pytest.mark.parametrize("nodal_index", [{}, {"AB": None, "SK": None}])
+def test_corridor_flow_without_nodal_paths(nodal_index):
+    """Treat absent hourly paths as unavailable flow data."""
+    assert flows.get_corridor_flow("AB", "SK", nodal_index) == (None, None)
+
+
+def test_corridor_flow_unreadable_file_raises(tmp_path):
+    """Do not treat an indexed but unreadable CSV as absent flow data."""
+    hourly = tmp_path / "AB_hourly.csv"
+
+    with pytest.raises(ValueError, match="Error reading CSV file"):
+        flows.get_corridor_flow("AB", "SK", {"AB": str(hourly)})
+
+
 @pytest.mark.parametrize("flow_source", ["direct", "provincial", "missing"])
 def test_map_outputs_and_hourly_reset(tmp_path, flow_source):
     """Export summaries and reset hourly data between consecutive map builds."""

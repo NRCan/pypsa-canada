@@ -70,10 +70,11 @@ def _load_flow_from_side(
 ):
     """Load and optionally negate the summed flow towards a neighbor."""
     path = nodal_index.get(source_key)
+    if not path:
+        return None, None
+
     df = read_csv_flex(path)
 
-    if df is None:
-        return None, None
     cols = find_flow_columns(df, target_key)
     if not cols:
         return None, None
