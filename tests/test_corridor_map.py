@@ -40,7 +40,7 @@ def test_load_context_normalizes_links_and_groups_corridors(tmp_path):
         }
     ).to_csv(tmp_path / "links.csv", index=False)
 
-    coordinates, provinces, corridors = load_context(str(tmp_path), "planning")
+    coordinates, provinces, corridors = load_context(str(tmp_path))
 
     assert coordinates == {"A": (53.0, -110.0), "B": (52.0, -105.0)}
     assert provinces == {"A": "AB", "B": "SK"}
@@ -147,10 +147,9 @@ def test_map_capacity_tracks_corridor_expansion_by_timestamp_year():
     )
 
 
-def test_corridor_flow_reverse_fallback(tmp_path, monkeypatch):
+def test_corridor_flow_reverse_fallback(tmp_path):
     """Sum parallel flow columns and negate flows loaded from the opposite side."""
-    monkeypatch.setattr(flows, "_hourly_cache", {})
-    timestamps = pd.date_range("2030-01-01", periods=2, freq="h")
+    timestamps = pd.date_range("2030-01-01", periods=2, freq="h", name="snapshot")
     hourly = tmp_path / "SK_hourly.csv"
     pd.DataFrame(
         {
@@ -169,7 +168,7 @@ def test_corridor_flow_reverse_fallback(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("flow_source", ["direct", "provincial", "missing"])
-def test_map_outputs_and_hourly_cache_reset(tmp_path, flow_source):
+def test_map_outputs_and_hourly_reset(tmp_path, flow_source):
     """Export summaries and reset hourly data between consecutive map builds."""
     timestamps = pd.date_range("2030-01-01", periods=2, freq="h")
     corridors = {
@@ -209,20 +208,20 @@ def test_map_outputs_and_hourly_cache_reset(tmp_path, flow_source):
 
         html_path = tmp_path / str(run) / "map.html"
         csv_path = tmp_path / str(run) / "summary.csv"
-        build_corridor_map(
-            corridors,
-            coordinates,
-            {"A": "AB", "B": "SK"},
-            nodal_index,
-            timestamps if direct_flows is not None else None,
-            direct_flows,
-            str(html_path),
-            str(csv_path),
-            "planning",
-            {},
-            2040,
-            {},
+        context = MapContext(
+            corridors=corridors,
+            bus_ll=coordinates,
+            bus_to_province={"A": "AB", "B": "SK"},
+            nodal_index=nodal_index,
+            link_flows_ts=timestamps if direct_flows is not None else None,
+            link_flows_df=direct_flows,
+            out_html=str(html_path),
+            out_csv=str(csv_path),
+            map_label="planning",
+            last_year=2040,
+            expansion_detail={},
         )
+        build_corridor_map(context)
 
         assert "leaflet" in html_path.read_text().lower()
         summary = pd.read_csv(csv_path)

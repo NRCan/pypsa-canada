@@ -9,10 +9,17 @@ from .geometry import bus_voltage_kv, canonical_pair, jitter_bus
 from .settings import BUS_JITTER_M, BUS_JITTER_MODE
 
 
-def read_csv_flex(path: str) -> pd.DataFrame:
+def read_csv_flex(path: str | None) -> pd.DataFrame:
     """Read a UTF-8-BOM-tolerant CSV and strip column-name whitespace."""
-    df = pd.read_csv(path, encoding="utf-8-sig")
-    df.columns = [c.strip() for c in df.columns]
+    if path is None:
+        raise ValueError("No path provided for CSV file.")
+
+    try:
+        df = pd.read_csv(path, encoding="utf-8-sig")
+        df.columns = [c.strip() for c in df.columns]
+    except Exception as e:
+        raise ValueError(f"Error reading CSV file {path}: {e}")
+
     return df
 
 

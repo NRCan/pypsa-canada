@@ -9,8 +9,6 @@ from .data import read_csv_flex
 from .geometry import canonical_pair
 from .settings import FORCE_TIME_COL
 
-_hourly_cache: dict = {}
-
 
 def detect_time_index(df: pd.DataFrame) -> pd.DatetimeIndex:
     """Infer timestamps, falling back to an hourly index starting in 2021."""
@@ -54,19 +52,6 @@ def index_nodal_files(nodal_dir: str) -> dict:
     return file_index
 
 
-def _get_cached_hourly_df(bus: str, nodal_index: dict) -> pd.DataFrame | None:
-    """Load and cache a bus or province hourly file, returning None if absent."""
-    if bus in _hourly_cache:
-        return _hourly_cache[bus]
-    filepath = nodal_index.get(bus)
-    if not filepath or not os.path.exists(filepath):
-        _hourly_cache[bus] = None
-        return None
-    df = read_csv_flex(filepath)
-    _hourly_cache[bus] = df
-    return df
-
-
 def find_flow_columns(df: pd.DataFrame, neighbor_key: str) -> list[str]:
     """Find transmission-flow columns starting with the neighbor key."""
     neighbor_key = str(neighbor_key).strip()
@@ -84,7 +69,9 @@ def _load_flow_from_side(
     negate: bool = False,
 ):
     """Load and optionally negate the summed flow towards a neighbor."""
-    df = _get_cached_hourly_df(source_key, nodal_index)
+    path = nodal_index.get(source_key)
+    df = read_csv_flex(path)
+
     if df is None:
         return None, None
     cols = find_flow_columns(df, target_key)
