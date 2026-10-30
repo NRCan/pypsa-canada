@@ -24,48 +24,68 @@ def build_util_plot_html(time_index, flow_signed, capacity_mw, title, subtitle):
     hours_ge_08 = int(np.sum(util >= CONGESTION_THRESHOLD))
     hours_ge_10 = int(np.sum(util >= FULL_CAPACITY_LINE))
 
-    fig = go.Figure()
-    fig.add_trace(
-        go.Scatter(
-            x=time_index,
-            y=util,
-            mode="lines",
-            name="Utilization |flow|/capacity (p.u.)",
+    fig = (
+        go.Figure()
+        # Utilization trace (|flow|/capacity)
+        .add_trace(
+            go.Scatter(
+                x=time_index,
+                y=util,
+                mode="lines",
+                name="Utilization |flow|/capacity (p.u.)",
+                line=dict(color="green", width=1),
+            )
         )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=[time_index.min(), time_index.max()],
-            y=[CONGESTION_THRESHOLD, CONGESTION_THRESHOLD],
-            mode="lines",
-            name="0.8 p.u. threshold",
-            line=dict(dash="dash", color="orange"),
+        # Flow trace (|flow| in MW)
+        .add_trace(
+            go.Scatter(
+                x=time_index,
+                y=np.abs(flow_signed),
+                mode="lines",
+                name="Flow |flow| (MW)",
+                yaxis="y2",
+                line=dict(color="blue", width=1),
+            )
         )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=[time_index.min(), time_index.max()],
-            y=[FULL_CAPACITY_LINE, FULL_CAPACITY_LINE],
-            mode="lines",
-            name="1.0 p.u. full capacity",
-            line=dict(dash="dot", color="red"),
+        # 0.8 p.u. capacity threshold trace (in MW)
+        .add_trace(
+            go.Scatter(
+                x=time_index,
+                y=CONGESTION_THRESHOLD * capacity_mw,
+                mode="lines",
+                name="0.8 p.u. capacity threshol",
+                yaxis="y2",
+                line=dict(dash="dash", color="orange"),
+            )
         )
-    )
-    fig.update_layout(
-        title=dict(
-            text=(
-                f"{title}<br><span style='font-size:12px'>{subtitle}<br>"
-                f"Max={max_util:.3f} p.u. | Avg={avg_util:.3f} p.u. | "
-                f"Hours ≥0.8={hours_ge_08} | Hours ≥1.0={hours_ge_10}</span>"
+        # 1.0 p.u. full capacity trace (in MW)
+        .add_trace(
+            go.Scatter(
+                x=time_index,
+                y=FULL_CAPACITY_LINE * capacity_mw,
+                mode="lines",
+                name="1.0 p.u. full capacity",
+                yaxis="y2",
+                line=dict(dash="dot", color="red"),
+            )
+        )
+        .update_layout(
+            title=dict(
+                text=(
+                    f"{title}<br><span style='font-size:12px'>{subtitle}<br>"
+                    f"Max={max_util:.3f} p.u. | Avg={avg_util:.3f} p.u. | "
+                    f"Hours ≥0.8={hours_ge_08} | Hours ≥1.0={hours_ge_10}</span>"
+                ),
+                x=0.01,
+                xanchor="left",
             ),
-            x=0.01,
-            xanchor="left",
-        ),
-        height=410,
-        margin=dict(l=55, r=30, t=120, b=45),
-        legend=dict(orientation="h", yanchor="top", y=-0.18, xanchor="left", x=0.0),
-        xaxis=dict(title="Time"),
-        yaxis=dict(title="Utilization (p.u.)", rangemode="tozero"),
+            height=410,
+            margin=dict(l=55, r=30, t=120, b=45),
+            legend=dict(orientation="h", yanchor="top", y=-0.18, xanchor="left", x=0.0),
+            xaxis=dict(title="Time"),
+            yaxis=dict(title="Utilization (p.u.)", rangemode="tozero"),
+            yaxis2=dict(title="Flow (MW)", overlaying="y", side="right"),
+        )
     )
     return fig.to_html(full_html=False, include_plotlyjs="cdn"), {
         "max_utilization": max_util,
