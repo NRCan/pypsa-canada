@@ -304,6 +304,21 @@ def main():
         logging.info("Adding Load shedding option")
         network.optimize.add_load_shedding(marginal_cost=1000000, sign=1.0)
 
+    # Retire must-run, non-committable units at the stop year so they cannot
+    # conflict with the zero-production constraint for their carrier.
+    stop_production_cfg = config["planning"]["constraints"]["add_stop_production"]
+    if stop_production_cfg["enable"]:
+        for stop_year in stop_production_cfg["years"]:
+            for carrier in stop_production_cfg["years"][stop_year]:
+                mask = (
+                    (network.generators.carrier == carrier)
+                    & (~network.generators.committable)
+                    & (network.generators.p_min_pu > 0)
+                )
+                network.generators.loc[mask, "lifetime"] = (
+                    stop_year - network.generators.loc[mask, "build_year"]
+                ).clip(lower=0)
+
     network.optimize.create_model(
         multi_investment_periods=True,
         linearized_unit_commitment=linearized_uc_ena,

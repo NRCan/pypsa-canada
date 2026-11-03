@@ -430,6 +430,20 @@ def main():
     else:
         investment_periods = dispatch_settings["investment_period"]
 
+    # Retire units that are forced to run if stop production constraint applies to them
+    stop_production_cfg = dispatch_settings["constraints"]["add_stop_production"]
+    if stop_production_cfg["enable"]:
+        for stop_year in stop_production_cfg["years"]:
+            for carrier in stop_production_cfg["years"][stop_year]:
+                mask = (
+                    (network.generators.carrier == carrier)
+                    & (~network.generators.committable)
+                    & (network.generators.p_min_pu > 0)
+                )
+                network.generators.loc[mask, "lifetime"] = (
+                    stop_year - network.generators.loc[mask, "build_year"]
+                ).clip(lower=0)
+
     for period in investment_periods:
         # network.snapshots = original_snapshots
         logging.info(f"Loading Dispatch Network for period = {period}")
