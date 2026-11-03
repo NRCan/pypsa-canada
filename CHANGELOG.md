@@ -1,3 +1,10 @@
+## 0.4.3 (2026-11-03)
+
+### Bug Fixes
+
+- Retire units that are forced to run if the “stop_prod” constraint appl...
+- Retire units that are forced to run if the “stop_prod” constraint applies to them
+
 ## 0.4.2 (2026-10-26)
 
 ### Bug Fixes
