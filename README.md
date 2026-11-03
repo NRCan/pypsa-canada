@@ -107,9 +107,25 @@ Following these steps, most dependencies should be installed and you should be a
 (env)  >> pypsa_canada run -f config\minimal_model.yaml
 ```
 
-3. If the process is stale, you will need to unlock it with the following command
+3. If the process is stale, you will need to unlock it with the following command and it's possible that you may need to delete the .snakemake to resolve the problem.
 ```bash
 (env)  >> pypsa_canada run -f sconfig\minimal_model.yaml --unlock
+```
+
+### Using Pixi (Alternative to using Python/Conda directly)
+Install Pixi by following the [official installation instructions](https://pixi.prefix.dev/latest/installation/). From the project root, install the development environment:
+
+```bash
+pixi install -e dev
+```
+
+Pixi installs the local `pypsa_canada` package in editable mode. You can also skip `pixi install`; `pixi run` will create or update the environment when needed.
+
+To run the minimal example with Pixi, change to the `example` directory and run:
+
+```bash
+cd example
+pixi run -e dev pypsa_canada run -f "config\minimal_model.yaml"
 ```
 
 ## Developers
@@ -253,6 +269,22 @@ $(base) python -m venv pypsa_canada_p312
 ```
 
 Après ces étapes, la plupart des dépendances devraient être installées et vous devriez pouvoir utiliser pypsa_canada
+
+### Utiliser Pixi
+Installez Pixi en suivant les [instructions officielles](https://pixi.prefix.dev/latest/installation/). Depuis la racine du projet, installez l'environnement de développement :
+
+```bash
+pixi install -e dev
+```
+
+Pixi installe le package local `pypsa_canada` en mode éditable. Vous pouvez aussi omettre `pixi install` ; `pixi run` crée ou met à jour l'environnement au besoin.
+
+Pour exécuter l'exemple minimal avec Pixi, accédez au dossier `example`, puis lancez :
+
+```bash
+cd example
+pixi run -e dev pypsa_canada run -f "config\minimal_model.yaml"
+```
 
 ## Exemple (À partir du dossier du projet)
 1. Allez dans le dossier du projet

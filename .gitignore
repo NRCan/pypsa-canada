@@ -150,3 +150,6 @@ example/model/Canada-National/*
 example/config/Canada-National*
 
 example/*.pdf
+# pixi environments
+.pixi/*
+!.pixi/config.toml
