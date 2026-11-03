@@ -1,3 +1,10 @@
+## 0.4.4 (2026-11-03)
+
+### Bug Fixes
+
+- Implemented pixi within the repo
+- Implemented pixi within the repo
+
 ## 0.4.3 (2026-11-03)
 
 ### Bug Fixes
