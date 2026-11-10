@@ -225,7 +225,8 @@ def main():
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.unsolved_network)
     planning_options = config["solving"]["options"]["planning"]
-    network = apply_generator_preprocess_toggles(network, planning_options)
+    comp_config = config["components"]
+    network = apply_generator_preprocess_toggles(network, planning_options, comp_config)
     disable_committable_for_OPT(network)
 
     # # TODO Temporary fix for standing_loss dim_0 issue - should be fixed in the network loading step instead

@@ -404,7 +404,8 @@ def main():
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.unsolved_dispatch_network)
     dispatch_options = config["solving"]["options"]["dispatch"]
-    network = apply_generator_preprocess_toggles(network, dispatch_options)
+    comp_config = config["components"]
+    network = apply_generator_preprocess_toggles(network, dispatch_options, comp_config)
 
     logging.info("Running Dispatch Solve")
 
