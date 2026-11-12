@@ -2,6 +2,22 @@
 
 **[English](#pypsa-canada)** | **[Français](#francais)**
 
+## Table of Contents
+- [Keywords](#keywords)
+- [Project Description](#project-description)
+- [Usage](#usage)
+- [Installation (English)](#installation-en)
+  - [Python / Conda](#installation-python-conda-en)
+  - [Pixi](#installation-pixi-en)
+- [Example](#example-from-the-project-folder)
+- [Developers](#developers)
+- [Documentation](#documentation)
+- [Licence](#licence)
+- [Rights](#rights)
+- [Authors](#authors)
+- [Contact Information](#contact-information)
+- [Getting Further Information](#getting-further-information)
+
 ## Keywords
 Python, Optimization, Linopy, Power Systems
 
@@ -57,44 +73,71 @@ Available example scenarios in the `example/scenarios/` directory:
 - `ressources/`: Intermediate network files generated during workflow
 - `results/`: Optimization results and outputs
 
+<a id="installation-en"></a>
 ## Installation
-Before starting the installation process:
-0. Clone the following project/library pypsa_canada:
-For GitHub users:
+
+Choose either Python/Conda or Pixi; you only need to follow one of these two sections.
+
+<a id="installation-python-conda-en"></a>
+### Python / Conda
+Clone the project. For GitHub users:
 ```bash
-$ git clone https://github.com/NRCan/pypsa-canada.git
+git clone https://github.com/NRCan/pypsa-canada.git
 ```
 
-For NRCAN internal users:
+For NRCan internal users:
 ```bash
-$ git clone https://nrcan-eets-cev-renouvelable-devops@dev.azure.com/nrcan-eets-cev-renouvelable-devops/Canadian_Scenarios_Analysis/_git/pypsa_canada
+git clone https://nrcan-eets-cev-renouvelable-devops@dev.azure.com/nrcan-eets-cev-renouvelable-devops/Canadian_Scenarios_Analysis/_git/pypsa_canada
 ```
 
-1. Create the virtual environment with either Conda or Python with Python 3.12. Feel free to choose the name of your environment.
+From the project directory, create and activate an environment with either Conda or Python 3.12.10.
 
-1-a) **For Anaconda/Miniconda users only, create a virtual environment with the following command:
+With Conda:
 ```bash
-$(base) conda create --name pypsa_canada_p312 python=3.12.10
+conda create --name pypsa_canada_p312 python=3.12.10
+conda activate pypsa_canada_p312
 ```
 
-1-b) **For Python users only, assuming you have a Python 3.12 installed, execute the following command to create a new virtual environment:
+With Python:
 ```bash
-$(base) python -m venv pypsa_canada_p312
+python -m venv .venv
+```
+Activate it in PowerShell with `.\.venv\Scripts\Activate.ps1`, or in Command Prompt with `.\.venv\Scripts\activate.bat`.
+
+Install the package and development dependencies:
+```bash
+python -m pip install -e ".[dev]"
 ```
 
-1-b) Proceed to activate the environment
-
-2. Go into the project folder
-```bash
-(env)  >> cd [PROJECT_DIR]
-```
-3. Install the package/library:
+<a id="installation-pixi-en"></a>
+### Pixi
+Install Pixi using the [official installation instructions](https://pixi.prefix.dev/latest/installation/). From the project root, install the development environment:
 
 ```bash
-(env)  >> pip install -e .[dev]
+pixi install -e dev
 ```
 
-Following these steps, most dependencies should be installed and you should be able to use pypsa_canada
+Pixi installs the local `pypsa_canada` package in editable mode. You can also skip `pixi install`; `pixi run` will create or sync the environment when needed.
+
+To open an interactive shell with the development environment enabled, run this from the project root:
+
+```bash
+pixi shell -e dev
+```
+
+From the Pixi shell, change to the `example` directory and run the simulation:
+
+```bash
+cd example
+pypsa_canada run -f "config\minimal_model.yaml"
+```
+
+Alternatively, run the minimal example directly without opening a shell:
+
+```bash
+cd example
+pixi run -e dev pypsa_canada run -f "config\minimal_model.yaml"
+```
 
 ## Example (From the project folder)
 1. Go into the project folder
@@ -109,23 +152,7 @@ Following these steps, most dependencies should be installed and you should be a
 
 3. If the process is stale, you will need to unlock it with the following command and it's possible that you may need to delete the .snakemake to resolve the problem.
 ```bash
-(env)  >> pypsa_canada run -f sconfig\minimal_model.yaml --unlock
-```
-
-### Using Pixi (Alternative to using Python/Conda directly)
-Install Pixi by following the [official installation instructions](https://pixi.prefix.dev/latest/installation/). From the project root, install the development environment:
-
-```bash
-pixi install -e dev
-```
-
-Pixi installs the local `pypsa_canada` package in editable mode. You can also skip `pixi install`; `pixi run` will create or update the environment when needed.
-
-To run the minimal example with Pixi, change to the `example` directory and run:
-
-```bash
-cd example
-pixi run -e dev pypsa_canada run -f "config\minimal_model.yaml"
+(env)  >> pypsa_canada run -f config\minimal_model.yaml --unlock
 ```
 
 ## Developers
@@ -157,12 +184,7 @@ Copyright CanmetENERGY - Varennes, NRCan, Goverment of Canada
 * Serban Ivanescu (Natural Resources Canada - CanmetENERGY)
 
 ## Contact Information
-* Steven Wong (steven.wong@nrcan-rncan.gc.ca)
-* Nathan De Matos (nathan.dematos@nrcan-rncan.gc.ca)
-* Michel Bui (michel.bui@nrcan-rncan.gc.ca)
-* Sophie Pelland (sophie.pelland@nrcan-rncan.gc.ca)
-* Adrien Prigent (adrien.prigent@nrcan-rncan.gc.ca)
-* Serban Ivanescu (serban.ivanescu@nrcan-rncan.gc.ca)
+For any comments or questions, feel free to contact us at the following email: pypsa-canada@nrcan-rncan.gc.ca
 
 ## Getting Further Information
 
@@ -176,9 +198,27 @@ Copyright CanmetENERGY - Varennes, NRCan, Goverment of Canada
 
 **[English](#pypsa-canada)** | **[Français](#francais)**
 
+## Table des matières
+- [Mots-clés](#mots-cles-fr)
+- [Description du projet](#description-du-projet-fr)
+- [Utilisation](#utilisation-fr)
+- [Installation](#installation-fr)
+  - [Python / Conda](#installation-python-conda-fr)
+  - [Pixi](#installation-pixi-fr)
+- [Exemple](#exemple-fr)
+- [Développeurs](#developpeurs-fr)
+- [Documentation](#documentation-fr)
+- [Licence](#licence-fr)
+- [Droits](#droits-fr)
+- [Auteurs](#auteurs-fr)
+- [Coordonnées](#coordonnees-fr)
+- [Pour plus d'informations](#plus-dinformations-fr)
+
+<a id="mots-cles-fr"></a>
 ## Mots-clés
 Python, Optimisation, Linopy, Réseaux électriques
 
+<a id="description-du-projet-fr"></a>
 ## Description du projet
 `pypsa_canada` est un cadre de modélisation basé sur des flux de travail pour l'analyse des réseaux électriques au Canada, construit sur [PyPSA](https://pypsa.org/) (Python for Power System Analysis). Cet outil permet une optimisation et une planification complètes des systèmes énergétiques pour les réseaux électriques canadiens. Il prend en charge le modèle [PyPSA-Canada-National](https://github.com/NRCan/pypsa-canada-national) et peut être utilisé avec d'autres modèles provinciaux et régionaux.
 
@@ -194,6 +234,7 @@ Python, Optimisation, Linopy, Réseaux électriques
 
 Ce cadre a été appliqué pour analyser des scénarios de réseaux électriques canadiens, y compris l'initiative de la Boucle de l'Atlantique et l'intégration du réseau de la Saskatchewan.
 
+<a id="utilisation-fr"></a>
 ## Utilisation
 
 ### Aperçu
@@ -231,61 +272,73 @@ Scénarios d'exemple disponibles dans le répertoire `example/scenarios/` :
 - `ressources/` : Fichiers de réseau intermédiaires générés pendant le flux de travail
 - `results/` : Résultats et sorties d'optimisation
 
+<a id="installation-fr"></a>
 ## Installation
-Avant de commencer le processus d'installation :
-0. Clonez le projet/bibliothèque pypsa_canada suivant :
-Pour les utilisateurs de GitHub :
+
+Choisissez Python/Conda ou Pixi ; il suffit de suivre une seule de ces deux méthodes.
+
+<a id="installation-python-conda-fr"></a>
+### Python / Conda
+Clonez le projet. Pour les utilisateurs de GitHub :
 ```bash
-$ git clone https://github.com/NRCan/pypsa-canada.git
+git clone https://github.com/NRCan/pypsa-canada.git
 ```
 
 Pour les utilisateurs internes de RNCan :
 ```bash
-$ git clone https://nrcan-eets-cev-renouvelable-devops@dev.azure.com/nrcan-eets-cev-renouvelable-devops/Canadian_Scenarios_Analysis/_git/pypsa_canada
+git clone https://nrcan-eets-cev-renouvelable-devops@dev.azure.com/nrcan-eets-cev-renouvelable-devops/Canadian_Scenarios_Analysis/_git/pypsa_canada
 ```
 
-1. Créez l'environnement virtuel avec Conda ou Python avec Python 3.12. N'hésitez pas à choisir le nom de votre environnement.
+Depuis le répertoire du projet, créez et activez un environnement avec Conda ou Python 3.12.10.
 
-1-a) **Pour les utilisateurs d'Anaconda/Miniconda uniquement, créez un environnement virtuel avec la commande suivante :
+Avec Conda :
 ```bash
-$(base) conda create --name pypsa_canada_p312 python=3.12.10
+conda create --name pypsa_canada_p312 python=3.12.10
+conda activate pypsa_canada_p312
 ```
 
-1-b) **Pour les utilisateurs de Python uniquement, en supposant que vous avez Python 3.12 installé, exécutez la commande suivante pour créer un nouvel environnement virtuel :
+Avec Python :
 ```bash
-$(base) python -m venv pypsa_canada_p312
+python -m venv .venv
 ```
+Activez-le dans PowerShell avec `.\.venv\Scripts\Activate.ps1`, ou dans l'invite de commandes avec `.\.venv\Scripts\activate.bat`.
 
-1-b) Procédez à l'activation de l'environnement
-
-2. Allez dans le dossier du projet
+Installez le package et ses dépendances de développement :
 ```bash
-(env)  >> cd [PROJECT_DIR]
-```
-3. Installez le package/bibliothèque :
-
-```bash
-(env)  >> pip install -e .[dev]
+python -m pip install -e ".[dev]"
 ```
 
-Après ces étapes, la plupart des dépendances devraient être installées et vous devriez pouvoir utiliser pypsa_canada
-
-### Utiliser Pixi
+<a id="installation-pixi-fr"></a>
+### Pixi
 Installez Pixi en suivant les [instructions officielles](https://pixi.prefix.dev/latest/installation/). Depuis la racine du projet, installez l'environnement de développement :
 
 ```bash
 pixi install -e dev
 ```
 
-Pixi installe le package local `pypsa_canada` en mode éditable. Vous pouvez aussi omettre `pixi install` ; `pixi run` crée ou met à jour l'environnement au besoin.
+Pixi installe le package local `pypsa_canada` en mode éditable. Vous pouvez aussi omettre `pixi install` ; `pixi run` créera ou synchronisera l'environnement au besoin.
 
-Pour exécuter l'exemple minimal avec Pixi, accédez au dossier `example`, puis lancez :
+Pour ouvrir un shell interactif avec l'environnement de développement activé, exécutez cette commande depuis la racine du projet :
+
+```bash
+pixi shell -e dev
+```
+
+Dans le shell Pixi, accédez au dossier `example`, puis exécutez la simulation :
+
+```bash
+cd example
+pypsa_canada run -f "config\minimal_model.yaml"
+```
+
+Vous pouvez aussi lancer directement l'exemple minimal sans ouvrir de shell :
 
 ```bash
 cd example
 pixi run -e dev pypsa_canada run -f "config\minimal_model.yaml"
 ```
 
+<a id="exemple-fr"></a>
 ## Exemple (À partir du dossier du projet)
 1. Allez dans le dossier du projet
 ```bash
@@ -302,25 +355,30 @@ pixi run -e dev pypsa_canada run -f "config\minimal_model.yaml"
 (env)  >> pypsa_canada run -f sconfig\minimal_model.yaml --unlock
 ```
 
+<a id="developpeurs-fr"></a>
 ## Développeurs
 Des hooks de pré-commit sont utilisés dans ce projet. Les hooks de pré-commit seront appliqués via un pipeline pendant la demande de tirage (PR). S'il échoue, la PR sera rejetée. Pour valider si vos modifications répondent au standard minimum, vous devez exécuter ce qui suit. S'il y a des problèmes, résolvez-les et validez à nouveau.
 ```bash
 (pypsa-canada_py312)  >> pre-commit run --all-files --hook-stage manual
 ```
 
+<a id="documentation-fr"></a>
 ## Documentation
 Pour construire la documentation :
 ```bash
 sphinx-build -b html docs/source docs/_build/html
 ```
 
+<a id="licence-fr"></a>
 ## Licence
 Licence MIT PyPSA : https://github.com/PyPSA/PyPSA/blob/master/LICENSE.txt
 Licence pypsa-eur : https://github.com/PyPSA/pypsa-eur/tree/master/LICENSES
 
+<a id="droits-fr"></a>
 ## Droits
 Copyright CanmetÉNERGIE - Varennes, RNCan, Gouvernement du Canada
 
+<a id="auteurs-fr"></a>
 ## Auteurs
 * Steven Wong (Ressources naturelles Canada - CanmetÉNERGIE)
 * Nathan De Matos (Ressources naturelles Canada - CanmetÉNERGIE)
@@ -330,14 +388,11 @@ Copyright CanmetÉNERGIE - Varennes, RNCan, Gouvernement du Canada
 * Adrien Prigent (Ressources naturelles Canada - CanmetÉNERGIE)
 * Serban Ivanescu (Ressources naturelles Canada - CanmetÉNERGIE)
 
+<a id="coordonnees-fr"></a>
 ## Coordonnées
-* Steven Wong (steven.wong@nrcan-rncan.gc.ca)
-* Nathan De Matos (nathan.dematos@nrcan-rncan.gc.ca)
-* Michel Bui (michel.bui@nrcan-rncan.gc.ca)
-* Sophie Pelland (sophie.pelland@nrcan-rncan.gc.ca)
-* Adrien Prigent (adrien.prigent@nrcan-rncan.gc.ca)
-* Serban Ivanescu (serban.ivanescu@nrcan-rncan.gc.ca)
+Pour toutes questions ou commentaires, vous pouvez nous rejoindre au courriel suivant: pypsa-canada@nrcan-rncan.gc.ca
 
+<a id="plus-dinformations-fr"></a>
 ## Pour plus d'informations
 
 [PyPSA-Canada-National](https://github.com/NRCan/pypsa-canada-national)

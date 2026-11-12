@@ -47,6 +47,9 @@ dependencies = [
     "igraph",
     "leidenalg",
     "rasterio",
+    "ipykernel",
+    "jupyter",
+    "notebook",
 ]
 
 [project.optional-dependencies]
@@ -70,7 +73,17 @@ pypsa_canada = { path = ".", editable = true }
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
-dev = { features = ["dev"], solve-group = "default" }
 docs = { features = ["docs"], solve-group = "default" }
 
+[tool.pixi.environments.dev]
+features = ["dev"]
+solve-group = "default"
+
+[tool.pixi.environments.dev.dependencies]
+ipykernel = ">=7.4.0,<8"
+notebook = ">=7.6.4,<8"
+
 [tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+ipykernel = ">=7.4.0,<8"
