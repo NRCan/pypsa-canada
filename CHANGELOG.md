@@ -1,3 +1,10 @@
+## 0.5.0 (2026-11-12)
+
+### Features
+
+- Add base_load technology parameter
+- Add base_load technology parameter
+
 ## 0.4.4 (2026-11-03)
 
 ### Bug Fixes
