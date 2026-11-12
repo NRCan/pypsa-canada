@@ -404,7 +404,8 @@ def main():
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.unsolved_dispatch_network)
     dispatch_options = config["solving"]["options"]["dispatch"]
-    network = apply_generator_preprocess_toggles(network, dispatch_options)
+    comp_config = config["components"]
+    network = apply_generator_preprocess_toggles(network, dispatch_options, comp_config)
 
     logging.info("Running Dispatch Solve")
 
@@ -438,7 +439,7 @@ def main():
                 mask = (
                     (network.generators.carrier == carrier)
                     & (~network.generators.committable)
-                    & (network.generators.p_min_pu > 0)
+                    & (network.generators.get("p_min_pu", 0) > 0)
                 )
                 network.generators.loc[mask, "lifetime"] = (
                     stop_year - network.generators.loc[mask, "build_year"]

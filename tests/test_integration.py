@@ -104,6 +104,7 @@ def test_minimal_planning_workflow_solves_and_exports(tmp_path, monkeypatch):
             },
             "custom_constraints": {"enabled": False},
         },
+        "components": {},
         "run": {"benchmark_results_file": str(tmp_path / "benchmarks.csv")},
     }
     snakemake = SimpleNamespace(
@@ -191,6 +192,7 @@ def test_minimal_dispatch_workflow_uses_manually_solved_planning_network(
             "custom_constraints": {"enabled": False},
         },
         "year_settings": {"investment_period": [2030]},
+        "components": {},
         "run": {"benchmark_results_file": str(tmp_path / "benchmarks.csv")},
     }
     create_dispatch_snakemake = SimpleNamespace(

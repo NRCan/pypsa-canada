@@ -116,7 +116,7 @@ def drop_inactive_assets(
 
 
 def apply_generator_preprocess_toggles(
-    network: "pypsa.Network", stage_config: dict
+    network: "pypsa.Network", stage_config: dict, comp_config: dict
 ) -> "pypsa.Network":
     """
     Apply generator preprocessing toggles and normalize power-limit time-series.
@@ -127,6 +127,8 @@ def apply_generator_preprocess_toggles(
         Network whose generator and time-series tables will be updated.
     stage_config : dict
         Stage configuration dictionary (planning or dispatch section).
+    comp_config : dict
+        Components configuration dictionary
 
     Returns
     -------
@@ -174,6 +176,33 @@ def apply_generator_preprocess_toggles(
                 existing_columns_to_drop,
             )
             network.generators = generators.drop(columns=existing_columns_to_drop)
+
+        # Add p_min_pu and put committable = False for base load technologies
+        if comp_config.get("base_load"):
+            components_dir = comp_config["components_dir"]
+            generator_data = pd.read_csv(
+                f"{components_dir}/generator_generic_data.csv", index_col=0
+            )
+            for province, technologies in comp_config["base_load"].items():
+                if "province" in network.buses.columns:
+                    bus_province_list = list(
+                        network.buses.index[network.buses.province == province]
+                    )
+                else:
+                    bus_province_list = list(
+                        network.buses.index[
+                            [province in x for x in network.buses.index]
+                        ]
+                    )
+
+                for model in technologies:
+                    mask = network.generators.bus.isin(bus_province_list) & (
+                        network.generators.model == model
+                    )
+                    network.generators.loc[mask, "p_min_pu"] = generator_data.loc[
+                        model, "p_min_pu"
+                    ]
+                    network.generators.loc[mask, "committable"] = False
 
     # Keep time-series power-limit tables numeric to avoid PyPSA consistency
     # checks failing on object-typed dense arrays.

@@ -59,6 +59,8 @@ components:
     "2040": 95.76
     "2045": 86.73
     "2050": 78.56
+  # base_load:
+  #   "SK": [coal_IGCC]
 
 snapshots:
   #method: "OPT_VRE_HYDRO", "KMEDOID_VRE_HYDRO", "CARPE_DIEM", "AVG_PEAK" or "ALL_DAYS"
