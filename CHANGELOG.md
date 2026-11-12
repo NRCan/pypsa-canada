@@ -1,3 +1,9 @@
+## 0.5.1 (2026-11-12)
+
+### Bug Fixes
+
+- [#2340] Add configurable carbon-tax exemptions
+
 ## 0.5.0 (2026-11-12)
 
 ### Features
