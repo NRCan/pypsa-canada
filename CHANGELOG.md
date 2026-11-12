@@ -1,3 +1,9 @@
+## 0.5.2 (2026-11-12)
+
+### Bug Fixes
+
+- [#2181] transmission map
+
 ## 0.5.1 (2026-11-12)
 
 ### Bug Fixes
