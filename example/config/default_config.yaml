@@ -151,8 +151,12 @@ components:
   #   "2040": 95.76
   #   "2045": 86.73
   #   "2050": 78.56
-  # base_load:
-  #   "SK": [coal_IGCC]
+  # carbon_tax_exemptions: #Exempt a specific province, carrier or technology from carbon tax
+  #   provinces: ["QC", "NY"]
+  #   carriers: ["coal"]
+  #   models: ["gas_CC"]
+  # base_load: #Force generators to operate (p_min_pu defined in generator_generic_data.csv)
+  #   "SK": ["coal_IGCC"]
 
 
 snapshots:

@@ -318,6 +318,10 @@ def create_marginal_costs(
     technology_costs: str = comp_config["technology_costs"]
     carbon_tax_dict: dict[str, int] = comp_config["carbon_tax"]
     obps: bool = comp_config["obps"]
+    carbon_tax_exemptions = comp_config.get("carbon_tax_exemptions", {}) or {}
+    exempt_provinces = set(carbon_tax_exemptions.get("provinces", []))
+    exempt_carriers = set(carbon_tax_exemptions.get("carriers", []))
+    exempt_models = set(carbon_tax_exemptions.get("models", []))
     marginal_costs_result = pd.DataFrame()
     carbon_cost_result = pd.DataFrame()
     fuel_cost_result = pd.DataFrame()
@@ -367,9 +371,6 @@ def create_marginal_costs(
 
         for gen_name in marginal_costs.columns:
             bus = network.generators.loc[gen_name].bus
-            # TODO: think of a better way to exclude areas from carbon tax
-            if bus == "ISONE":
-                continue
             carrier = network.generators.loc[gen_name].carrier
             carrier_data = network.carriers.loc[carrier]
             model = network.generators.loc[gen_name].model
@@ -402,7 +403,15 @@ def create_marginal_costs(
                     marginal_costs[gen_name] = fuel_costs.loc[model, tech_year]
                     gen_fuel_cost[gen_name] = fuel_costs.loc[model, tech_year]
 
-            # NOTE: carbon costs are added to all generators, even those with manually-defined costs
+            generator_province = network.buses.at[bus, "province"]
+            if (
+                generator_province in exempt_provinces
+                or carrier in exempt_carriers
+                or model in exempt_models
+            ):
+                tax_adjustment = 0.0
+
+            # NOTE: carbon costs are added to all non-exempt generators, even those with manually-defined costs
             marginal_costs[gen_name] += tax_adjustment
             gen_carbon_costs[gen_name] = tax_adjustment
 

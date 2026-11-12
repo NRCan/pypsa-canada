@@ -59,8 +59,12 @@ components:
     "2040": 95.76
     "2045": 86.73
     "2050": 78.56
-  # base_load:
-  #   "SK": [coal_IGCC]
+  # carbon_tax_exemptions: #Exempt a specific province, carrier or technology from carbon tax
+  #   provinces: ["NB"]
+  #   carriers: ["coal"]
+  #   models: ["gas_CC"]
+  # base_load: #Force generators to operate (p_min_pu defined in generator_generic_data.csv)
+  #   "QC": ["coal_IGCC"]
 
 snapshots:
   #method: "OPT_VRE_HYDRO", "KMEDOID_VRE_HYDRO", "CARPE_DIEM", "AVG_PEAK" or "ALL_DAYS"
@@ -124,23 +128,21 @@ planning:
 
   modify_components:
     links:
-      # 'OPT_QCNB_HVDC':
+    generators:
+      # 'BUS_1 Coal':
       #   p_nom_extendable: False
       #   efficiency: 0.55
-      #   p_nom: 3455
-
-      # 'EelRiver_QCa':
-      #   action: "Delete"
-    generators:
-      'BUS_1 Coal':
-        p_nom_extendable: False
-        efficiency: 0.55
-        p_nom: 3455
+      #   p_nom: 300
 
       # 'BUS_3 Gas 2':
       #   action: "Delete"
     storage_units:
     lines:
+      # 'OPT line_1_4':
+      #   s_nom_extendable: False
+
+      # 'line_3_4':
+      #   action: "Delete"
     stores:
 
 dispatch:
