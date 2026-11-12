@@ -411,7 +411,7 @@ def create_marginal_costs(
             ):
                 tax_adjustment = 0.0
 
-            # NOTE: carbon costs are added to all generators, even those with manually-defined costs
+            # NOTE: carbon costs are added to all non-exempt generators, even those with manually-defined costs
             marginal_costs[gen_name] += tax_adjustment
             gen_carbon_costs[gen_name] = tax_adjustment
 
