@@ -1,3 +1,10 @@
+## 0.5.3 (2026-11-12)
+
+### Bug Fixes
+
+- Updated dependencies to add jupyter notebook ipykernel
+- Updated dependencies to add jupyter notebook ipykernel
+
 ## 0.5.2 (2026-11-12)
 
 ### Bug Fixes
