@@ -314,7 +314,7 @@ def main():
                 mask = (
                     (network.generators.carrier == carrier)
                     & (~network.generators.committable)
-                    & (network.generators.p_min_pu > 0)
+                    & (network.generators.get("p_min_pu", 0) > 0)
                 )
                 network.generators.loc[mask, "lifetime"] = (
                     stop_year - network.generators.loc[mask, "build_year"]
