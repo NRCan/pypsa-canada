@@ -143,6 +143,24 @@ def apply_generator_preprocess_toggles(
         enable_p_min_pu = stage_config["enable_p_min_pu"]
         enable_ramp_rates = stage_config["enable_ramp_rates"]
 
+        base_load_mask = pd.Series(False, index=generators.index)
+        if comp_config.get("base_load"):
+            for province, technologies in comp_config["base_load"].items():
+                if "province" in network.buses.columns:
+                    bus_province_list = list(
+                        network.buses.index[network.buses.province == province]
+                    )
+                else:
+                    bus_province_list = list(
+                        network.buses.index[
+                            [province in x for x in network.buses.index]
+                        ]
+                    )
+                for model in technologies:
+                    base_load_mask |= generators.bus.isin(bus_province_list) & (
+                        generators.model == model
+                    )
+
         columns_to_drop: list[str] = []
 
         if not enable_committable:
@@ -160,9 +178,16 @@ def apply_generator_preprocess_toggles(
                     "ramp_limit_shut_down",
                 ]
             )
+        else:
+            # Force committable = False just for base load technologies
+            generators.loc[base_load_mask, "committable"] = False
 
         if not enable_p_min_pu:
-            columns_to_drop.append("p_min_pu")
+            # Keep p_min_pu for base load technologies and put p_min_pu = 0 for others
+            if comp_config.get("base_load"):
+                generators.loc[~base_load_mask, "p_min_pu"] = 0.0
+            else:
+                columns_to_drop.append("p_min_pu")
 
         if not enable_ramp_rates:
             columns_to_drop.extend(["ramp_limit_up", "ramp_limit_down"])
@@ -176,33 +201,6 @@ def apply_generator_preprocess_toggles(
                 existing_columns_to_drop,
             )
             network.generators = generators.drop(columns=existing_columns_to_drop)
-
-        # Add p_min_pu and put committable = False for base load technologies
-        if comp_config.get("base_load"):
-            components_dir = comp_config["components_dir"]
-            generator_data = pd.read_csv(
-                f"{components_dir}/generator_generic_data.csv", index_col=0
-            )
-            for province, technologies in comp_config["base_load"].items():
-                if "province" in network.buses.columns:
-                    bus_province_list = list(
-                        network.buses.index[network.buses.province == province]
-                    )
-                else:
-                    bus_province_list = list(
-                        network.buses.index[
-                            [province in x for x in network.buses.index]
-                        ]
-                    )
-
-                for model in technologies:
-                    mask = network.generators.bus.isin(bus_province_list) & (
-                        network.generators.model == model
-                    )
-                    network.generators.loc[mask, "p_min_pu"] = generator_data.loc[
-                        model, "p_min_pu"
-                    ]
-                    network.generators.loc[mask, "committable"] = False
 
     # Keep time-series power-limit tables numeric to avoid PyPSA consistency
     # checks failing on object-typed dense arrays.
