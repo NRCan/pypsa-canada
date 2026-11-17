@@ -1,3 +1,11 @@
+## 0.5.4 (2026-11-17)
+
+### Bug Fixes
+
+- Fix base load technology preprocess and add SMR p_min_pu value
+- Fix base load technology preprocess because p_min_pu column was filled with n/a values instead of 0 which was creating solving error
+- Put SMR generator p_min_pu value at 0.2 instead of 0 according to online research
+
 ## 0.5.3 (2026-11-12)
 
 ### Bug Fixes
