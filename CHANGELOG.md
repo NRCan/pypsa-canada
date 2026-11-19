@@ -1,3 +1,10 @@
+## 0.5.5 (2026-11-19)
+
+### Bug Fixes
+
+- Removed add_extra_loads and reordered rep_days rule
+- Removed add_extra_loads and changed order of rep days so it won't affect the dispatch model
+
 ## 0.5.4 (2026-11-17)
 
 ### Bug Fixes
