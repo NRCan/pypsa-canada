@@ -6,8 +6,6 @@ def get_log_inputs(wildcards=None):
         *rules.load_network.log,
         *rules.add_components.log,
         *rules.add_snapshots.log,
-        *rules.add_representative_days.log,
-        *rules.add_extra_loads.log,
         *rules.modify_components.log,
     ]
     if config["load"]["load_mode"].upper() != "DEFAULT":
@@ -15,6 +13,7 @@ def get_log_inputs(wildcards=None):
 
     if "planning" in WORKFLOW_STAGES:
         logs += [
+            *rules.add_representative_days.log,
             *rules.solve_planning.log,
             *rules.post_process_planning.log,
         ]

@@ -2,7 +2,7 @@
 # Next rule: post_process_planning
 rule solve_planning:
     input:
-        unsolved_network=f"{RUN_NET_DIR}/base_network.nc"
+        unsolved_network=f"{RUN_NET_DIR}/add_representative_days.nc"
     output:
         solved_network_csv=directory(f"{RUN_OUTPUT_DIR}/planning_solved_network")
     log:

@@ -1,8 +1,8 @@
-# Previous rule: add_extra_loads
+# Previous rule: add_snapshots
 # Next rule: solve_planning
 rule modify_components:
     input:
-        input_data=f"{RUN_NET_DIR}/add_extra_loads.nc"
+        input_data=f"{RUN_NET_DIR}/add_snapshots.nc"
     output:
         unsolved_network=f"{RUN_NET_DIR}/base_network.nc",
         unsolved_network_csv=directory(f"{RUN_NET_DIR}/base_network_csv")

@@ -1,5 +1,5 @@
 # Previous rules: add_loads, add_components
-# Next rule: add_representative_days
+# Next rule: modify_components
 rule add_snapshots:
     input:
         input_data=f"{RUN_NET_DIR}/add_components.nc",
