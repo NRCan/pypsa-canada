@@ -73,13 +73,17 @@ def add_all_dispatch_constraints(network: pypsa.Network, snapshots: pd.DatetimeI
     snapshots : pd.Datetime.index
         The pypsa network snapshots for which the constraint will be applied
     """
-    constraint_dict = config["dispatch"]["constraints"]
-    stop_production_cfg = constraint_dict["add_stop_production"]
-    # spilling_variable_cfg = constraint_dict["add_spilling_variable"]
-    bidirectional_link_constraint_cfg = constraint_dict["add_bidirection_link"]
-    prevent_spill_if_not_fully_charged_cfg = constraint_dict[
-        "add_prevent_spill_if_not_fully_charged"
-    ]
+    constraint_dict_dispatch = config["dispatch"].get("constraints", {})
+    constraint_dict = config.get("constraints", {})
+
+    stop_production_cfg = constraint_dict.get("add_stop_production", {})
+    bidirectional_link_constraint_cfg = constraint_dict_dispatch.get(
+        "add_bidirection_link", {}
+    )
+    prevent_spill_if_not_fully_charged_cfg = constraint_dict_dispatch.get(
+        "add_prevent_spill_if_not_fully_charged", {}
+    )
+
     # The snapshots must only contain one unique year
     period_list = snapshots.year.unique()
     if len(period_list) == 1:
@@ -90,8 +94,7 @@ def add_all_dispatch_constraints(network: pypsa.Network, snapshots: pd.DatetimeI
         )
 
     # Stop production constraint
-    if stop_production_cfg["enable"]:
-        logging.debug(f"Stop_production_dictionary = {stop_production_cfg}")
+    if "dispatch" in stop_production_cfg.get("enable", []):
         for stop_year in stop_production_cfg["years"]:
             if period >= stop_year:
                 logging.info(
@@ -101,19 +104,17 @@ def add_all_dispatch_constraints(network: pypsa.Network, snapshots: pd.DatetimeI
                     network, snapshots, stop_production_cfg["years"][stop_year]
                 )
 
-    # Add binary spilling variable (1: spilling, 0: not spilling) to Linopy model
-    # if spilling_variable_cfg["enable"]:
-    #     add_spilling_variable(network, snapshots)
-
     # Bidirectional link constraint
-    if bidirectional_link_constraint_cfg["enable"]:
+    if bidirectional_link_constraint_cfg.get("enable"):
+        logging.info("Adding bidirectional link constraints")
         add_bidirection_link_constraint(
             network,
             bidirectional_link_constraint_cfg,
         )
 
     # Prevent spill if not fully charged constraint
-    if prevent_spill_if_not_fully_charged_cfg["enable"]:
+    if prevent_spill_if_not_fully_charged_cfg.get("enable"):
+        logging.info("Adding prevent spill if not fully charged constraint")
         maximum_soc_storage_value = prevent_spill_if_not_fully_charged_cfg[
             "maximum_soc_storage_value"
         ]
@@ -144,8 +145,8 @@ def optimize_uc_period(
     )
 
     # --- CER constraint initialisation (state shared across UC periods) ---
-    constraint_dict = config.get("dispatch", {}).get("constraints", {})
-    CER_constraint_cfg = constraint_dict["CER_constraint"]
+    CER_constraint_cfg = config.get("constraints", {}).get("CER_constraint", {})
+    CER_dispatch_cfg = CER_constraint_cfg.get("dispatch_params", {})
     logging.info(f"CER constraint config: {CER_constraint_cfg}")
     CER_generators = pd.DataFrame()
     CER_group_list = []
@@ -157,9 +158,9 @@ def optimize_uc_period(
 
     logging.info(f"Solver options for {solver_name}: {solver_options}")
 
-    if CER_constraint_cfg["enable"] and period_year >= CER_constraint_cfg.get(
-        "year", 9999
-    ):
+    if "dispatch" in CER_constraint_cfg.get(
+        "enable", []
+    ) and period_year >= CER_constraint_cfg.get("start_year", 9999):
         CER_generators, CER_group_budget, CER_group_list = CER_generator_grouping(
             network, CER_constraint_cfg, period_year, "dispatch"
         )
@@ -169,7 +170,7 @@ def optimize_uc_period(
                 f"CER constraint active for {period_year}: "
                 f"{len(CER_generators)} generators, groups={list(CER_group_list)}"
             )
-            if CER_constraint_cfg.get("forecast_hours") == "load":
+            if CER_dispatch_cfg.get("forecast_hours") == "load":
                 CER_data = distribute_CER_hours_dispatch(network, period_year)
                 CER_total_hours = (
                     CER_data[CER_data["above_avg_load"] > 0].count().values[0]
@@ -257,7 +258,7 @@ def optimize_uc_period(
             _cer_snapshots = snapshots if is_last_uc else snapshots[:-overlap]
 
             # Calculate CER hours fraction for this UC period
-            forecast_mode = CER_constraint_cfg["forecast_hours"]
+            forecast_mode = CER_dispatch_cfg.get("forecast_hours")
             if forecast_mode == "load":
                 CER_hours = (
                     CER_data[CER_data["above_avg_load"] > 0.1]
@@ -403,9 +404,7 @@ def main():
 
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.unsolved_dispatch_network)
-    dispatch_options = config["solving"]["options"]["dispatch"]
     comp_config = config["components"]
-    network = apply_generator_preprocess_toggles(network, dispatch_options, comp_config)
 
     logging.info("Running Dispatch Solve")
 
@@ -416,10 +415,17 @@ def main():
 
     solving_settings = config["solving"]
 
-    options_settings = solving_settings["options"]["dispatch"]
-    load_shedding = options_settings["load_shedding"]
-    linearized_unit_commitment = options_settings["linearized_unit_commitment"]
-    include_objective_constant = options_settings["include_objective_constant"]
+    options_settings = solving_settings["options"]
+    load_shedding = "dispatch" in options_settings.get("load_shedding", [])
+    linearized_unit_commitment = "dispatch" in options_settings.get(
+        "linearized_unit_commitment", []
+    )
+    include_objective_constant = "dispatch" in options_settings.get(
+        "include_objective_constant", []
+    )
+    network = apply_generator_preprocess_toggles(
+        network, options_settings, "dispatch", comp_config
+    )
 
     solver_settings = solving_settings["solver"]
     solver_name = solver_settings["name"]
@@ -432,7 +438,7 @@ def main():
         investment_periods = dispatch_settings["investment_period"]
 
     # Retire units that are forced to run if stop production constraint applies to them
-    stop_production_cfg = dispatch_settings["constraints"]["add_stop_production"]
+    stop_production_cfg = config.get("constraints", {}).get("add_stop_production", {})
     if stop_production_cfg["enable"]:
         for stop_year in stop_production_cfg["years"]:
             for carrier in stop_production_cfg["years"][stop_year]:

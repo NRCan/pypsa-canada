@@ -10,32 +10,17 @@ run:
   workflow_stages: ["planning", "dispatch"]  # "planning", "dispatch", or "flexibility(TBI)"
 
 year_settings:
-  ref_year: 2021
-  start_year: 2021
-  forecast_year: 2050
   investment_period: [2021, 2025, 2030, 2035, 2040, 2045, 2050]
   discount_rate: 0.05
 
 solving:
-  options:
-    planning:
-      include_objective_constant : true
-      enable_committable: true
-      enable_p_min_pu: true
-      enable_ramp_rates: true
-      load_shedding: false
-      linearized_unit_commitment: false
-      keep_files: false
-      store_model: false
-    dispatch:
-      include_objective_constant : true
-      enable_committable: true
-      enable_p_min_pu: true
-      enable_ramp_rates: true
-      load_shedding: false
-      linearized_unit_commitment: false
-      keep_files: false
-      store_model: false
+  options: # Enable run options for planning and dispatch
+    include_objective_constant : ['planning', 'dispatch']
+    load_shedding: []
+    enable_committable: ['planning', 'dispatch']
+    enable_p_min_pu: ['planning', 'dispatch']
+    enable_ramp_rates: ['planning', 'dispatch']
+    linearized_unit_commitment: []
   solver:
     name: &solver_name highs
     options: highs-default
@@ -178,41 +163,43 @@ snapshots:
   # year: None
   aggregate: false
 
-extra_loads:
-  is_used: false
-  extra_loads: data/base
-  path: data/base
+# Constraints common across models
+constraints:
+  # Clean electricity regulations
+  CER_constraint:
+    enable: ['planning', 'dispatch']
+    aggregation: 'provincial' # aggregation levels: provincial, group, individual
+    start_year: 2035 # year that constraint becomes active
+    carriers: ['oil', 'gas', 'diesel'] # carriers to include
+    # values for hourly mode is number of hours, values for emissions mode is emission intensity (in tC02eq/GWh)
+    values: {
+      limit: {2035: 65, 2050: 0},
+      offset: {2035: 35, 2050: 42}
+      }
+    min_cap: 25 # minimum capacity, above which the CER applies
+    exemptions: [] # Provinces that are exempt from the CER regulation
+    dispatch_params:
+      # forecast hours based on net load ('load'), uniformly ('uniform'), or assign max to first UC period and carry leftover ('carryover')
+      forecast_hours: 'carryover'
+      mode: 'emissions' # modes = hourly, emissions
 
+  # Forces 0 generation for specific carrier types after certain year
+  add_stop_production:
+    enable: ['planning', 'dispatch']
+    years:
+      2030: ["coal"]
+
+# Planning parameters
 planning:
   constraints:
     add_bidirection_link:
       enable: false
-    add_stop_production:
+    emission_constraint:
       enable: false
-      years:
-        # 2030: ["coal"]
-    CER_constraint:
-      enable: false
-      # aggregation levels: provincial, group, individual
-      aggregation: 'provincial'
-      # year that constraint becomes active
-      year: 2035
-      # carriers to include
-      carriers: ['oil', 'gas', 'diesel']
-      # values for emissions limit and offset is emission intensity (in tC02eq/GWh)
-      values: {
-        limit: {2035: 65, 2050: 0},
-        offset: {2035: 35, 2050: 42}
-        }
-      # minimum capacity
-      min_cap: 25
-      # provinces to exclude from CER
-      exemptions: []
-    NZ_constraint:
-      enable: false
+      # 2050: 0
     planning_reserve_margin:
       enable: false
-      capacity_values_placeholder_filepath: "data/constraints/capacity_values_placeholder.csv"
+      capacity_values_filepath: "data/constraints/capacity_values_placeholder.csv"
       # provinces_list:
       #   "PE": 1.2
       #   "NB": 1.2
@@ -252,7 +239,7 @@ planning:
     lines:
     stores:
 
-
+# Dispatch parameters
 dispatch:
   #Snapshots related
   horizon: 336 #336 #2 weeks in hours
@@ -262,10 +249,6 @@ dispatch:
   planning_solved_network: '' # Path to solve planning model to use for dispatch only stage
 
   constraints:
-    add_stop_production:
-      enable: false
-      years:
-        # 2030: ["coal"]
     add_spilling_variable:
       enable: false
     add_bidirection_link:
@@ -273,27 +256,6 @@ dispatch:
     add_prevent_spill_if_not_fully_charged:
       enable: false
     #   maximum_soc_storage_value: 2000
-    CER_constraint:
-      enable: false
-      # modes = hourly, emissions
-      mode: 'emissions'
-      # aggregation levels: provincial, group, individual
-      aggregation: 'provincial'
-      # year that constraint becomes active
-      year: 2035
-      # carriers to include
-      carriers: ['oil', 'gas', 'diesel']
-      # values for hourly mode is number of hours, values for emissions mode is emission intensity (in tC02eq/GWh)
-      values: {
-        limit: {2035: 65, 2050: 0},
-        offset: {2035: 35, 2050: 42}
-        }
-      # minimum capacity
-      min_cap: 25
-      # forecast hours based on net load ('load'), uniformly ('uniform'), or assign max to first UC period and carry leftover ('carryover')
-      forecast_hours: 'carryover'
-      # provinces to exclude from CER
-      exemptions: []
 
   custom_constraints:
     enabled: false

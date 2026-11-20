@@ -54,9 +54,9 @@ config = snakemake.config if snakemake is not None else None
 
 
 def disable_committable_for_OPT(network: pypsa.Network):
-    planning_options = config["solving"]["options"]["planning"]
-    enable_committable = planning_options["enable_committable"]
-    enable_p_min_pu = planning_options["enable_p_min_pu"]
+    planning_options = config["solving"]["options"]
+    enable_committable = "planning" in planning_options["enable_committable"]
+    enable_p_min_pu = "planning" in planning_options["enable_p_min_pu"]
 
     if enable_committable and "committable" in network.generators.columns:
         network.generators.loc[
@@ -83,17 +83,23 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
         The pypsa network snapshots for which the constraint will be applied
     """
 
-    constraint_dict = config["planning"]["constraints"]
-    bidirectional_link_constraint_cfg = constraint_dict["add_bidirection_link"]
-    stop_production_cfg = constraint_dict["add_stop_production"]
-    CER_constraint_cfg = constraint_dict["CER_constraint"]
-    NZ_constraint_cfg = constraint_dict["NZ_constraint"]
-    planning_reserve_margin_cfg = constraint_dict["planning_reserve_margin"]
-    component_capacity_expansion_cfg = constraint_dict[
-        "component_capacity_expansion_constraint"
-    ]
+    constraint_dict_planning = config["planning"].get("constraints", {})
+    constraint_dict = config.get("constraints", {})
 
-    custom_constraints_cfg = config["planning"]["custom_constraints"]
+    bidirectional_link_constraint_cfg = constraint_dict_planning.get(
+        "add_bidirection_link", {}
+    )
+    stop_production_cfg = constraint_dict.get("add_stop_production", {})
+    CER_constraint_cfg = constraint_dict.get("CER_constraint", {})
+    emission_constraint_cfg = constraint_dict_planning.get("emission_constraint", {})
+    planning_reserve_margin_cfg = constraint_dict_planning.get(
+        "planning_reserve_margin", {}
+    )
+    component_capacity_expansion_cfg = constraint_dict_planning.get(
+        "component_capacity_expansion_constraint", {}
+    )
+
+    custom_constraints_cfg = config["planning"].get("custom_constraints", {})
 
     # The snapshots must only contain one unique year
     period_list = network.snapshots.get_level_values(0).unique()
@@ -110,7 +116,7 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
         add_bidirection_link_constraint_OPT(network, OPT_transmission)
 
     # Add bidirectional link constraint (applies to all periods)
-    if bidirectional_link_constraint_cfg["enable"]:
+    if bidirectional_link_constraint_cfg.get("enable"):
         logging.info(
             f"Adding bidirectional link constraint: {bidirectional_link_constraint_cfg}"
         )
@@ -123,11 +129,8 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
         period_snapshots = network.snapshots[
             network.snapshots.get_level_values(0) == period
         ]
-        logging.info(f"Processing constraints for period {period}")
-        logging.info(f"Network multi-index = {period_snapshots}")
-
         # Stop production constraint
-        if stop_production_cfg["enable"]:
+        if "planning" in stop_production_cfg.get("enable", []):
             for stop_year in stop_production_cfg["years"]:
                 if period >= stop_year:
                     logging.info(
@@ -140,19 +143,13 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
                     )
 
         # CER constraint for planning
-        if CER_constraint_cfg["enable"]:
-            if period >= CER_constraint_cfg["year"]:
+        if "planning" in CER_constraint_cfg.get("enable", []):
+            if period >= CER_constraint_cfg["start_year"]:
                 logging.info(f"CER constraint active for year {period}")
                 CER_generators, _, CER_group_list = CER_generator_grouping(
                     network, CER_constraint_cfg, period, "planning"
                 )
-                logging.info(
-                    f"CER generators for period {period}: {CER_generators} - {CER_group_list}"
-                )
                 if not CER_generators.empty:
-                    logging.info(
-                        f"Adding CER constraint for {len(CER_generators)} generators"
-                    )
                     add_CER_constraint_planning(
                         network,
                         period_snapshots,
@@ -163,8 +160,8 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
                     )
 
         # Net-zero/Emissions constraint
-        if NZ_constraint_cfg["enable"]:
-            emissions_limit = NZ_constraint_cfg[period]
+        if emission_constraint_cfg.get("enable"):
+            emissions_limit = emission_constraint_cfg[period]
             logging.info(
                 f"Adding emissions constraint for {period}: {emissions_limit} MtCO2eq"
             )
@@ -173,10 +170,10 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
             )
 
         # Planning reserve margin constraint
-        if planning_reserve_margin_cfg["enable"]:
+        if planning_reserve_margin_cfg.get("enable"):
             prov_list = planning_reserve_margin_cfg.get("provinces_list", {})
             capacity_values_filepath = planning_reserve_margin_cfg.get(
-                "capacity_values_placeholder_filepath", None
+                "capacity_values_filepath", None
             )
             for prov, margin in prov_list.items():
                 logging.info(
@@ -191,7 +188,7 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
                 )
 
     # Custom capacity expansion constraints (applies to all periods)
-    if component_capacity_expansion_cfg["enable"]:
+    if component_capacity_expansion_cfg.get("enable"):
         logging.info(
             f"Adding custom capacity expansion constraints: {component_capacity_expansion_cfg}"
         )
@@ -200,7 +197,8 @@ def add_all_planning_constraints(network: pypsa.Network, snapshots: "pd.Datetime
         )
 
     # Custom model planning constraints (applies to all periods)
-    if custom_constraints_cfg["enabled"]:
+    if custom_constraints_cfg.get("enabled"):
+        logging.info(f"Adding custom constraints: {custom_constraints_cfg}")
         for period in period_list:
             period_snapshots = network.snapshots[
                 network.snapshots.get_level_values(0) == period
@@ -224,9 +222,7 @@ def main():
 
     benchmark_timer, benchmark_memory = start_benchmark_tracker()
     network = pypsa.Network(snakemake.input.unsolved_network)
-    planning_options = config["solving"]["options"]["planning"]
     comp_config = config["components"]
-    network = apply_generator_preprocess_toggles(network, planning_options, comp_config)
     disable_committable_for_OPT(network)
 
     # # TODO Temporary fix for standing_loss dim_0 issue - should be fixed in the network loading step instead
@@ -235,10 +231,17 @@ def main():
     # )
     solving_settings = config["solving"]
 
-    options_settings = solving_settings["options"]["planning"]
-    load_shedding = options_settings["load_shedding"]
-    linearized_unit_commitment = options_settings["linearized_unit_commitment"]
-    include_objective_constant = options_settings["include_objective_constant"]
+    options_settings = solving_settings["options"]
+    load_shedding = "planning" in options_settings.get("load_shedding", [])
+    linearized_unit_commitment = "planning" in options_settings.get(
+        "linearized_unit_commitment", []
+    )
+    include_objective_constant = "planning" in options_settings.get(
+        "include_objective_constant", []
+    )
+    network = apply_generator_preprocess_toggles(
+        network, options_settings, "planning", comp_config
+    )
 
     solver_settings = solving_settings["solver"]
     solver_name = solver_settings["name"]
@@ -307,7 +310,7 @@ def main():
 
     # Retire must-run, non-committable units at the stop year so they cannot
     # conflict with the zero-production constraint for their carrier.
-    stop_production_cfg = config["planning"]["constraints"]["add_stop_production"]
+    stop_production_cfg = config.get("constraints", {}).get("add_stop_production", {})
     if stop_production_cfg["enable"]:
         for stop_year in stop_production_cfg["years"]:
             for carrier in stop_production_cfg["years"][stop_year]:

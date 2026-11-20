@@ -49,7 +49,7 @@ def create_yearly_snapshots(network: Network, snapshot_config: dict) -> Network:
 
     folder_name: str = snapshot_config["folder_name"]
     years: list[int] = config["year_settings"]["investment_period"]
-    ref_year: int = config["year_settings"]["ref_year"]
+    ref_year: int = years[0]
     snapshot_new_df: pd.DatetimeIndex = pd.DatetimeIndex([])
     period_df: pd.DatetimeIndex = pd.DatetimeIndex([])
 

@@ -715,7 +715,8 @@ def test_cer_dispatch_forecast_modes(
     """Test that CER dispatch works with different forecast_hours modes"""
     network = cer_dispatch_network
     config = cer_dispatch_config.copy()
-    config["forecast_hours"] = forecast_mode
+    config["dispatch_params"] = config["dispatch_params"].copy()
+    config["dispatch_params"]["forecast_hours"] = forecast_mode
     year = 2030
 
     network.generators["p_nom_opt"] = network.generators["p_nom"]
@@ -769,8 +770,9 @@ def test_cer_dispatch_emissions_validated(cer_dispatch_network, cer_dispatch_con
     """
     network = cer_dispatch_network
     config = cer_dispatch_config.copy()
-    config["mode"] = "emissions"
-    config["forecast_hours"] = "carryover"
+    config["dispatch_params"] = config["dispatch_params"].copy()
+    config["dispatch_params"]["mode"] = "emissions"
+    config["dispatch_params"]["forecast_hours"] = "carryover"
     year = 2030
 
     network.generators["p_nom_opt"] = network.generators["p_nom"]

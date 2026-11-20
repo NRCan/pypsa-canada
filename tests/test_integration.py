@@ -78,23 +78,23 @@ def test_minimal_planning_workflow_solves_and_exports(tmp_path, monkeypatch):
     config = {
         "solving": {
             "options": {
-                "planning": {
-                    "enable_committable": False,
-                    "enable_p_min_pu": False,
-                    "enable_ramp_rates": False,
-                    "load_shedding": False,
-                    "linearized_unit_commitment": False,
-                    "include_objective_constant": False,
-                }
+                "enable_committable": [],
+                "enable_p_min_pu": [],
+                "enable_ramp_rates": [],
+                "load_shedding": [],
+                "linearized_unit_commitment": [],
+                "include_objective_constant": [],
             },
             "solver": {"name": "highs", "options": "highs-fast"},
             "solver_options": {"highs-fast": {}},
         },
+        "constraints": {
+            "add_stop_production": {"enable": [], "years": {}},
+            "CER_constraint": {"enable": [], "start_year": 9999},
+        },
         "planning": {
             "constraints": {
                 "add_bidirection_link": {"enable": False},
-                "add_stop_production": {"enable": False, "years": {}},
-                "CER_constraint": {"enable": False, "year": 9999},
                 "NZ_constraint": {"enable": False},
                 "planning_reserve_margin": {
                     "enable": False,
@@ -166,17 +166,19 @@ def test_minimal_dispatch_workflow_uses_manually_solved_planning_network(
     config = {
         "solving": {
             "options": {
-                "dispatch": {
-                    "enable_committable": False,
-                    "enable_p_min_pu": False,
-                    "enable_ramp_rates": False,
-                    "load_shedding": False,
-                    "linearized_unit_commitment": False,
-                    "include_objective_constant": False,
-                }
+                "enable_committable": [],
+                "enable_p_min_pu": [],
+                "enable_ramp_rates": [],
+                "load_shedding": [],
+                "linearized_unit_commitment": [],
+                "include_objective_constant": [],
             },
             "solver": {"name": "highs", "options": "highs-fast"},
             "solver_options": {"highs-fast": {}},
+        },
+        "constraints": {
+            "add_stop_production": {"enable": [], "years": {}},
+            "CER_constraint": {"enable": [], "start_year": 9999},
         },
         "dispatch": {
             "horizon": 2,
@@ -184,10 +186,8 @@ def test_minimal_dispatch_workflow_uses_manually_solved_planning_network(
             "investment_period": [2030],
             "planning_solved_network": str(planning_solved_path),
             "constraints": {
-                "add_stop_production": {"enable": False, "years": {}},
                 "add_bidirection_link": {"enable": False},
                 "add_prevent_spill_if_not_fully_charged": {"enable": False},
-                "CER_constraint": {"enable": False, "year": 9999},
             },
             "custom_constraints": {"enabled": False},
         },

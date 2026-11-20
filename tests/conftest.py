@@ -188,6 +188,7 @@ def cer_config():
     """Default CER constraint configuration"""
     return {
         "year": 2035,
+        "start_year": 2035,
         "carriers": ["gas_CC"],
         "aggregation": "provincial",
         "values": {"limit": {2035: 30}, "offset": {2035: 0}},
@@ -207,10 +208,13 @@ def cer_dispatch_config():
     """
     return {
         "year": 2030,
+        "start_year": 2030,
         "carriers": ["gas_CC"],
         "aggregation": "provincial",
-        "mode": "emissions",
-        "forecast_hours": "carryover",
+        "dispatch_params": {
+            "mode": "emissions",
+            "forecast_hours": "carryover",
+        },
         "values": {"limit": {2030: 1.2}, "offset": {2030: 0.0}},
         "min_cap": 25,
     }

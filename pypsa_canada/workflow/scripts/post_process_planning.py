@@ -355,7 +355,7 @@ def calc_reserve_capacity(n, comp, years, templates, agg=True):
         config.get("planning", {})
         .get("constraints", {})
         .get("planning_reserve_margin", {})
-        .get("capacity_values_placeholder_filepath", None)
+        .get("capacity_values_filepath", None)
     )
 
     if capacity_values_path and os.path.exists(capacity_values_path):

@@ -47,9 +47,11 @@ def main():
     post_process_folder: str = snakemake.input[f"post_process_{stage}"]
     out_html: str = snakemake.output[f"{stage}_corridor_map"]
     out_csv: str = snakemake.output[f"{stage}_corridor_summary"]
+    years: list[int] = config["year_settings"]["investment_period"]
+    ref_year: int = years[0]
 
     if stage == "dispatch":
-        res_folder = os.path.join(res_folder, str(config["year_settings"]["ref_year"]))
+        res_folder = os.path.join(res_folder, str(ref_year))
 
     # Load bus locations, bus-to-province mapping, and corridor definitions
     bus_ll, bus_to_province, corridors = load_context(res_folder)

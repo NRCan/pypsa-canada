@@ -71,19 +71,19 @@ def add_CER_constraint_dispatch(
 
         leftover_budget = leftover[group] if leftover else 0
         # Ensure budget is never negative
-        leftover_budget = max(leftover_budget, 0)
+        leftover_budget = round(max(leftover_budget, 0))
 
         gens = CER_gens[CER_gens.group == group]
         budget_snapshot[group] = 0
         budget_snapshot_with_leftover[group] = 0
 
         for gen, data in gens.iterrows():
-            match constraint["mode"]:
+            match constraint["dispatch_params"]["mode"]:
                 case "hourly":
                     unit = "hours"
                     lhs += (m["Generator-status"].loc[snapshots, gen]).sum()
 
-                    if constraint["forecast_hours"] == "carryover":
+                    if constraint["dispatch_params"]["forecast_hours"] == "carryover":
                         # If carryover, 100% of the budget is available for the first period
                         if not uc_period:
                             budget_snapshot[group] += round(limit + offset)
@@ -104,23 +104,24 @@ def add_CER_constraint_dispatch(
                         / data.efficiency
                     )
 
-                    if constraint["forecast_hours"] == "carryover":
+                    if constraint["dispatch_params"]["forecast_hours"] == "carryover":
                         # If carryover, 100% of the budget is available for the first period
                         if not uc_period:
-                            budget_snapshot[group] += (
+                            budget_snapshot[group] += round(
                                 (limit + offset) * data.p_nom_opt * 8760 / 1000
                             )
                     else:
                         if not uc_period:
                             # 10% of the budget for the first period
-                            budget_snapshot[group] += (
+                            budget_snapshot[group] += round(
                                 (limit + offset) * 0.1 * data.p_nom_opt * 8760 / 1000
                             )
                         else:
                             # Use the period value to scale the budget
-                            budget_snapshot[group] += (
-                                (limit + offset) * data.p_nom_opt * 8760 / 1000
-                            ) * period_value
+                            budget_snapshot[group] += round(
+                                ((limit + offset) * data.p_nom_opt * 8760 / 1000)
+                                * period_value
+                            )
 
         # Add leftover budget to the budget snapshot
         budget_snapshot_with_leftover[group] = budget_snapshot[group] + leftover_budget

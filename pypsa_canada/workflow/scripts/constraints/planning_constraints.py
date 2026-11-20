@@ -91,16 +91,16 @@ def add_CER_constraint_planning(network, snapshots, constraint, groups, CER_gens
 
         lhs = emissions_extendable + emissions_existing - emission_cap_extendable
         rhs = emission_cap_existing
-        print(f"{group} generators included in CER constraint in {year}:", gens.index)
+        logging.info(
+            f"{group} generators included in CER constraint in {year}: {gens.index}"
+        )
+        logging.info(f"{group} has a budget of {rhs} for existing generators")
         m.add_constraints(
             lhs,
             "<=",
             rhs,
             name=f"GlobalConstraint-CER_constraint_{group}_{unit}_{year}_dynamic",
         )
-        # print(f"CER_constraint_{group}_{unit}_{year}")
-        # print(lhs)
-        # print(rhs)
     return 0
 
 
@@ -177,7 +177,6 @@ def add_planning_reserve_margin(
 
     capacity_value_by_carrier = pd.read_csv(data_filepath, index_col="Carrier")
     capacity_value_by_carrier.columns = capacity_value_by_carrier.columns.astype(int)
-    print(f"Capacity value by carrier = {capacity_value_by_carrier}")
     # Initialize both sides of constraint
     lhs = []
     rhs = reserve_margin
@@ -241,7 +240,6 @@ def add_planning_reserve_margin(
         df = df[
             (df.build_year + df.lifetime > int(year)) & (df.build_year <= int(year))
         ]
-        print(f"DF {component} = {df}")
         if df.empty:
             continue
 
@@ -249,8 +247,6 @@ def add_planning_reserve_margin(
 
         # Compute right-hand side of constraint requiring extendable gen capacity value (total) be greater or equal to reserve margin minus existing gen total capacity value
         rhs -= existing_cap_value
-        print(f"Existing {component} cap_value for {province} = {existing_cap_value}")
-        print(f"RHS = {rhs}")
         logger.debug(
             f"Existing {component} cap_value for {province} = {existing_cap_value}"
         )
@@ -258,7 +254,7 @@ def add_planning_reserve_margin(
 
         # Skip if reserve margin has been satisfied
         if rhs <= 0:
-            print(f"Reserve margin satisfied for {province} in {year}, skipping")
+            logger.info(f"Reserve margin satisfied for {province} in {year}, skipping")
             return
 
         # Get extendable components

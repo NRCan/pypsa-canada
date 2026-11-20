@@ -116,7 +116,7 @@ def drop_inactive_assets(
 
 
 def apply_generator_preprocess_toggles(
-    network: "pypsa.Network", stage_config: dict, comp_config: dict
+    network: "pypsa.Network", option_config: dict, model: str, comp_config: dict
 ) -> "pypsa.Network":
     """
     Apply generator preprocessing toggles and normalize power-limit time-series.
@@ -125,8 +125,10 @@ def apply_generator_preprocess_toggles(
     ----------
     network : pypsa.Network
         Network whose generator and time-series tables will be updated.
-    stage_config : dict
-        Stage configuration dictionary (planning or dispatch section).
+    options_config : dict
+        Option configuration dictionary
+    model: str
+        Model options to use (planning or dispatch)
     comp_config : dict
         Components configuration dictionary
 
@@ -139,9 +141,9 @@ def apply_generator_preprocess_toggles(
     generators = network.generators
 
     if not generators.empty:
-        enable_committable = stage_config["enable_committable"]
-        enable_p_min_pu = stage_config["enable_p_min_pu"]
-        enable_ramp_rates = stage_config["enable_ramp_rates"]
+        enable_committable = model in option_config["enable_committable"]
+        enable_p_min_pu = model in option_config["enable_p_min_pu"]
+        enable_ramp_rates = model in option_config["enable_ramp_rates"]
 
         base_load_mask = pd.Series(False, index=generators.index)
         if comp_config.get("base_load"):
