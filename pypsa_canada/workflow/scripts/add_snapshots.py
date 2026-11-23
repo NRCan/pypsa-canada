@@ -83,7 +83,7 @@ def create_yearly_snapshots(network: Network, snapshot_config: dict) -> Network:
 
 
 # TODO Verify why canada model doesn't do this part auto. when applying I.P.
-def save_ref_year_data(
+def apply_ref_year_yearly_data(
     network: Network, network_ref: Network, timestep: int = 8760
 ) -> Network:
     """
@@ -135,7 +135,8 @@ def save_ref_year_data(
         # Compute the flat integer slice for this period's rows.
         start, end = i * timestep, (i + 1) * timestep
         # Weight each hourly snapshot equally within the period.
-        network.snapshot_weightings[start:end] = 1
+        # Snapshot weightings per period are copied from the reference network.
+        network.snapshot_weightings[start:end] = network_ref.snapshot_weightings
         # Tile each reference time series into the corresponding period slice.
         for target_ts, ref_ts in replication_targets:
             target_ts[start:end] = ref_ts.values
@@ -177,9 +178,23 @@ def create_yearly_weightings(
             custom_dynamic_attrs[attr] = df.values.copy()
 
     # Convert to multi-index with period (year) and timestep
+    # Weightings need to be copied and re-indexed to match the new multi-index snapshots (the new MultiIndex resets the weightings to 1).
+    weightings = network.snapshot_weightings.copy()
     network.snapshots = pd.MultiIndex.from_arrays(
         [snapshot_new_df.year, snapshot_new_df], names=["period", "timestep"]
     )
+    weightings.index = network.snapshots
+    # TODO This is a patch for the default snapshot profile mode.
+    # Consider making the deufalt profile mode use an aleady structured multi-index for snapshots (w/ obj, gens and stores).
+    # Stores value only 1 when both objective and generators weightings are not 0
+    valid_weightings = (
+        weightings["objective"].ne(0)
+        & weightings["generators"].ne(0)
+        & weightings["objective"].notna()
+        & weightings["generators"].notna()
+    )
+    weightings["stores"] = valid_weightings.astype(int)
+    network.snapshot_weightings = weightings
 
     # Restore custom dynamic attributes with the new index
     for attr, values in custom_dynamic_attrs.items():
@@ -576,7 +591,7 @@ def main():
     snapshot_config = config["snapshots"]
 
     network = create_yearly_snapshots(network=network, snapshot_config=snapshot_config)
-    network = save_ref_year_data(network, network_ref)
+    network = apply_ref_year_yearly_data(network, network_ref)
 
     comp_config: dict[str, Any] = config["components"]
 
